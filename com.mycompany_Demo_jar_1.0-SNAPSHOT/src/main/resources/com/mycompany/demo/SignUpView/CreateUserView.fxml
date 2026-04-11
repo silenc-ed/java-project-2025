@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Rectangle2D?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="548.0" prefWidth="876.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mycompany.demo.CreateUserController">
+   <children>
+      <TextField fx:id="fullnameField" layoutX="544.0" layoutY="193.0" prefHeight="26.0" prefWidth="270.0" promptText="Họ và tên" />
+      <TextField fx:id="emailField" layoutX="544.0" layoutY="238.0" prefHeight="26.0" prefWidth="270.0" promptText="Email" />
+      <TextField fx:id="numberField" layoutX="544.0" layoutY="283.0" prefHeight="26.0" prefWidth="270.0" promptText="SĐT" />
+      <TextField fx:id="addressField" layoutX="544.0" layoutY="328.0" prefHeight="26.0" prefWidth="270.0" promptText="Địa chỉ" />
+      <Button fx:id="nextButton" layoutX="651.0" layoutY="373.0" mnemonicParsing="false" onAction="#handleNext" text="Tiếp tục" />
+      <Hyperlink fx:id="signInLink" layoutX="705.0" layoutY="415.0" onAction="#goSignIn" text="đăng nhập" />
+      <Label alignment="CENTER" layoutX="632.0" layoutY="131.0" text="Đăng Ký">
+         <font>
+            <Font name="System Bold" size="24.0" />
+         </font>
+      </Label>
+      <Label layoutX="587.0" layoutY="418.0" text="bạn đã có tài khoản?" />
+      <ImageView fx:id="brandImageView" fitHeight="585.0" fitWidth="550.0" layoutX="-80.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../images/wallpaperflare.com_wallpaper(4).jpg" />
+         </image>
+         <viewport>
+            <Rectangle2D height="850.0" minX="475.0" width="850.0" />
+         </viewport>
+      </ImageView>
+   </children>
+</AnchorPane>
