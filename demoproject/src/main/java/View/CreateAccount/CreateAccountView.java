@@ -40,7 +40,7 @@ public class CreateAccountView extends javax.swing.JFrame {
         passwordField.putClientProperty("JTextField.placeholderText", "Nhập mật khẩu");
         repeatPasswordField.putClientProperty("JTextField.placeholderText", "Nhập lại mật khẩu");
         usernameField.putClientProperty("JTextField.placeholderText", "Tên đăng nhập");
-        passwordField.putClientProperty("JTextField.showClearButton", true);
+        passwordField.putClientProperty("JTextField.showRevealButton", true);
         repeatPasswordField.putClientProperty("JTextField.showRevealButton", true);
         usernameField.putClientProperty("JTextField.showClearButton", true);
         

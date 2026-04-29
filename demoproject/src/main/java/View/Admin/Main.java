@@ -10,25 +10,123 @@ package View.Admin;
  */
 public class Main extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Main.class.getName());
+    // private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Main.class.getName());
 
     /**
      * Creates new form Main
      */
+    private javax.swing.JPanel mainBody;
+
+    private void showForm(javax.swing.JComponent com) {
+        mainBody.removeAll();
+        mainBody.add(com);
+        mainBody.repaint();
+        mainBody.revalidate();
+    }
+
     public Main() {
         initComponents();
-        
-        jLabel1.setText(Common.TokenManager.getFullNameFromLocalToken());
+        this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
 
-        LogOutLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        LogOutLink.addMouseListener(new java.awt.event.MouseAdapter() {
+        // --- Cập nhật tên người đăng nhập ---
+        String fullname = Common.TokenManager.getFullNameFromLocalToken();
+        if (fullname == null || fullname.isEmpty()) {
+            fullname = "Quản trị viên";
+        }
+        menu1.setFullName(fullname);
+
+        // --- Cập nhật danh sách mục menu Admin ---
+        menu1.setMenu(new String[]{
+            "Tổng quan",
+            "Sản phẩm",
+            "Đơn hàng",
+            "Khách hàng",
+            "Khuyến mãi"
+        });
+
+        // --- Thiết lập khu vực nội dung chính ---
+        mainBody = new javax.swing.JPanel();
+        mainBody.setLayout(new java.awt.BorderLayout());
+
+        jPanel1.setLayout(new java.awt.BorderLayout());
+        jPanel1.add(menu1, java.awt.BorderLayout.WEST);
+        jPanel1.add(mainBody, java.awt.BorderLayout.CENTER);
+
+        // --- Xóa layout tĩnh của NetBeans để cho phép menu giãn toàn màn hình ---
+        getContentPane().setLayout(new java.awt.BorderLayout());
+        getContentPane().removeAll();
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
+
+        // --- Xử lý sự kiện chọn mục menu Admin ---
+        menu1.addEventMenuSelected(new View.Customers.EventMenuSelected() {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                Common.TokenManager.revokeToken();
-                new View.SignIn.SignInView().setVisible(true);
-                dispose();
+            public void selected(int index) {
+                if (index == 0) {
+                    showForm(new View.Admin.MainMenuPanel());
+                } else if (index == 1) {
+                    // showForm(new View.Admin.ProductPanel());
+                } else if (index == 2) {
+                    // showForm(new View.Admin.OrderPanel());
+                } else if (index == 3) {
+                    // showForm(new View.Admin.CustomerPanel());
+                } else if (index == 4) {
+                    // showForm(new View.Admin.PromotionPanel());
+                }
             }
         });
+
+        // --- Xử lý sự kiện click vào icon (logo user) ---
+        menu1.addEventProfileClicked(new Runnable() {
+            @Override
+            public void run() {
+                javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
+                popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
+                
+                View.Customers.UserOptionPanel optionPanel = new View.Customers.UserOptionPanel();
+                
+                // Thêm sự kiện cho list các chức năng (Hồ sơ, Cài đặt, ...)
+                optionPanel.getListOptionUser().addListSelectionListener(e -> {
+                    if (!e.getValueIsAdjusting()) {
+                        String selected = optionPanel.getListOptionUser().getSelectedValue();
+                        if (selected == null || selected.trim().isEmpty()) return;
+                        
+                        popupMenu.setVisible(false);
+                        optionPanel.getListOptionUser().clearSelection();
+
+                        if ("Đăng xuất".equals(selected)) {
+                            int confirm = javax.swing.JOptionPane.showConfirmDialog(Main.this, 
+                                    "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận đăng xuất", 
+                                    javax.swing.JOptionPane.YES_NO_OPTION);
+                            if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+                                Common.TokenManager.revokeToken();
+                                new View.SignIn.SignInView().setVisible(true);
+                                dispose();
+                            }
+                        } else {
+                            javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng " + selected + " đang phát triển.");
+                        }
+                    }
+                });
+                
+                popupMenu.add(optionPanel);
+                
+                // Hiển thị ở góc trái dưới cùng
+                popupMenu.show(menu1, 60, menu1.getHeight() - optionPanel.getPreferredSize().height - 50);
+            }
+        });
+
+        // --- Xử lý sự kiện click vào tên người dùng ---
+        menu1.addEventUserNameClicked(new Runnable() {
+            @Override
+            public void run() {
+                // Admin profile panel can be implemented here later
+                javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng xem hồ sơ Admin đang phát triển.", "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+
+        // Mặc định hiển thị Tổng quan khi mở
+        menu1.setSelectedIndex(0);
+        showForm(new View.Admin.MainMenuPanel());
     }
 
     /**
@@ -36,59 +134,26 @@ public class Main extends javax.swing.JFrame {
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
-    @SuppressWarnings("unchecked")
+    // @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
         menu1 = new View.Admin.Menu();
-        jPanel2 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        LogOutLink = new javax.swing.JLabel();
+        mainMenuPanel2 = new View.Admin.MainMenuPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Admin/Icon/8.png"))); // NOI18N
-        jLabel1.setText("Fullname");
-
-        LogOutLink.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        LogOutLink.setForeground(new java.awt.Color(204, 51, 255));
-        LogOutLink.setText("(Đăng xuất)");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(LogOutLink, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(LogOutLink, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(19, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addGap(0, 546, Short.MAX_VALUE)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -96,17 +161,25 @@ public class Main extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(menu1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(menu1, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mainMenuPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 677, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(menu1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(mainMenuPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 562, Short.MAX_VALUE)
+                    .addComponent(menu1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(70, 70, 70)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -127,33 +200,20 @@ public class Main extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
+            com.formdev.flatlaf.FlatLightLaf.setup();
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new Main().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel LogOutLink;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private View.Admin.MainMenuPanel mainMenuPanel2;
     private View.Admin.Menu menu1;
     // End of variables declaration//GEN-END:variables
 }
