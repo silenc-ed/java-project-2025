@@ -21,7 +21,7 @@ public class Demoproject {
         }
 
         java.awt.EventQueue.invokeLater(() -> {
-            String role = Common.TokenManager.validateLocalToken();
+            String role = Controller.SignIn.AuthProcess.validateToken();
             if ("CUSTOMER".equals(role)) {
                 new View.Customers.Main().setVisible(true);
             } else if ("ADMIN".equals(role)) {

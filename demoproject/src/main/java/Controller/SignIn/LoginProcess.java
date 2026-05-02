@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package Controller;
+package Controller.SignIn;
 
 import ConnectDB.ConnectionUtils;
 import java.sql.Connection;
@@ -30,7 +30,9 @@ public class LoginProcess {
                 String hashedPasswordFromDB = rs.getString("PASSWORD_HASH");
                 if (Common.HashUtil.checkPassword(password.trim(), hashedPasswordFromDB)) {
                     long maTk = rs.getLong("MA_TK");
-                    Common.TokenManager.generateAndSaveToken(maTk);
+                    
+                    // Changed to use AuthProcess instead of TokenManager
+                    AuthProcess.generateAndSaveToken(maTk);
                     
                     if (rs.getObject("MA_NV") != null) {
                         role = "ADMIN";

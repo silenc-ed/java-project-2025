@@ -29,7 +29,7 @@ public class Main extends javax.swing.JFrame {
         this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
 
         // --- Cập nhật tên người đăng nhập ---
-        String fullname = Common.TokenManager.getFullNameFromLocalToken();
+        String fullname = Controller.SignIn.AuthProcess.getFullNameFromToken();
         if (fullname == null || fullname.isEmpty()) {
             fullname = "Khách hàng mới";
         }
@@ -98,7 +98,7 @@ public class Main extends javax.swing.JFrame {
                                     "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận đăng xuất", 
                                     javax.swing.JOptionPane.YES_NO_OPTION);
                             if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-                                Common.TokenManager.revokeToken();
+                                Controller.SignIn.AuthProcess.revokeToken();
                                 new View.SignIn.SignInView().setVisible(true);
                                 dispose();
                             }

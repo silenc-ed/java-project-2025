@@ -1,11 +1,14 @@
 E:\Java\projects\demoproject\src\main\java\com\mycompany\demoproject\Demoproject.java
+E:\Java\projects\demoproject\src\main\java\Common\EmailService.java
 E:\Java\projects\demoproject\src\main\java\Common\HashUtil.java
 E:\Java\projects\demoproject\src\main\java\Common\TokenManager.java
 E:\Java\projects\demoproject\src\main\java\ConnectDB\ConnectionOracle.java
 E:\Java\projects\demoproject\src\main\java\ConnectDB\ConnectionUtils.java
-E:\Java\projects\demoproject\src\main\java\Controller\CreateAccountProcess.java
-E:\Java\projects\demoproject\src\main\java\Controller\CreateUserProcess.java
-E:\Java\projects\demoproject\src\main\java\Controller\LoginProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\CreateAccount\CreateAccountProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\CreateAccount\CreateUserProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\ForgottedPassword\ForgottedPasswordProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\SignIn\AuthProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\SignIn\LoginProcess.java
 E:\Java\projects\demoproject\src\main\java\TestDB.java
 E:\Java\projects\demoproject\src\main\java\View\Admin\EventMenuSelected.java
 E:\Java\projects\demoproject\src\main\java\View\Admin\ListMenu.java
@@ -29,4 +32,7 @@ E:\Java\projects\demoproject\src\main\java\View\Customers\WarrantyPanel.java
 E:\Java\projects\demoproject\src\main\java\View\Employees\Main.java
 E:\Java\projects\demoproject\src\main\java\View\Employees\Menu.java
 E:\Java\projects\demoproject\src\main\java\View\Employees\PanelBorder.java
+E:\Java\projects\demoproject\src\main\java\View\ForgottedPassword\ForgottedPasswordView.java
+E:\Java\projects\demoproject\src\main\java\View\ForgottedPassword\GetRequestAccount.java
+E:\Java\projects\demoproject\src\main\java\View\ForgottedPassword\ResetPasswordView.java
 E:\Java\projects\demoproject\src\main\java\View\SignIn\SignInView.java

@@ -2,47 +2,38 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package View.CreateAccount;
+package View.ForgottedPassword;
+
+import View.CreateAccount.*;
 
 
 /**
  *
  * @author DELL
  */
-public class CreateAccountView extends javax.swing.JFrame {
-    
-    private String fullname;
-    private String gmail;
-    private String number;
-    private String address;
+public class ResetPasswordView extends javax.swing.JFrame {
 
-    /**
-     * Creates new form SignInView
-     */
-    public CreateAccountView() {
+    private String username;
+
+    public ResetPasswordView() {
         initComponents();
         setLocationRelativeTo(null);
         setupUI();
     }
 
-    public CreateAccountView(String fullname, String gmail, String number, String address) {
+    public ResetPasswordView(String username) {
         initComponents();
         setLocationRelativeTo(null);
         setupUI();
-        this.fullname = fullname;
-        this.gmail = gmail;
-        this.number = number;
-        this.address = address;
+        this.username = username;
     }
 
     private void setupUI() {
         nextButton.putClientProperty("JButton.buttonType", "roundRect");
-        passwordField.putClientProperty("JTextField.placeholderText", "Nhập mật khẩu");
+        passwordField.putClientProperty("JTextField.placeholderText", "Nhập mật khẩu mới");
         repeatPasswordField.putClientProperty("JTextField.placeholderText", "Nhập lại mật khẩu");
-        usernameField.putClientProperty("JTextField.placeholderText", "Tên đăng nhập");
         passwordField.putClientProperty("JTextField.showRevealButton", true);
         repeatPasswordField.putClientProperty("JTextField.showRevealButton", true);
-        usernameField.putClientProperty("JTextField.showClearButton", true);
         
         signInLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         signInLink.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -70,7 +61,6 @@ public class CreateAccountView extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         nextButton = new javax.swing.JButton();
-        usernameField = new javax.swing.JTextField();
         passwordField = new javax.swing.JPasswordField();
         repeatPasswordField = new javax.swing.JPasswordField();
         signInLink = new javax.swing.JLabel();
@@ -93,8 +83,6 @@ public class CreateAccountView extends javax.swing.JFrame {
         nextButton.setText("Tiếp Theo");
         nextButton.addActionListener(this::nextButtonActionPerformed);
 
-        usernameField.addActionListener(this::usernameFieldActionPerformed);
-
         signInLink.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         signInLink.setForeground(new java.awt.Color(204, 51, 255));
         signInLink.setText("Đăng nhập");
@@ -102,7 +90,7 @@ public class CreateAccountView extends javax.swing.JFrame {
         jLabel3.setText("Bạn đã có tài khoản?");
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jLabel2.setText("Tạo tài khoản");
+        jLabel2.setText("Cập nhật mật khẩu");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -119,23 +107,20 @@ public class CreateAccountView extends javax.swing.JFrame {
                         .addComponent(jLabel2)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(passwordField)
-                            .addComponent(usernameField, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
-                            .addComponent(nextButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(nextButton, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
                             .addComponent(repeatPasswordField))))
                 .addGap(26, 26, 26))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(83, 83, 83)
+                .addGap(127, 127, 127)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
-                .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
                 .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(repeatPasswordField, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGap(40, 40, 40)
                 .addComponent(nextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -204,42 +189,35 @@ public class CreateAccountView extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+        String newPassword = new String(passwordField.getPassword());
         String repeatPassword = new String(repeatPasswordField.getPassword());
 
-        if (username.isEmpty() || password.isEmpty() || repeatPassword.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        if (newPassword.isEmpty() || repeatPassword.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ mật khẩu!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (!password.equals(repeatPassword)) {
+        if (!newPassword.equals(repeatPassword)) {
             javax.swing.JOptionPane.showMessageDialog(this, "Mật khẩu nhập lại không khớp!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Tạo tài khoản và khách hàng vào DB
-        Controller.CreateAccount.CreateAccountProcess process = new Controller.CreateAccount.CreateAccountProcess();
-        
-        if (process.checkUsernameExists(username)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại! Vui lòng chọn tên khác.", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        if (newPassword.length() < 6) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Mật khẩu phải có ít nhất 6 ký tự!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        boolean success = process.createAccount(fullname, gmail, number, address, username, password);
+        Controller.ForgottedPassword.ForgottedPasswordProcess process = new Controller.ForgottedPassword.ForgottedPasswordProcess();
+        boolean isSuccess = process.resetPassword(this.username, newPassword);
 
-        if (success) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Đăng ký thành công!", "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            new View.SignIn.SignInView().setVisible(true);
+        if (isSuccess) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật mật khẩu thành công!\nVui lòng đăng nhập lại.", "Thành công", javax.swing.JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
+            new View.SignIn.SignInView().setVisible(true);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "Có lỗi xảy ra trong quá trình đăng ký!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Cập nhật mật khẩu thất bại. Vui lòng thử lại sau!", "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    private void usernameFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_usernameFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_usernameFieldActionPerformed
 
     /**
      * @param args the command line arguments
@@ -252,7 +230,7 @@ public class CreateAccountView extends javax.swing.JFrame {
             System.err.println("Không thể khởi tạo FlatLaf");
         }
 
-        java.awt.EventQueue.invokeLater(() -> new CreateAccountView().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new ResetPasswordView().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -266,6 +244,5 @@ public class CreateAccountView extends javax.swing.JFrame {
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JPasswordField repeatPasswordField;
     private javax.swing.JLabel signInLink;
-    private javax.swing.JTextField usernameField;
     // End of variables declaration//GEN-END:variables
 }
