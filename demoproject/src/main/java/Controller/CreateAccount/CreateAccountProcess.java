@@ -1,4 +1,4 @@
-package Controller;
+package Controller.CreateAccount;
 
 import ConnectDB.ConnectionUtils;
 import java.sql.Connection;

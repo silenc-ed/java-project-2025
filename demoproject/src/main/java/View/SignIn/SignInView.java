@@ -67,6 +67,11 @@ public class SignInView extends javax.swing.JFrame {
 
         forgottedPasswordLink.setForeground(new java.awt.Color(204, 0, 255));
         forgottedPasswordLink.setText("Quên mật khẩu?");
+        forgottedPasswordLink.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                forgottedPasswordLinkMouseClicked(evt);
+            }
+        });
 
         jLabel3.setText("Bạn chưa có tài khoản?");
 
@@ -121,7 +126,6 @@ public class SignInView extends javax.swing.JFrame {
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Login/Theme/download.jpg"))); // NOI18N
-        jLabel2.setText("ảnh");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -149,14 +153,14 @@ public class SignInView extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(39, 39, 39)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(42, Short.MAX_VALUE))
+                .addGap(42, 42, 42))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(18, 18, 18)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addGap(22, 22, 22))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -188,7 +192,7 @@ public class SignInView extends javax.swing.JFrame {
             return;
         }
 
-        Controller.LoginProcess loginProcess = new Controller.LoginProcess();
+        Controller.SignIn.LoginProcess loginProcess = new Controller.SignIn.LoginProcess();
         String role = loginProcess.loginProcess(username, password);
 
         if ("CUSTOMER".equals(role)) {
@@ -214,6 +218,11 @@ public class SignInView extends javax.swing.JFrame {
         this.dispose();
         new View.CreateAccount.CreateUserView().setVisible(true);
     }//GEN-LAST:event_signUpLinkMouseClicked
+
+    private void forgottedPasswordLinkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_forgottedPasswordLinkMouseClicked
+        this.dispose();
+        new View.ForgottedPassword.ForgottedPasswordView().setVisible(true);
+    }//GEN-LAST:event_forgottedPasswordLinkMouseClicked
 
     /**
      * @param args the command line arguments
