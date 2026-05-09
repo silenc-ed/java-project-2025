@@ -6,7 +6,6 @@ package View.CreateAccount;
 
 import java.awt.event.ActionEvent;
 import javax.swing.JComboBox;
-
 /**
  *
  * @author DELL
@@ -36,6 +35,14 @@ public class CreateUserView extends javax.swing.JFrame {
                         @Override
                         public void mouseClicked(java.awt.event.MouseEvent evt) {
                                 signInLinkMouseClicked(evt);
+                        }
+                        @Override
+                        public void mouseEntered(java.awt.event.MouseEvent evt) {
+                                signInLink.setForeground(java.awt.Color.BLUE);
+                        }
+                        @Override
+                        public void mouseExited(java.awt.event.MouseEvent evt) {
+                                signInLink.setForeground(new java.awt.Color(204, 51, 255));
                         }
                 });
         }
@@ -126,7 +133,7 @@ public class CreateUserView extends javax.swing.JFrame {
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(71, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel2)
                 .addGap(18, 18, 18)
                 .addComponent(fullnameField, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -145,7 +152,7 @@ public class CreateUserView extends javax.swing.JFrame {
                 .addGap(73, 73, 73))
         );
 
-        jLabel1.setText("ảnh");
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Login/Theme/theme.jpg"))); // NOI18N
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -159,7 +166,7 @@ public class CreateUserView extends javax.swing.JFrame {
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 501, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 530, Short.MAX_VALUE)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -178,7 +185,7 @@ public class CreateUserView extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(33, Short.MAX_VALUE)
+                .addContainerGap(22, Short.MAX_VALUE)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(31, 31, 31))
         );
@@ -292,6 +299,7 @@ public class CreateUserView extends javax.swing.JFrame {
         }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> addressComboBox;
     private javax.swing.JTextField fullnameField;
     private javax.swing.JTextField gmailField;
     private javax.swing.JLabel jLabel1;
@@ -303,14 +311,13 @@ public class CreateUserView extends javax.swing.JFrame {
     private javax.swing.JButton nextButton;
     private javax.swing.JTextField numberField;
     private javax.swing.JLabel signInLink;
-    private javax.swing.JComboBox<String> addressComboBox;
     // End of variables declaration//GEN-END:variables
-
+    
     private void numberFieldActionPerformed(ActionEvent e) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     private void addressComboBoxActionPerformed(ActionEvent e) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // Selection handled automatically by JComboBox
     }
 }

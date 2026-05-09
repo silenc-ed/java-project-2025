@@ -9,8 +9,9 @@ package View.Admin;
  * @author DELL
  */
 public class Main extends javax.swing.JFrame {
-    
-    // private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Main.class.getName());
+
+    // private static final java.util.logging.Logger logger =
+    // java.util.logging.Logger.getLogger(Main.class.getName());
 
     /**
      * Creates new form Main
@@ -36,12 +37,16 @@ public class Main extends javax.swing.JFrame {
         menu1.setFullName(fullname);
 
         // --- Cập nhật danh sách mục menu Admin ---
-        menu1.setMenu(new String[]{
-            "Tổng quan",
-            "Sản phẩm",
-            "Đơn hàng",
-            "Khách hàng",
-            "Khuyến mãi"
+        menu1.setMenu(new String[] {
+                "Tổng quan",
+                "Mua hàng",
+                "Quản lý SP",
+                "Đơn hàng",
+                "Khách hàng",
+                "Nhân viên",
+                "Tồn kho CN",
+                "Khuyến mãi",
+                "Nhập kho"
         });
 
         // --- Thiết lập khu vực nội dung chính ---
@@ -61,16 +66,34 @@ public class Main extends javax.swing.JFrame {
         menu1.addEventMenuSelected(new View.Customers.EventMenuSelected() {
             @Override
             public void selected(int index) {
-                if (index == 0) {
-                    showForm(new View.Admin.MainMenuPanel());
-                } else if (index == 1) {
-                    // showForm(new View.Admin.ProductPanel());
-                } else if (index == 2) {
-                    // showForm(new View.Admin.OrderPanel());
-                } else if (index == 3) {
-                    // showForm(new View.Admin.CustomerPanel());
-                } else if (index == 4) {
-                    // showForm(new View.Admin.PromotionPanel());
+                switch (index) {
+                    case 0: // Tổng quan
+                        showForm(new View.Admin.DashboardPanel());
+                        break;
+                    case 1: // Mua hàng
+                        showForm(new View.Admin.CreateInvoicePanel());
+                        break;
+                    case 2: // Quản lý SP
+                        showForm(new View.Admin.ProductPanel());
+                        break;
+                    case 3: // Đơn hàng
+                        showForm(new View.Admin.BillPanel());
+                        break;
+                    case 4: // Khách hàng
+                        showForm(new View.Admin.CustomerPanel());
+                        break;
+                    case 5: // Nhân viên
+                        showForm(new View.Admin.EmployeePanel());
+                        break;
+                    case 6: // Tồn kho CN
+                        showForm(new View.Admin.WarehousePanel());
+                        break;
+                    case 7: // Khuyến mãi
+                        showForm(new View.Admin.VoucherPanel());
+                        break;
+                    case 8: // Nhập kho
+                        showForm(new View.Admin.ProcurementPanel());
+                        break;
                 }
             }
         });
@@ -81,21 +104,22 @@ public class Main extends javax.swing.JFrame {
             public void run() {
                 javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
                 popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
-                
+
                 View.Customers.UserOptionPanel optionPanel = new View.Customers.UserOptionPanel();
-                
+
                 // Thêm sự kiện cho list các chức năng (Hồ sơ, Cài đặt, ...)
                 optionPanel.getListOptionUser().addListSelectionListener(e -> {
                     if (!e.getValueIsAdjusting()) {
                         String selected = optionPanel.getListOptionUser().getSelectedValue();
-                        if (selected == null || selected.trim().isEmpty()) return;
-                        
+                        if (selected == null || selected.trim().isEmpty())
+                            return;
+
                         popupMenu.setVisible(false);
                         optionPanel.getListOptionUser().clearSelection();
 
                         if ("Đăng xuất".equals(selected)) {
-                            int confirm = javax.swing.JOptionPane.showConfirmDialog(Main.this, 
-                                    "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận đăng xuất", 
+                            int confirm = javax.swing.JOptionPane.showConfirmDialog(Main.this,
+                                    "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận đăng xuất",
                                     javax.swing.JOptionPane.YES_NO_OPTION);
                             if (confirm == javax.swing.JOptionPane.YES_OPTION) {
                                 Controller.SignIn.AuthProcess.revokeToken();
@@ -103,13 +127,14 @@ public class Main extends javax.swing.JFrame {
                                 dispose();
                             }
                         } else {
-                            javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng " + selected + " đang phát triển.");
+                            javax.swing.JOptionPane.showMessageDialog(Main.this,
+                                    "Chức năng " + selected + " đang phát triển.");
                         }
                     }
                 });
-                
+
                 popupMenu.add(optionPanel);
-                
+
                 // Hiển thị ở góc trái dưới cùng
                 popupMenu.show(menu1, 60, menu1.getHeight() - optionPanel.getPreferredSize().height - 50);
             }
@@ -120,13 +145,14 @@ public class Main extends javax.swing.JFrame {
             @Override
             public void run() {
                 // Admin profile panel can be implemented here later
-                javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng xem hồ sơ Admin đang phát triển.", "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng xem hồ sơ Admin đang phát triển.",
+                        "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
-        // Mặc định hiển thị Tổng quan khi mở
+        // Mặc định hiển thị Dashboard khi mở
         menu1.setSelectedIndex(0);
-        showForm(new View.Admin.MainMenuPanel());
+        showForm(new View.Admin.DashboardPanel());
     }
 
     /**
@@ -135,63 +161,59 @@ public class Main extends javax.swing.JFrame {
      * regenerated by the Form Editor.
      */
     // @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated
+    // Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
         menu1 = new View.Admin.Menu();
-        jPanel3 = new javax.swing.JPanel();
-        mainMenuPanel2 = new View.Admin.MainMenuPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGap(0, 0, Short.MAX_VALUE));
+        jPanel2Layout.setVerticalGroup(
+                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGap(0, 0, Short.MAX_VALUE));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(menu1, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(mainMenuPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 677, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(menu1, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 683,
+                                        Short.MAX_VALUE)
+                                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap()));
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(mainMenuPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 562, Short.MAX_VALUE)
-                    .addComponent(menu1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(70, 70, 70)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(76, 76, 76)
+                                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
+                        .addComponent(menu1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE,
+                                Short.MAX_VALUE));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE));
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE,
+                                        javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -212,8 +234,7 @@ public class Main extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel3;
-    private View.Admin.MainMenuPanel mainMenuPanel2;
+    private javax.swing.JPanel jPanel2;
     private View.Admin.Menu menu1;
     // End of variables declaration//GEN-END:variables
 }
