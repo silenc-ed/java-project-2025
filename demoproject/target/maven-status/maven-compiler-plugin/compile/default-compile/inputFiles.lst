@@ -7,8 +7,10 @@ E:\Java\projects\demoproject\src\main\java\ConnectDB\ConnectionUtils.java
 E:\Java\projects\demoproject\src\main\java\Controller\CreateAccount\CreateAccountProcess.java
 E:\Java\projects\demoproject\src\main\java\Controller\CreateAccount\CreateUserProcess.java
 E:\Java\projects\demoproject\src\main\java\Controller\ForgottedPassword\ForgottedPasswordProcess.java
+E:\Java\projects\demoproject\src\main\java\Controller\SanPhamDAO.java
 E:\Java\projects\demoproject\src\main\java\Controller\SignIn\AuthProcess.java
 E:\Java\projects\demoproject\src\main\java\Controller\SignIn\LoginProcess.java
+E:\Java\projects\demoproject\src\main\java\Model\SanPham.java
 E:\Java\projects\demoproject\src\main\java\TestDB.java
 E:\Java\projects\demoproject\src\main\java\View\Admin\BillPanel.java
 E:\Java\projects\demoproject\src\main\java\View\Admin\CreateInvoicePanel.java
@@ -33,7 +35,10 @@ E:\Java\projects\demoproject\src\main\java\View\Customers\ListMenu.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\Main.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\Menu.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\PacketPanel.java
-E:\Java\projects\demoproject\src\main\java\View\Customers\ProductPanel.java
+E:\Java\projects\demoproject\src\main\java\View\Customers\ProductPanel\BannerSlideshow.java
+E:\Java\projects\demoproject\src\main\java\View\Customers\ProductPanel\ProductCard.java
+E:\Java\projects\demoproject\src\main\java\View\Customers\ProductPanel\ProductPanel.java
+E:\Java\projects\demoproject\src\main\java\View\Customers\ProductPanel\WrapLayout.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\UserAccountPanel.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\UserOptionPanel.java
 E:\Java\projects\demoproject\src\main\java\View\Customers\VoucherPanel.java

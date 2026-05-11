@@ -44,9 +44,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="menu1" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Component id="productPanel2" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="702" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -54,10 +52,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="menu1" max="32767" attributes="0"/>
-                      <Component id="productPanel2" max="32767" attributes="0"/>
-                  </Group>
+                  <Component id="menu1" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -65,21 +60,6 @@
       <SubComponents>
         <Component class="View.Customers.Menu" name="menu1">
         </Component>
-        <Container class="View.Customers.ProductPanel" name="productPanel2">
-
-          <Layout>
-            <DimensionLayout dim="0">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="690" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-            <DimensionLayout dim="1">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-              </Group>
-            </DimensionLayout>
-          </Layout>
-        </Container>
       </SubComponents>
     </Container>
   </SubComponents>
