@@ -1,4 +1,4 @@
-package Controller.Customers;
+package Controller.Customers.Warranty;
 
 import ConnectDB.ConnectionUtils;
 import java.sql.Connection;

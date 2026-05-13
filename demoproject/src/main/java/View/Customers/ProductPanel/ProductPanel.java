@@ -75,6 +75,20 @@ public class ProductPanel extends javax.swing.JPanel {
                 Category.setForeground(TEXT_SECONDARY);
                 Category.setBackground(BG_PRIMARY);
             }
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                View.Customers.ProductPanel.CategoryPopupDialog popup = new View.Customers.ProductPanel.CategoryPopupDialog(
+                    (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(ProductPanel.this),
+                    Category,
+                    new View.Customers.ProductPanel.ProductFilterListener() {
+                        @Override
+                        public void onProductsFiltered(java.util.List<Model.SanPham> products, String sectionTitle) {
+                            updateProductGrid(products, sectionTitle);
+                        }
+                    }
+                );
+                popup.setVisible(true);
+            }
         });
 
         // Delivery - interactive style with icon
@@ -95,6 +109,13 @@ public class ProductPanel extends javax.swing.JPanel {
                 Delivery.setForeground(TEXT_SECONDARY);
                 Delivery.setBackground(BG_PRIMARY);
             }
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(ProductPanel.this);
+                if (window instanceof View.Customers.Main) {
+                    ((View.Customers.Main) window).toggleCartDrawer();
+                }
+            }
         });
 
         // === Dashboard Panel ===
@@ -113,6 +134,96 @@ public class ProductPanel extends javax.swing.JPanel {
         searchField.setBackground(SEARCH_BG);
         searchField.setForeground(TEXT_PRIMARY);
         searchField.setCaretColor(ACCENT_PRIMARY);
+
+        // Autocomplete Suggestion Logic
+        javax.swing.JPopupMenu suggestionPopup = new javax.swing.JPopupMenu();
+        suggestionPopup.setFocusable(false);
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void updateSuggestions() {
+                String text = searchField.getText().trim();
+                if (text.isEmpty()) {
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        suggestionPopup.setVisible(false);
+                        updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+                    });
+                    return;
+                }
+
+                // Chạy API request trên một thread riêng biệt để không làm đơ UI
+                new Thread(() -> {
+                    java.util.List<String> suggestions = new java.util.ArrayList<>();
+                    try {
+                        String urlStr = "http://suggestqueries.google.com/complete/search?client=chrome&q=" + java.net.URLEncoder.encode(text, "UTF-8");
+                        java.net.URL url = new java.net.URL(urlStr);
+                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("GET");
+                        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                        conn.setConnectTimeout(2000);
+                        conn.setReadTimeout(2000);
+
+                        java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream(), "UTF-8"));
+                        StringBuilder response = new StringBuilder();
+                        String inputLine;
+                        while ((inputLine = in.readLine()) != null) {
+                            response.append(inputLine);
+                        }
+                        in.close();
+
+                        // Parse kết quả JSON đơn giản
+                        String res = response.toString();
+                        int startIndex = res.indexOf(",[");
+                        if (startIndex != -1) {
+                            String arrayPart = res.substring(startIndex + 1);
+                            int endIndex = arrayPart.indexOf("]");
+                            if (endIndex != -1) {
+                                java.util.regex.Pattern p = java.util.regex.Pattern.compile("\"([^\"]*)\"");
+                                java.util.regex.Matcher m = p.matcher(arrayPart);
+                                int count = 0;
+                                while (m.find() && count < 6) {
+                                    suggestions.add(m.group(1));
+                                    count++;
+                                }
+                            }
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+
+                    // Cập nhật giao diện trên EDT
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        if (!searchField.getText().trim().equals(text)) {
+                            return; // User has typed something else
+                        }
+                        suggestionPopup.removeAll();
+                        if (!suggestions.isEmpty()) {
+                            for (String sugg : suggestions) {
+                                javax.swing.JMenuItem item = new javax.swing.JMenuItem(sugg);
+                                item.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                                item.addActionListener(ev -> {
+                                    searchField.setText(sugg);
+                                    suggestionPopup.setVisible(false);
+                                    performSearch();
+                                });
+                                suggestionPopup.add(item);
+                            }
+                            if (searchField.isShowing()) {
+                                suggestionPopup.show(searchField, 0, searchField.getHeight());
+                                searchField.requestFocusInWindow();
+                            }
+                        } else {
+                            suggestionPopup.setVisible(false);
+                        }
+                    });
+                }).start();
+            }
+
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { updateSuggestions(); }
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { updateSuggestions(); }
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { updateSuggestions(); }
+        });
 
         // Search button - modern style
         SearchButton.putClientProperty("JButton.buttonType", "roundRect");
@@ -150,19 +261,34 @@ public class ProductPanel extends javax.swing.JPanel {
     }
 
     private void setupProductGrid() {
-        // Lấy dữ liệu từ database thông qua DAO
         java.util.List<Model.SanPham> products = Controller.SanPhamDAO.getAllSanPham();
+        updateProductGrid(products, "  GỢI Ý HÔM NAY");
+    }
 
+    private void updateProductGrid(java.util.List<Model.SanPham> products, String title) {
         // Create grid panel with WrapLayout
         javax.swing.JPanel gridPanel = new javax.swing.JPanel(
             new View.Customers.ProductPanel.WrapLayout(java.awt.FlowLayout.LEFT, 15, 15)
         );
         gridPanel.setBackground(BG_PRIMARY);
 
-        for (Model.SanPham p : products) {
-            View.Customers.ProductPanel.ProductCard card = new View.Customers.ProductPanel.ProductCard();
-            card.setData(p);
-            gridPanel.add(card);
+        if (products != null) {
+            for (Model.SanPham p : products) {
+                View.Customers.ProductPanel.ProductCard card = new View.Customers.ProductPanel.ProductCard();
+                card.setData(p);
+                
+                // Bắt sự kiện click để chuyển sang InfoProductPanel
+                card.setOnClickListener(sp -> {
+                    java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+                    if (window instanceof View.Customers.Main) {
+                        View.Customers.ProductPanel.InfoProductPanel infoPanel = new View.Customers.ProductPanel.InfoProductPanel();
+                        infoPanel.setData(sp);
+                        ((View.Customers.Main) window).showForm(infoPanel);
+                    }
+                });
+                
+                gridPanel.add(card);
+            }
         }
 
         // Wrap in scroll pane
@@ -186,7 +312,7 @@ public class ProductPanel extends javax.swing.JPanel {
         });
 
         // Add section title
-        javax.swing.JLabel sectionTitle = new javax.swing.JLabel("  GỢI Ý HÔM NAY") {
+        javax.swing.JLabel sectionTitle = new javax.swing.JLabel(title) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -380,12 +506,22 @@ public class ProductPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchFieldActionPerformed
-        // TODO add your handling code here:
+        performSearch();
     }//GEN-LAST:event_searchFieldActionPerformed
 
     private void SearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchButtonActionPerformed
-        // TODO add your handling code here:
+        performSearch();
     }//GEN-LAST:event_SearchButtonActionPerformed
+
+    private void performSearch() {
+        String text = searchField.getText().trim();
+        if (!text.isEmpty()) {
+            java.util.List<Model.SanPham> results = Controller.SanPhamDAO.searchByName(text);
+            updateProductGrid(results, "KẾT QUẢ TÌM KIẾM: " + text.toUpperCase());
+        } else {
+            updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+        }
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

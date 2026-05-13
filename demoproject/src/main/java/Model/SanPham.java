@@ -11,11 +11,12 @@ public class SanPham {
     private int coQuanLySerial;
     private String trangThai;
     private int soLuongDaBan;
+    private String moTa;
 
     public SanPham() {
     }
 
-    public SanPham(int maSp, int maLsp, String tenSp, String donViTinh, double giaBan, int thoiGianBh, String hinhAnh, int coQuanLySerial, String trangThai, int soLuongDaBan) {
+    public SanPham(int maSp, int maLsp, String tenSp, String donViTinh, double giaBan, int thoiGianBh, String hinhAnh, int coQuanLySerial, String trangThai, int soLuongDaBan, String moTa) {
         this.maSp = maSp;
         this.maLsp = maLsp;
         this.tenSp = tenSp;
@@ -26,6 +27,7 @@ public class SanPham {
         this.coQuanLySerial = coQuanLySerial;
         this.trangThai = trangThai;
         this.soLuongDaBan = soLuongDaBan;
+        this.moTa = moTa;
     }
 
     public int getMaSp() { return maSp; }
@@ -57,4 +59,7 @@ public class SanPham {
 
     public int getSoLuongDaBan() { return soLuongDaBan; }
     public void setSoLuongDaBan(int soLuongDaBan) { this.soLuongDaBan = soLuongDaBan; }
+
+    public String getMoTa() { return moTa; }
+    public void setMoTa(String moTa) { this.moTa = moTa; }
 }
