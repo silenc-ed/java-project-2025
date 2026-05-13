@@ -14,6 +14,13 @@ public class ProductCard extends javax.swing.JPanel {
     private javax.swing.Timer zoomTimer;
     private int currentImgSize = 180;
     private int targetImgSize = 180;
+    
+    private Model.SanPham sp;
+    private java.util.function.Consumer<Model.SanPham> onClickListener;
+    
+    public void setOnClickListener(java.util.function.Consumer<Model.SanPham> listener) {
+        this.onClickListener = listener;
+    }
 
     /**
      * Creates new form ProductPanel2
@@ -62,12 +69,23 @@ public class ProductCard extends javax.swing.JPanel {
                 
                 // Scale ảnh bằng Graphics2D để đảm bảo mượt và nhẹ nhất
                 java.awt.image.BufferedImage resizedImg = new java.awt.image.BufferedImage(
-                    currentImgSize, currentImgSize, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    195, 195, java.awt.image.BufferedImage.TYPE_INT_ARGB);
                 java.awt.Graphics2D g2 = resizedImg.createGraphics();
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                // Canh giữa ảnh khi zoom
-                int offset = (195 - currentImgSize) / 2;
-                g2.drawImage(currentImage, offset, offset, currentImgSize, currentImgSize, null);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                int imgW = currentImage.getWidth(null);
+                int imgH = currentImage.getHeight(null);
+                // currentImage is already aspect-ratio preserved to max 195x195
+                // We just need to scale it to fit within currentImgSize
+                double ratio = Math.min((double) currentImgSize / imgW, (double) currentImgSize / imgH);
+                int drawW = (int) (imgW * ratio);
+                int drawH = (int) (imgH * ratio);
+                
+                int xOffset = (195 - drawW) / 2;
+                int yOffset = (195 - drawH) / 2;
+                g2.drawImage(currentImage, xOffset, yOffset, drawW, drawH, null);
                 g2.dispose();
                 
                 productImage.setIcon(new javax.swing.ImageIcon(resizedImg));
@@ -75,8 +93,14 @@ public class ProductCard extends javax.swing.JPanel {
                 zoomTimer.stop();
             }
         });
-
+        
         this.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (onClickListener != null && sp != null) {
+                    onClickListener.accept(sp);
+                }
+            }
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 setBorder(javax.swing.BorderFactory.createCompoundBorder(
@@ -103,6 +127,7 @@ public class ProductCard extends javax.swing.JPanel {
     }
 
     public void setData(Model.SanPham sp) {
+        this.sp = sp;
         jLabel1.setText(sp.getTenSp());
         
         java.text.DecimalFormat formatter = new java.text.DecimalFormat("###,###,###");
@@ -118,18 +143,39 @@ public class ProductCard extends javax.swing.JPanel {
         java.net.URL imgUrl = getClass().getResource(imagePath);
         if (imgUrl != null) {
             javax.swing.ImageIcon icon = new javax.swing.ImageIcon(imgUrl);
-            currentImage = icon.getImage();
+            java.awt.Image originalImage = icon.getImage();
             
-            // Vẽ ảnh gốc ngay lần đầu (180x180) nhưng đặt trong khung 195x195 để không bị giật layout khi zoom
-            java.awt.image.BufferedImage initialImg = new java.awt.image.BufferedImage(
-                195, 195, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-            java.awt.Graphics2D g2 = initialImg.createGraphics();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            int offset = (195 - 180) / 2;
-            g2.drawImage(currentImage, offset, offset, 180, 180, null);
-            g2.dispose();
-            
-            productImage.setIcon(new javax.swing.ImageIcon(initialImg));
+            // Pre-scale using SCALE_SMOOTH to get a very high quality base image at max zoom size (195)
+            int imgW = originalImage.getWidth(null);
+            int imgH = originalImage.getHeight(null);
+            if (imgW > 0 && imgH > 0) {
+                double ratio = Math.min((double) 195 / imgW, (double) 195 / imgH);
+                int drawW = (int) (imgW * ratio);
+                int drawH = (int) (imgH * ratio);
+                currentImage = new javax.swing.ImageIcon(originalImage.getScaledInstance(drawW, drawH, java.awt.Image.SCALE_SMOOTH)).getImage();
+                
+                // Vẽ ảnh gốc ngay lần đầu (180x180) nhưng đặt trong khung 195x195 để không bị giật layout khi zoom
+                java.awt.image.BufferedImage initialImg = new java.awt.image.BufferedImage(
+                    195, 195, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                java.awt.Graphics2D g2 = initialImg.createGraphics();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw currentImage (which is up to 195x195) scaled down slightly to 180x180
+                double initialRatio = Math.min((double) 180 / drawW, (double) 180 / drawH);
+                int initW = (int) (drawW * initialRatio);
+                int initH = (int) (drawH * initialRatio);
+                
+                int xOffset = (195 - initW) / 2;
+                int yOffset = (195 - initH) / 2;
+                g2.drawImage(currentImage, xOffset, yOffset, initW, initH, null);
+                g2.dispose();
+                
+                productImage.setIcon(new javax.swing.ImageIcon(initialImg));
+            } else {
+                productImage.setIcon(icon);
+            }
         } else {
             productImage.setIcon(null);
             productImage.setText("No Image");
@@ -175,7 +221,7 @@ public class ProductCard extends javax.swing.JPanel {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(productCost, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -195,7 +241,7 @@ public class ProductCard extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(productImage, javax.swing.GroupLayout.PREFERRED_SIZE, 194, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

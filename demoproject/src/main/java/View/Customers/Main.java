@@ -18,8 +18,17 @@ public class Main extends javax.swing.JFrame {
      * Creates new form Main
      */
     private javax.swing.JPanel mainBody;
+    public CartDrawer cartDrawer;
 
-    private void showForm(javax.swing.JComponent com) {
+    public Menu getMenu() {
+        return menu1;
+    }
+    
+    public void toggleCartDrawer() {
+        cartDrawer.toggleDrawer();
+    }
+
+    public void showForm(javax.swing.JComponent com) {
         mainBody.removeAll();
         mainBody.add(com);
         mainBody.repaint();
@@ -131,6 +140,25 @@ public class Main extends javax.swing.JFrame {
         //Mặc định hiển thị Trang chủ khi mở
         menu1.setSelectedIndex(0);
         showForm(new ProductPanel());
+        
+        // --- Cài đặt CartDrawer ---
+        cartDrawer = new CartDrawer(this);
+        cartDrawer.setVisible(false);
+        getLayeredPane().add(cartDrawer, javax.swing.JLayeredPane.POPUP_LAYER);
+        
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int yOffset = getContentPane().getY();
+                int h = getContentPane().getHeight();
+                int w = getContentPane().getWidth();
+                if (cartDrawer.isShowingDrawer()) {
+                    cartDrawer.setBounds(w - 350, yOffset, 350, h);
+                } else {
+                    cartDrawer.setBounds(w, yOffset, 350, h);
+                }
+            }
+        });
     }
 
     /**

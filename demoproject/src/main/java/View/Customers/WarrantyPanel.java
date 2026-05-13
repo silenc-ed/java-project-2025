@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package View.Customers;
-import Controller.Customers.WarrantyCheckingProcess;
+import Controller.Customers.Warranty.WarrantyCheckingProcess;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -143,7 +143,7 @@ public class WarrantyPanel extends javax.swing.JPanel {
         }
         
         java.sql.Date[] thoiGian = new java.sql.Date[2];
-        Controller.Customers.WarrantyCheckingProcess checkingWarranty = new Controller.Customers.WarrantyCheckingProcess();
+        Controller.Customers.Warranty.WarrantyCheckingProcess checkingWarranty = new Controller.Customers.Warranty.WarrantyCheckingProcess();
         
         try {
             String rs = checkingWarranty.checking(sdt, imei, thoiGian);
