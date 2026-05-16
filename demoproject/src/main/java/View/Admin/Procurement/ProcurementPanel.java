@@ -2,20 +2,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
-package View.Admin;
-
-import View.Customers.*;
+package View.Admin.Procurement;
 
 /**
  *
  * @author DELL
  */
-public class ProductPanel extends javax.swing.JPanel {
+public class ProcurementPanel extends javax.swing.JPanel {
 
     /**
-     * Creates new form TongQuanPanel
+     * Creates new form ProcurementPanel
      */
-    public ProductPanel() {
+    public ProcurementPanel() {
         initComponents();
     }
 
@@ -31,7 +29,7 @@ public class ProductPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jLabel1.setText("Quản lí sản phẩm");
+        jLabel1.setText("Nhập kho");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -40,14 +38,14 @@ public class ProductPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addContainerGap(745, Short.MAX_VALUE))
+                .addContainerGap(315, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(541, Short.MAX_VALUE))
+                .addContainerGap(250, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -56,3 +54,4 @@ public class ProductPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 }
+
