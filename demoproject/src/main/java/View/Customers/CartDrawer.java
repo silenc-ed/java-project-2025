@@ -1,5 +1,6 @@
 package View.Customers;
 
+import View.Customers.StockPanel.PacketPanel;
 import Model.CartItem;
 import Model.CartManager;
 import java.awt.*;
