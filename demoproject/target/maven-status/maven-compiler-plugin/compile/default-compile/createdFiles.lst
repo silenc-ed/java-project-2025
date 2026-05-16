@@ -1,7 +1,6 @@
 Common\EmailService.class
 View\Customers\ProductPanel\ProductPanel$2.class
 View\Customers\Menu.class
-View\Admin\DashboardPanel.class
 View\Admin\Main$1.class
 View\Customers\ProductPanel\BannerSlideshow.class
 View\SignIn\SignInView$2.class
@@ -30,6 +29,7 @@ View\Admin\CustomerPanel.class
 View\Customers\Main$4.class
 View\Customers\Main$1.class
 View\Customers\UserAccountPanel.class
+View\Admin\DashBoard\DashboardPanel.class
 Controller\Customers\Warranty\WarrantyCheckingProcess.class
 View\Employees\Menu.class
 View\Admin\Main$3.class

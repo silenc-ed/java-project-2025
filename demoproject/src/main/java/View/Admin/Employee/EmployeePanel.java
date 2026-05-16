@@ -2,18 +2,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
-package View.Admin;
+package View.Admin.Employee;
 
 /**
  *
  * @author DELL
  */
-public class CustomerPanel extends javax.swing.JPanel {
+public class EmployeePanel extends javax.swing.JPanel {
 
     /**
-     * Creates new form CustomerPanel
+     * Creates new form EmployeePanel
      */
-    public CustomerPanel() {
+    public EmployeePanel() {
         initComponents();
     }
 
@@ -29,7 +29,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jLabel2.setText("Khách hàng");
+        jLabel2.setText("Nhân viên");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -38,7 +38,7 @@ public class CustomerPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel2)
-                .addContainerGap(298, Short.MAX_VALUE))
+                .addContainerGap(312, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -54,3 +54,4 @@ public class CustomerPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     // End of variables declaration//GEN-END:variables
 }
+
