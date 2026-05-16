@@ -14,7 +14,7 @@ public class WarrantyCheckingProcess {
         
         try (Connection con = ConnectionUtils.getMyConnection()) {
             String SQL = "SELECT NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI " + 
-                         "FROM BAOHANH WHERE SERIAL_IMEI = ?";
+                         "FROM BAOHANH WHERE SERIAL_NUMBER = ?";
             
             PreparedStatement ps = con.prepareStatement(SQL);
             ps.setString(1, imei.trim());
