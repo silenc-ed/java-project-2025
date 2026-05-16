@@ -20,6 +20,7 @@ Model\CartItem.class
 View\ForgottedPassword\ForgottedPasswordView$1.class
 View\ForgottedPassword\ResetPasswordView.class
 View\Customers\ProductPanel\InfoProductPanel$1.class
+ConnectDAO\LoaiSanPhamDAO.class
 View\Admin\ListMenu$3.class
 com\mycompany\demoproject\Demoproject.class
 Controller\CreateAccount\CreateAccountProcess.class
@@ -52,6 +53,7 @@ TestDB.class
 Model\BienTheSanPham.class
 View\Customers\PacketPanel.class
 View\Customers\UserOptionPanel$4.class
+ConnectDAO\SanPhamDAO.class
 View\Customers\ProductPanel\InfoProductPanel$3.class
 View\Customers\ProductPanel\ProductPanel$4.class
 View\Customers\EventMenuSelected.class
@@ -89,7 +91,6 @@ View\Admin\CreateInvoicePanel.class
 View\Admin\ListMenu$1.class
 View\Admin\Menu$1.class
 View\Customers\ProductPanel\ProductPanel.class
-Controller\SanPhamDAO.class
 View\Customers\ProductPanel\CategoryPopupDialog$1.class
 View\Customers\ProductPanel\CategoryPopupDialog.class
 View\Customers\Main$3.class
@@ -97,7 +98,6 @@ View\Customers\UserOptionPanel$2.class
 View\Admin\WarrantyPanel.class
 View\Customers\ListMenu$4.class
 View\Customers\CartDrawer.class
-Controller\LoaiSanPhamDAO.class
 View\Admin\Menu$2.class
 View\Customers\ProductPanel\ProductPanel$1.class
 View\Customers\WarrantyPanel.class

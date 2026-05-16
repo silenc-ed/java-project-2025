@@ -2,14 +2,14 @@ E:\Java\java-project-2025\demoproject\src\main\java\com\mycompany\demoproject\De
 E:\Java\java-project-2025\demoproject\src\main\java\Common\EmailService.java
 E:\Java\java-project-2025\demoproject\src\main\java\Common\HashUtil.java
 E:\Java\java-project-2025\demoproject\src\main\java\Common\TokenManager.java
+E:\Java\java-project-2025\demoproject\src\main\java\ConnectDAO\LoaiSanPhamDAO.java
+E:\Java\java-project-2025\demoproject\src\main\java\ConnectDAO\SanPhamDAO.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionOracle.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionUtils.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateAccountProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateUserProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Customers\Warranty\WarrantyCheckingProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\ForgottedPassword\ForgottedPasswordProcess.java
-E:\Java\java-project-2025\demoproject\src\main\java\Controller\LoaiSanPhamDAO.java
-E:\Java\java-project-2025\demoproject\src\main\java\Controller\SanPhamDAO.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\SignIn\AuthProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\SignIn\LoginProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Model\BienTheSanPham.java
