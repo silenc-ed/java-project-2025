@@ -1,12 +1,14 @@
 package View.Customers.ProductPanel;
 
-import Controller.LoaiSanPhamDAO;
-import Controller.SanPhamDAO;
 import Model.LoaiSanPham;
 import Model.SanPham;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import ConnectDAO.LoaiSanPhamDAO;
+import ConnectDAO.SanPhamDAO;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;

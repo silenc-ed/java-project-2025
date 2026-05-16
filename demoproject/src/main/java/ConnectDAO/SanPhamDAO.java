@@ -1,4 +1,4 @@
-package Controller;
+package ConnectDAO;
 
 import ConnectDB.ConnectionUtils;
 import Model.SanPham;

@@ -140,7 +140,7 @@ public class InfoProductPanel extends javax.swing.JPanel {
         
         // Load variants
         variatyPanel.removeAll();
-        java.util.List<Model.BienTheSanPham> variants = Controller.SanPhamDAO.getBienTheByMaSp(sp.getMaSp());
+        java.util.List<Model.BienTheSanPham> variants = ConnectDAO.SanPhamDAO.getBienTheByMaSp(sp.getMaSp());
         if (variants != null && !variants.isEmpty()) {
             for (Model.BienTheSanPham variant : variants) {
                 javax.swing.JButton btnVariant = new javax.swing.JButton(variant.getTenBienThe());

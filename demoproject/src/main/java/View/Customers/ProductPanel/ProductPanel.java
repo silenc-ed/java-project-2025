@@ -144,7 +144,7 @@ public class ProductPanel extends javax.swing.JPanel {
                 if (text.isEmpty()) {
                     javax.swing.SwingUtilities.invokeLater(() -> {
                         suggestionPopup.setVisible(false);
-                        updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+                        updateProductGrid(ConnectDAO.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
                     });
                     return;
                 }
@@ -261,7 +261,7 @@ public class ProductPanel extends javax.swing.JPanel {
     }
 
     private void setupProductGrid() {
-        java.util.List<Model.SanPham> products = Controller.SanPhamDAO.getAllSanPham();
+        java.util.List<Model.SanPham> products = ConnectDAO.SanPhamDAO.getAllSanPham();
         updateProductGrid(products, "  GỢI Ý HÔM NAY");
     }
 
@@ -516,10 +516,10 @@ public class ProductPanel extends javax.swing.JPanel {
     private void performSearch() {
         String text = searchField.getText().trim();
         if (!text.isEmpty()) {
-            java.util.List<Model.SanPham> results = Controller.SanPhamDAO.searchByName(text);
+            java.util.List<Model.SanPham> results = ConnectDAO.SanPhamDAO.searchByName(text);
             updateProductGrid(results, "KẾT QUẢ TÌM KIẾM: " + text.toUpperCase());
         } else {
-            updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+            updateProductGrid(ConnectDAO.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
         }
     }
 
