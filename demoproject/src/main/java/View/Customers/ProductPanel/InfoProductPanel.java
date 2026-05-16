@@ -4,7 +4,7 @@
  */
 package View.Customers.ProductPanel;
 
-import View.Customers.PacketPanel;
+import View.Customers.StockPanel.PacketPanel;
 
 /**
  *
