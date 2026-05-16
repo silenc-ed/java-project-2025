@@ -50,6 +50,7 @@ View\Customers\ProductPanel\BannerSlideshow$2.class
 View\Admin\ListMenu$5.class
 View\Admin\ProductPanel.class
 TestDB.class
+View\Customers\StockPanel\PacketPanel$GradientButton.class
 Model\BienTheSanPham.class
 View\Customers\UserOptionPanel$4.class
 View\Customers\ProductPanel\InfoProductPanel$3.class
