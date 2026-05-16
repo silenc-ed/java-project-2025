@@ -25,11 +25,11 @@ public class ConnectionOracle {
         //Host name
         String hostName = "localhost";
         //SID Oralce
-        String sid = "orclpdb";
+        String sid = "orcl";
         //Username
-        String userName = "DoAn";
+        String userName = "AdminTestingVN";
         //Password
-        String password = "123";
+        String password = "Admin123";
         
         // Khai báo class Driver cho DB Oracle
         // Việc này cần thiết với Java 5
@@ -39,7 +39,7 @@ public class ConnectionOracle {
 
         // Cấu trúc URL Connection dành cho Oracle
         // Ví dụ: jdbc:oracle:thin:@localhost:1521:db11g
-        String connectionURL = "jdbc:oracle:thin:@//" + hostName + ":1521/" + sid;
+        String connectionURL = "jdbc:oracle:thin:@" + hostName + ":1521:" + sid;
 
         //Tạo đối tượng connection
         Connection conn = DriverManager.getConnection(connectionURL, userName,
