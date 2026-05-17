@@ -1,10 +1,10 @@
 package Controller.Customers.Warranty;
 
-import ConnectDB.ConnectionUtils;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Date;
+import ConnectDB.ConnectionUtils;
 
 public class WarrantyCheckingProcess {
     

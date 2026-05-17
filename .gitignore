@@ -1,5 +1,7 @@
 *.class
 target/
+
+# Bỏ qua cấu hình của các IDE
 .idea/
 .vscode/
 *.iml
