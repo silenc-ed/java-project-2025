@@ -27,7 +27,7 @@ public class ConnectionOracle {
         //SID Oralce
         String sid = "orcl";
         //Username
-        String userName = "AdminTestingVN";
+        String userName = "AdminTestingVN_K";
         //Password
         String password = "Admin123";
         
