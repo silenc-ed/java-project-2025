@@ -91,20 +91,20 @@ public class ProcurementPanel extends javax.swing.JPanel {
             BorderFactory.createEmptyBorder(5, 15, 5, 15)
         ));
 
-        JTextField txtSearch = new JTextField("Tìm kiếm theo Mã HD");
+        JTextField txtSearch = new JTextField("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...");
         txtSearch.setBorder(null);
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         txtSearch.setForeground(Color.GRAY);
         txtSearch.addFocusListener(new FocusAdapter() {
             @Override public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Tìm kiếm theo Mã HD")) {
+                if (txtSearch.getText().equals("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...")) {
                     txtSearch.setText("");
                     txtSearch.setForeground(new Color(30, 41, 59));
                 }
             }
             @Override public void focusLost(FocusEvent e) {
                 if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Tìm kiếm theo Mã HD");
+                    txtSearch.setText("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...");
                     txtSearch.setForeground(Color.GRAY);
                 }
             }
@@ -116,11 +116,20 @@ public class ProcurementPanel extends javax.swing.JPanel {
             @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { search(); }
             private void search() {
                 SwingUtilities.invokeLater(() -> {
-                    String text = txtSearch.getText();
-                    if (text.trim().isEmpty() || text.equals("Tìm kiếm theo Mã HD") || txtSearch.getForeground() == Color.GRAY) {
+                    String text = txtSearch.getText().trim();
+                    if (text.isEmpty() || text.equals("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...") || txtSearch.getForeground() == Color.GRAY) {
                         sorter.setRowFilter(null);
                     } else {
-                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
+                        final String searchLower = text.toLowerCase();
+                        sorter.setRowFilter(new RowFilter<DefaultTableModel, Object>() {
+                            @Override
+                            public boolean include(javax.swing.RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                                String maHd = entry.getStringValue(1).toLowerCase();
+                                String kh = entry.getStringValue(2).toLowerCase();
+                                String maNv = entry.getStringValue(3).toLowerCase();
+                                return maHd.contains(searchLower) || kh.contains(searchLower) || maNv.contains(searchLower);
+                            }
+                        });
                     }
                 });
             }
