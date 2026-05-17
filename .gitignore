@@ -1,11 +1,5 @@
-ConnectDB/
-# Bỏ qua các file biên dịch
 *.class
-
-# Bỏ qua thư mục build của Maven
 target/
-
-# Bỏ qua cấu hình của các IDE
 .idea/
 .vscode/
 *.iml
