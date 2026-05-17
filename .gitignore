@@ -3,6 +3,7 @@
 
 # Bỏ qua thư mục build của Maven
 target/
+connectDB/
 
 # Bỏ qua cấu hình của các IDE
 .idea/
