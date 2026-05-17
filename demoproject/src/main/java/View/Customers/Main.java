@@ -4,6 +4,7 @@
  */
 package View.Customers;
 
+import View.Customers.Warranty.WarrantyPanel;
 import View.Customers.StockPanel.PacketPanel;
 import View.Customers.ProductPanel.ProductPanel;
 
