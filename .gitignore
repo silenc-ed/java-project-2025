@@ -11,3 +11,5 @@ target/
 nbactions.xml
 nbproject/
 
+*.sql
+*.md
