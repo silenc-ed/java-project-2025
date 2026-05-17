@@ -379,7 +379,7 @@ public class ProductPanel extends javax.swing.JPanel {
 
     private void loadCategories() {
         categoryList.clear();
-        String sql = "SELECT MA_LSP, TEN_LSP FROM LOAISANPHAM";
+        String sql = "SELECT MA_LSP, TEN_LSP FROM LOAI_SANPHAM";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -397,7 +397,11 @@ public class ProductPanel extends javax.swing.JPanel {
 
     private void loadDataToTable() {
         tableModel.setRowCount(0);
-        String sql = "SELECT SP.*, LSP.TEN_LSP FROM SANPHAM SP LEFT JOIN LOAISANPHAM LSP ON SP.MA_LSP = LSP.MA_LSP ORDER BY SP.MA_SP DESC";
+        String sql = "SELECT SP.*, LSP.TEN_LSP, " +
+                     "(SELECT NVL(MIN(BT.GIA_BAN), 0) FROM BIENTHE_SANPHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN " +
+                     "FROM SANPHAM SP " +
+                     "LEFT JOIN LOAI_SANPHAM LSP ON SP.MA_LSP = LSP.MA_LSP " +
+                     "ORDER BY SP.MA_SP DESC";
         DecimalFormat df = new DecimalFormat("#,###đ");
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -505,19 +509,42 @@ public class ProductPanel extends javax.swing.JPanel {
                 return;
             }
 
-            String sql = "INSERT INTO SANPHAM (MA_LSP, TEN_SP, GIA_BAN, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            try (Connection con = ConnectionUtils.getMyConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setInt(1, cat.getId());
-                ps.setString(2, name);
-                ps.setDouble(3, price);
-                ps.setString(4, status);
-                ps.setInt(5, qty);
-                ps.setString(6, unit);
-                ps.setString(7, desc);
-                ps.executeUpdate();
-                loadDataToTable();
-                JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
+            String sqlSp = "INSERT INTO SANPHAM (MA_LSP, TEN_SP, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?)";
+            try (Connection con = ConnectionUtils.getMyConnection()) {
+                con.setAutoCommit(false);
+                try (PreparedStatement psSp = con.prepareStatement(sqlSp, new String[]{"MA_SP"})) {
+                    psSp.setInt(1, cat.getId());
+                    psSp.setString(2, name);
+                    psSp.setString(3, status);
+                    psSp.setInt(4, qty);
+                    psSp.setString(5, unit);
+                    psSp.setString(6, desc);
+                    psSp.executeUpdate();
+                    
+                    int maSp = -1;
+                    try (ResultSet rs = psSp.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            maSp = rs.getInt(1);
+                        }
+                    }
+                    
+                    if (maSp != -1) {
+                        String sqlBt = "INSERT INTO BIENTHE_SANPHAM (MA_SP, TEN_BIENTHE, GIA_BAN, TRANG_THAI) VALUES (?, ?, ?, ?)";
+                        try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                            psBt.setInt(1, maSp);
+                            psBt.setString(2, name);
+                            psBt.setDouble(3, price);
+                            psBt.setString(4, status);
+                            psBt.executeUpdate();
+                        }
+                    }
+                    con.commit();
+                    loadDataToTable();
+                    JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
+                } catch (Exception ex) {
+                    con.rollback();
+                    throw ex;
+                }
             } catch (Exception ex) {
                 // Fallback simulation
                 tableModel.insertRow(0, new Object[]{
@@ -586,22 +613,37 @@ public class ProductPanel extends javax.swing.JPanel {
             if (name.isEmpty() || cat == null) return;
 
             if (id != -1) {
-                String sql = "UPDATE SANPHAM SET MA_LSP = ?, TEN_SP = ?, GIA_BAN = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
-                try (Connection con = ConnectionUtils.getMyConnection();
-                     PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setInt(1, cat.getId());
-                    ps.setString(2, name);
-                    ps.setDouble(3, price);
-                    ps.setString(4, status);
-                    ps.setInt(5, qty);
-                    ps.setString(6, unit);
-                    ps.setString(7, desc);
-                    ps.setInt(8, id);
-                    ps.executeUpdate();
-                    loadDataToTable();
-                    JOptionPane.showMessageDialog(this, "Cập nhật sản phẩm thành công!");
+                String sqlSp = "UPDATE SANPHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
+                String sqlBt = "UPDATE BIENTHE_SANPHAM SET GIA_BAN = ?, TRANG_THAI = ? WHERE MA_SP = ?";
+                try (Connection con = ConnectionUtils.getMyConnection()) {
+                    con.setAutoCommit(false);
+                    try (PreparedStatement psSp = con.prepareStatement(sqlSp);
+                         PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                        
+                        psSp.setInt(1, cat.getId());
+                        psSp.setString(2, name);
+                        psSp.setString(3, status);
+                        psSp.setInt(4, qty);
+                        psSp.setString(5, unit);
+                        psSp.setString(6, desc);
+                        psSp.setInt(7, id);
+                        psSp.executeUpdate();
+                        
+                        psBt.setDouble(1, price);
+                        psBt.setString(2, status);
+                        psBt.setInt(3, id);
+                        psBt.executeUpdate();
+                        
+                        con.commit();
+                        loadDataToTable();
+                        JOptionPane.showMessageDialog(this, "Cập nhật sản phẩm thành công!");
+                    } catch (Exception ex) {
+                        con.rollback();
+                        throw ex;
+                    }
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật cơ sở dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
                 // Edit simulation row

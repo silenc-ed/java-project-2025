@@ -267,30 +267,85 @@ public class ProcurementPanel extends javax.swing.JPanel {
                     "INSERT INTO HOADON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN_HANG, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT) VALUES (?, ?, ?, ?, ?, ?, ?, ?)" :
                     "UPDATE HOADON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN_HANG=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=? WHERE MA_HD=?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setInt(1, cbKhachHang.getSelectedItem() != null ? ((DBItem) cbKhachHang.getSelectedItem()).getId() : 1);
-                    ps.setInt(2, cbNhanVien.getSelectedItem() != null ? ((DBItem) cbNhanVien.getSelectedItem()).getId() : 1);
-                    ps.setInt(3, cbChiNhanH.getSelectedItem() != null ? ((DBItem) cbChiNhanH.getSelectedItem()).getId() : 1);
-                    ps.setInt(4, cbKhuyenMai.getSelectedItem() != null ? ((DBItem) cbKhuyenMai.getSelectedItem()).getId() : 1);
+                    if (cbKhachHang.getSelectedItem() != null) {
+                        ps.setInt(1, ((DBItem) cbKhachHang.getSelectedItem()).getId());
+                    } else {
+                        ps.setNull(1, java.sql.Types.INTEGER);
+                    }
+                    
+                    if (cbNhanVien.getSelectedItem() != null) {
+                        ps.setInt(2, ((DBItem) cbNhanVien.getSelectedItem()).getId());
+                    } else {
+                        ps.setInt(2, 1);
+                    }
+                    
+                    if (cbChiNhanH.getSelectedItem() != null) {
+                        ps.setInt(3, ((DBItem) cbChiNhanH.getSelectedItem()).getId());
+                    } else {
+                        ps.setInt(3, 1);
+                    }
+                    
+                    if (cbKhuyenMai.getSelectedItem() != null) {
+                        ps.setInt(4, ((DBItem) cbKhuyenMai.getSelectedItem()).getId());
+                    } else {
+                        ps.setNull(4, java.sql.Types.INTEGER);
+                    }
+                    
                     ps.setDouble(5, Double.parseDouble(txtTongTienHang.getText().trim()));
                     ps.setDouble(6, Double.parseDouble(txtGiamGia.getText().trim()));
                     ps.setDouble(7, Double.parseDouble(txtThanhTien.getText().trim()));
                     ps.setString(8, cbPhuongThuc.getSelectedItem().toString());
-                    if (isEdit) ps.setInt(9, editingMaHd);
+                    
+                    if (isEdit) {
+                        ps.setInt(9, editingMaHd);
+                    }
+                    
                     ps.executeUpdate();
-                    addFormPanel.setVisible(false); loadDataToTable(tableModel);
+                    addFormPanel.setVisible(false);
+                    loadDataToTable(tableModel);
+                    JOptionPane.showMessageDialog(this, isEdit ? "Cập nhật hóa đơn thành công!" : "Lưu hóa đơn thành công!");
                 }
-            } catch (Exception ex) { ex.printStackTrace(); }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi lưu hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         btnDelete.addActionListener(e -> {
             int row = dataTable.getSelectedRow();
             if (row == -1) return;
-            if (JOptionPane.showConfirmDialog(this, "Xóa hóa đơn?") == JOptionPane.YES_OPTION) {
+            if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa hóa đơn này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 int maHd = (int) tableModel.getValueAt(dataTable.convertRowIndexToModel(row), 1);
                 try (Connection con = ConnectionUtils.getMyConnection()) {
-                    PreparedStatement ps = con.prepareStatement("DELETE FROM HOADON WHERE MA_HD = ?");
-                    ps.setInt(1, maHd); ps.executeUpdate(); loadDataToTable(tableModel);
-                } catch (Exception ex) { ex.printStackTrace(); }
+                    con.setAutoCommit(false);
+                    try (PreparedStatement psCthd = con.prepareStatement("DELETE FROM CHITIET_HOADON WHERE MA_HD = ?");
+                         PreparedStatement psPdv = con.prepareStatement("DELETE FROM PHIEU_DICH_VU WHERE MA_HD = ?");
+                         PreparedStatement psBh = con.prepareStatement("DELETE FROM BAOHANH WHERE MA_HD = ?");
+                         PreparedStatement psHd = con.prepareStatement("DELETE FROM HOADON WHERE MA_HD = ?")) {
+                        
+                        psCthd.setInt(1, maHd);
+                        psCthd.executeUpdate();
+                        
+                        psPdv.setInt(1, maHd);
+                        psPdv.executeUpdate();
+                        
+                        psBh.setInt(1, maHd);
+                        psBh.executeUpdate();
+                        
+                        psHd.setInt(1, maHd);
+                        psHd.executeUpdate();
+                        
+                        con.commit();
+                        loadDataToTable(tableModel);
+                        JOptionPane.showMessageDialog(this, "Xóa hóa đơn thành công!");
+                    } catch (Exception ex) {
+                        con.rollback();
+                        throw ex;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Lỗi khi xóa hóa đơn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
