@@ -136,6 +136,39 @@ public class DashboardDAO {
         return list;
     }
 
+    public static List<Object[]> getTopLoaiSanPhamThinhHanh(Date from, Date to, int limit) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT lsp.TEN_LSP, " +
+                     "NVL(SUM(ct.SO_LUONG), 0) AS TONG_BAN, " +
+                     "NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM CHITIET_HOADON ct " +
+                     "JOIN HOADON h ON ct.MA_HD = h.MA_HD " +
+                     "JOIN SANPHAM sp ON ct.MA_SP = sp.MA_SP " +
+                     "JOIN LOAI_SANPHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
+                     "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
+                     "GROUP BY lsp.MA_LSP, lsp.TEN_LSP " +
+                     "ORDER BY TONG_BAN DESC " +
+                     "FETCH FIRST ? ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            ps.setInt(3, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[]{
+                        rs.getString("TEN_LSP"),
+                        rs.getLong("TONG_BAN"),
+                        rs.getLong("DOANH_THU")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public static long getTongSanPhamBan(Date from, Date to) {
         String sql = "SELECT NVL(SUM(ct.SO_LUONG), 0) AS TONG FROM CHITIET_HOADON ct " +
                      "JOIN HOADON h ON ct.MA_HD = h.MA_HD " +

@@ -1,3 +1,4 @@
+ConnectDB/
 # Bỏ qua các file biên dịch
 *.class
 
@@ -13,3 +14,4 @@ nbproject/
 
 *.sql
 *.md
+    

@@ -17,6 +17,10 @@ public class PopularProductPanel extends JPanel {
     private JLabel lblDoanhThuSpValue;
     private JLabel lblSoLuongBanValue;
     private DefaultTableModel tableModel;
+    private JTable table;
+    private JButton btnToggleMode;
+
+    private boolean isByCategory = false;
 
     public PopularProductPanel() {
         setLayout(new BorderLayout());
@@ -73,13 +77,71 @@ public class PopularProductPanel extends JPanel {
         btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLoc.addActionListener(e -> loadData());
 
+        btnToggleMode = new JButton("Loại sản phẩm");
+        styleToggleBtn(btnToggleMode, false);
+        btnToggleMode.addActionListener(e -> toggleMode());
+
         panel.add(lbl);
         panel.add(lblFrom);
         panel.add(spinnerFrom);
         panel.add(lblTo);
         panel.add(spinnerTo);
         panel.add(btnLoc);
+        panel.add(Box.createHorizontalStrut(10));
+        panel.add(btnToggleMode);
         return panel;
+    }
+
+    private void styleToggleBtn(JButton btn, boolean active) {
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        if (active) {
+            btn.setBackground(new Color(124, 58, 237));
+            btn.setForeground(Color.WHITE);
+            btn.setBorder(new CompoundBorder(
+                    new LineBorder(new Color(109, 40, 217), 1, true),
+                    new EmptyBorder(5, 14, 5, 14)));
+        } else {
+            btn.setBackground(Color.WHITE);
+            btn.setForeground(new Color(71, 85, 105));
+            btn.setBorder(new CompoundBorder(
+                    new LineBorder(new Color(203, 213, 225), 1, true),
+                    new EmptyBorder(5, 14, 5, 14)));
+        }
+    }
+
+    private void toggleMode() {
+        isByCategory = !isByCategory;
+        if (isByCategory) {
+            btnToggleMode.setText("Sản phẩm");
+            styleToggleBtn(btnToggleMode, true);
+            updateTableColumns(new String[]{"#", "Loại sản phẩm", "Số lượng bán", "Doanh thu (VND)"});
+        } else {
+            btnToggleMode.setText("Loại sản phẩm");
+            styleToggleBtn(btnToggleMode, false);
+            updateTableColumns(new String[]{"#", "Tên sản phẩm", "Danh mục", "Số lượng bán", "Doanh thu (VND)"});
+        }
+        loadData();
+    }
+
+    private void updateTableColumns(String[] cols) {
+        tableModel.setColumnCount(0);
+        for (String col : cols) tableModel.addColumn(col);
+        applyColumnRenderers();
+    }
+
+    private void applyColumnRenderers() {
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        int colCount = tableModel.getColumnCount();
+        table.getColumnModel().getColumn(0).setCellRenderer(center);
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);
+        table.getColumnModel().getColumn(colCount - 2).setCellRenderer(center);
+        table.getColumnModel().getColumn(colCount - 1).setCellRenderer(right);
     }
 
     private JPanel buildSummaryCards() {
@@ -152,7 +214,7 @@ public class PopularProductPanel extends JPanel {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
 
-        JTable table = new JTable(tableModel);
+        table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setRowHeight(36);
         table.setShowVerticalLines(false);
@@ -164,15 +226,7 @@ public class PopularProductPanel extends JPanel {
         table.setSelectionBackground(new Color(239, 246, 255));
         table.setSelectionForeground(new Color(30, 41, 59));
 
-        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
-        center.setHorizontalAlignment(SwingConstants.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer(center);
-        table.getColumnModel().getColumn(0).setPreferredWidth(40);
-        table.getColumnModel().getColumn(3).setCellRenderer(center);
-
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
-        table.getColumnModel().getColumn(4).setCellRenderer(right);
+        applyColumnRenderers();
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -186,6 +240,7 @@ public class PopularProductPanel extends JPanel {
     public void loadData() {
         Date from = (Date) spinnerFrom.getValue();
         Date to = nextDay((Date) spinnerTo.getValue());
+        boolean byCategory = isByCategory;
 
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             List<Object[]> rows;
@@ -194,9 +249,13 @@ public class PopularProductPanel extends JPanel {
 
             @Override
             protected Void doInBackground() {
-                rows = DashboardDAO.getTopSanPhamThinhHanh(from, to, 10);
                 tongLuotBan = DashboardDAO.getTongSanPhamBan(from, to);
                 tongDoanhThu = DashboardDAO.getTongDoanhThu(from, to);
+                if (byCategory) {
+                    rows = DashboardDAO.getTopLoaiSanPhamThinhHanh(from, to, 10);
+                } else {
+                    rows = DashboardDAO.getTopSanPhamThinhHanh(from, to, 10);
+                }
                 return null;
             }
 
@@ -207,17 +266,32 @@ public class PopularProductPanel extends JPanel {
                 if (lblSoLuongBanValue != null) lblSoLuongBanValue.setText(String.format("%,d", tongLuotBan));
 
                 tableModel.setRowCount(0);
-                for (int i = 0; i < rows.size(); i++) {
-                    Object[] r = rows.get(i);
-                    long soLuong = ((Number) r[2]).longValue();
-                    long doanhThuSp = ((Number) r[3]).longValue();
-                    tableModel.addRow(new Object[]{
-                        i + 1,
-                        r[0],
-                        r[1],
-                        String.format("%,d", soLuong),
-                        DashboardDAO.formatVND((double) doanhThuSp)
-                    });
+
+                if (byCategory) {
+                    for (int i = 0; i < rows.size(); i++) {
+                        Object[] r = rows.get(i);
+                        long soLuong = ((Number) r[1]).longValue();
+                        long dthu = ((Number) r[2]).longValue();
+                        tableModel.addRow(new Object[]{
+                            i + 1,
+                            r[0],
+                            String.format("%,d", soLuong),
+                            DashboardDAO.formatVND((double) dthu)
+                        });
+                    }
+                } else {
+                    for (int i = 0; i < rows.size(); i++) {
+                        Object[] r = rows.get(i);
+                        long soLuong = ((Number) r[2]).longValue();
+                        long dthu = ((Number) r[3]).longValue();
+                        tableModel.addRow(new Object[]{
+                            i + 1,
+                            r[0],
+                            r[1],
+                            String.format("%,d", soLuong),
+                            DashboardDAO.formatVND((double) dthu)
+                        });
+                    }
                 }
             }
         };
