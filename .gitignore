@@ -1,1 +1,11 @@
-/RS_ProjectVN/nbproject/private/
+*.class
+target/
+.idea/
+.vscode/
+*.iml
+nbactions.xml
+nbproject/
+ConnectDB/
+
+*.sql
+*.md
