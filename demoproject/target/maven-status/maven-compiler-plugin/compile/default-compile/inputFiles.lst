@@ -5,6 +5,7 @@ E:\Java\java-project-2025\demoproject\src\main\java\Common\TokenManager.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionOracle.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionUtils.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Admin\DashboardDAO.java
+E:\Java\java-project-2025\demoproject\src\main\java\Controller\Admin\KhachHangDAO.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateAccountProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateUserProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Customers\Warranty\WarrantyCheckingProcess.java
@@ -21,6 +22,7 @@ E:\Java\java-project-2025\demoproject\src\main\java\Model\SanPham.java
 E:\Java\java-project-2025\demoproject\src\main\java\TestDB.java
 E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\Bill\BillPanel.java
 E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\CreateInvoice\CreateInvoicePanel.java
+E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\CreateInvoicePanel.java
 E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\Customer\CustomerPanel.java
 E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\DashBoard\DashboardPanel.java
 E:\Java\java-project-2025\demoproject\src\main\java\View\Admin\DashBoard\PopularProductPanel.java
