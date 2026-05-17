@@ -15,10 +15,10 @@ public class KhachHang {
     private String diaChi;
     private String email;
     private int diemTichLuy;
-
+    
     // Hàm khởi tạo không tham số
     public KhachHang() {
-    }
+}
 
     // Hàm khởi tạo có tham số
     public KhachHang(long maKH, String hoTen, String sDT,

@@ -10,16 +10,23 @@ import Model.KhachHang;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+/**
+ *
+ * @author DELL
+ */
 public class CreateInvoicePanel extends javax.swing.JPanel {
 
     private CreateInvoiceProcess process;
-
+    
+    /**
+     * Creates new form ProcurementPanel
+     */
     public CreateInvoicePanel() {
         initComponents();
         process = new CreateInvoiceProcess(); 
         startRouting();
     }
-    
+
     public void startRouting(){
         if(showCustomerPopup()){
             showRoutingFork1();
