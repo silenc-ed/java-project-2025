@@ -89,14 +89,14 @@ class ProductCellRenderer extends DefaultTableCellRenderer {
 class StatusBadgeRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        String status = value != null ? value.toString() : "Hết hàng";
+        String status = value != null ? value.toString() : "Ngừng kinh doanh";
         JLabel label = new JLabel(status) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(getBackground());
-                g2.fillRoundRect(getWidth() / 2 - 40, getHeight() / 2 - 12, 80, 24, 12, 12);
+                g2.fillRoundRect(getWidth() / 2 - 55, getHeight() / 2 - 12, 110, 24, 12, 12);
                 g2.dispose();
                 super.paintComponent(g);
             }
@@ -105,12 +105,9 @@ class StatusBadgeRenderer extends DefaultTableCellRenderer {
         label.setFont(new Font("Segoe UI", Font.BOLD, 12));
         label.setOpaque(false);
         
-        if ("Còn hàng".equals(status)) {
+        if ("Đang kinh doanh".equalsIgnoreCase(status) || "Còn bán".equalsIgnoreCase(status) || "Còn hàng".equalsIgnoreCase(status)) {
             label.setBackground(new Color(220, 252, 231));
             label.setForeground(new Color(21, 128, 61));
-        } else if ("Sắp hết".equals(status)) {
-            label.setBackground(new Color(254, 243, 199));
-            label.setForeground(new Color(180, 83, 9));
         } else {
             label.setBackground(new Color(254, 226, 226));
             label.setForeground(new Color(185, 28, 28));
@@ -305,10 +302,10 @@ public class ProductPanel extends javax.swing.JPanel {
         searchPanel.add(txtSearch, BorderLayout.CENTER);
         centerPanel.add(searchPanel, BorderLayout.NORTH);
 
-        // Table
-        String[] columns = {"Mã SP", "Sản phẩm", "Danh mục", "Giá", "Tồn kho", "Trạng thái", "Thao tác"};
+        // Table: Mã sản phẩm, Tên sản phẩm, Danh mục, Mô tả, Số lượng đã bán, Giá bán, Đơn vị tính, Trạng thái, Thao tác
+        String[] columns = {"Mã sản phẩm", "Tên sản phẩm", "Danh mục", "Mô tả", "Số lượng đã bán", "Giá bán", "Đơn vị tính", "Trạng thái", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 6; }
+            @Override public boolean isCellEditable(int r, int c) { return c == 8; }
         };
         dataTable = new JTable(tableModel);
         dataTable.setRowHeight(60);
@@ -329,23 +326,24 @@ public class ProductPanel extends javax.swing.JPanel {
 
         // Custom Renderers
         dataTable.getColumnModel().getColumn(1).setCellRenderer(new ProductCellRenderer());
-        dataTable.getColumnModel().getColumn(5).setCellRenderer(new StatusBadgeRenderer());
+        dataTable.getColumnModel().getColumn(7).setCellRenderer(new StatusBadgeRenderer());
         
         // Column Alignment
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         dataTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         dataTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
         dataTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+        dataTable.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
+        dataTable.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
 
         // Action Renderer & Editor
         ActionCellEditor actionEditor = new ActionCellEditor(dataTable, 
             () -> handleEditProduct(), 
             () -> handleDeleteProduct()
         );
-        dataTable.getColumnModel().getColumn(6).setCellRenderer(new ActionCellRenderer());
-        dataTable.getColumnModel().getColumn(6).setCellEditor(actionEditor);
+        dataTable.getColumnModel().getColumn(8).setCellRenderer(new ActionCellRenderer());
+        dataTable.getColumnModel().getColumn(8).setCellEditor(actionEditor);
 
         JScrollPane scrollPane = new JScrollPane(dataTable);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
@@ -411,22 +409,22 @@ public class ProductPanel extends javax.swing.JPanel {
                 int id = rs.getInt("MA_SP");
                 String name = rs.getString("TEN_SP");
                 String cat = rs.getString("TEN_LSP");
+                String desc = rs.getString("MO_TA");
+                int qty = rs.getInt("SO_LUONG_DA_BAN");
                 double price = rs.getDouble("GIA_BAN");
-                int stock = rs.getInt("SO_LUONG_DA_BAN"); // Map to simulated/available stock
-                
-                // Map stock to status
-                String status = "Còn hàng";
-                if (stock == 0) status = "Hết hàng";
-                else if (stock < 10) status = "Sắp hết";
+                String donVi = rs.getString("DON_VI_TINH");
+                String status = rs.getString("TRANG_THAI");
 
                 tableModel.addRow(new Object[]{
                     "SP" + String.format("%03d", id),
                     formatProductHtml(name),
                     cat != null ? cat : "Danh mục khác",
+                    desc != null ? desc : "",
+                    qty,
                     df.format(price),
-                    stock,
-                    status,
-                    id // Stores ID in hidden model structure if needed, or row operations can use conversion
+                    donVi != null ? donVi : "Cái",
+                    status != null ? status : "Đang kinh doanh",
+                    id
                 });
             }
             
@@ -441,13 +439,13 @@ public class ProductPanel extends javax.swing.JPanel {
     private void loadSampleData() {
         DecimalFormat df = new DecimalFormat("#,###đ");
         Object[][] samples = {
-            {"Laptop Dell XPS 13", "Laptop", 25000000.0, 15, "Còn hàng"},
-            {"iPhone 15 Pro Max", "Điện thoại", 35000000.0, 8, "Sắp hết"},
-            {"Samsung Galaxy S24", "Điện thoại", 22000000.0, 12, "Còn hàng"},
-            {"AirPods Pro 2", "Tai nghe", 6500000.0, 0, "Hết hàng"},
-            {"MacBook Pro 14\"", "Laptop", 45000000.0, 6, "Sắp hết"},
-            {"Sony WH-1000XM5", "Tai nghe", 8500000.0, 20, "Còn hàng"},
-            {"iPad Air M2", "Máy tính bảng", 18000000.0, 10, "Còn hàng"}
+            {"Laptop Dell XPS 13", "Laptop", "Laptop cao cấp siêu mỏng nhẹ", 15, 25000000.0, "Cái", "Đang kinh doanh"},
+            {"iPhone 15 Pro Max", "Điện thoại", "Màn hình OLED, chip A17 Pro", 8, 35000000.0, "Cái", "Đang kinh doanh"},
+            {"Samsung Galaxy S24", "Điện thoại", "Camera AI zoom 100x", 12, 22000000.0, "Cái", "Đang kinh doanh"},
+            {"AirPods Pro 2", "Tai nghe", "Tai nghe chống ồn chủ động", 30, 6500000.0, "Cái", "Đang kinh doanh"},
+            {"MacBook Pro 14\"", "Laptop", "Chip M3 Pro, màn hình Liquid Retina", 6, 45000000.0, "Cái", "Đang kinh doanh"},
+            {"Sony WH-1000XM5", "Tai nghe", "Chống ồn đỉnh cao, pin 30h", 20, 8500000.0, "Cái", "Đang kinh doanh"},
+            {"iPad Air M2", "Máy tính bảng", "Màn hình Liquid Retina 11 inch", 10, 18000000.0, "Cái", "Ngừng kinh doanh"}
         };
         int simId = 101;
         for (Object[] row : samples) {
@@ -455,10 +453,12 @@ public class ProductPanel extends javax.swing.JPanel {
                 "SP" + String.format("%03d", simId),
                 formatProductHtml((String) row[0]),
                 row[1],
-                df.format((Double) row[2]),
+                row[2],
                 row[3],
-                row[4],
-                -1 // Simulated ID
+                df.format((Double) row[4]),
+                row[5],
+                row[6],
+                -1
             });
             simId++;
         }
@@ -494,8 +494,10 @@ public class ProductPanel extends javax.swing.JPanel {
         if (dialog.isSaveClicked()) {
             String name = dialog.getTenSp();
             DBItem cat = dialog.getSelectedCategory();
+            String desc = dialog.getMoTa();
+            int qty = dialog.getSoLuongDaBan();
             double price = dialog.getGiaBan();
-            int stock = dialog.getTonKho();
+            String unit = dialog.getDonViTinh();
             String status = dialog.getTrangThai();
 
             if (name.isEmpty() || cat == null) {
@@ -503,14 +505,16 @@ public class ProductPanel extends javax.swing.JPanel {
                 return;
             }
 
-            String sql = "INSERT INTO SANPHAM (MA_LSP, TEN_SP, GIA_BAN, TRANG_THAI, SO_LUONG_DA_BAN) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO SANPHAM (MA_LSP, TEN_SP, GIA_BAN, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (Connection con = ConnectionUtils.getMyConnection();
                  PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setInt(1, cat.getId());
                 ps.setString(2, name);
                 ps.setDouble(3, price);
                 ps.setString(4, status);
-                ps.setInt(5, stock);
+                ps.setInt(5, qty);
+                ps.setString(6, unit);
+                ps.setString(7, desc);
                 ps.executeUpdate();
                 loadDataToTable();
                 JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
@@ -520,8 +524,10 @@ public class ProductPanel extends javax.swing.JPanel {
                     "SP" + String.format("%03d", (int)(Math.random() * 900) + 100),
                     formatProductHtml(name),
                     cat.getName(),
+                    desc,
+                    qty,
                     new DecimalFormat("#,###đ").format(price),
-                    stock,
+                    unit,
                     status,
                     -1
                 });
@@ -538,20 +544,24 @@ public class ProductPanel extends javax.swing.JPanel {
         String currentHtml = tableModel.getValueAt(modelRow, 1).toString();
         String currentName = stripHtml(currentHtml);
         String currentCat = tableModel.getValueAt(modelRow, 2).toString();
-        String currentPriceStr = tableModel.getValueAt(modelRow, 3).toString().replace(",", "").replace(".", "").replace("đ", "");
+        String currentDesc = tableModel.getValueAt(modelRow, 3).toString();
+        int currentQty = (int) tableModel.getValueAt(modelRow, 4);
+        String currentPriceStr = tableModel.getValueAt(modelRow, 5).toString().replace(",", "").replace(".", "").replace("đ", "");
         double currentPrice = 0;
         try { currentPrice = Double.parseDouble(currentPriceStr); } catch (Exception ignored) {}
-        int currentStock = (int) tableModel.getValueAt(modelRow, 4);
-        String currentStatus = tableModel.getValueAt(modelRow, 5).toString();
-        Object idObj = tableModel.getValueAt(modelRow, 6);
+        String currentUnit = tableModel.getValueAt(modelRow, 6).toString();
+        String currentStatus = tableModel.getValueAt(modelRow, 7).toString();
+        Object idObj = tableModel.getValueAt(modelRow, 8);
         int id = idObj instanceof Integer ? (int) idObj : -1;
 
         Window parent = SwingUtilities.getWindowAncestor(this);
         Frame frame = parent instanceof Frame ? (Frame) parent : null;
         ProductDialog dialog = new ProductDialog(frame, "Cập nhật sản phẩm", categoryList);
         dialog.setTenSp(currentName);
+        dialog.setMoTa(currentDesc);
+        dialog.setSoLuongDaBan(currentQty);
         dialog.setGiaBan(currentPrice);
-        dialog.setTonKho(currentStock);
+        dialog.setDonViTinh(currentUnit);
         dialog.setTrangThai(currentStatus);
         
         // Match category
@@ -567,22 +577,26 @@ public class ProductPanel extends javax.swing.JPanel {
         if (dialog.isSaveClicked()) {
             String name = dialog.getTenSp();
             DBItem cat = dialog.getSelectedCategory();
+            String desc = dialog.getMoTa();
+            int qty = dialog.getSoLuongDaBan();
             double price = dialog.getGiaBan();
-            int stock = dialog.getTonKho();
+            String unit = dialog.getDonViTinh();
             String status = dialog.getTrangThai();
 
             if (name.isEmpty() || cat == null) return;
 
             if (id != -1) {
-                String sql = "UPDATE SANPHAM SET MA_LSP = ?, TEN_SP = ?, GIA_BAN = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ? WHERE MA_SP = ?";
+                String sql = "UPDATE SANPHAM SET MA_LSP = ?, TEN_SP = ?, GIA_BAN = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
                 try (Connection con = ConnectionUtils.getMyConnection();
                      PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, cat.getId());
                     ps.setString(2, name);
                     ps.setDouble(3, price);
                     ps.setString(4, status);
-                    ps.setInt(5, stock);
-                    ps.setInt(6, id);
+                    ps.setInt(5, qty);
+                    ps.setString(6, unit);
+                    ps.setString(7, desc);
+                    ps.setInt(8, id);
                     ps.executeUpdate();
                     loadDataToTable();
                     JOptionPane.showMessageDialog(this, "Cập nhật sản phẩm thành công!");
@@ -593,9 +607,11 @@ public class ProductPanel extends javax.swing.JPanel {
                 // Edit simulation row
                 tableModel.setValueAt(formatProductHtml(name), modelRow, 1);
                 tableModel.setValueAt(cat.getName(), modelRow, 2);
-                tableModel.setValueAt(new DecimalFormat("#,###đ").format(price), modelRow, 3);
-                tableModel.setValueAt(stock, modelRow, 4);
-                tableModel.setValueAt(status, modelRow, 5);
+                tableModel.setValueAt(desc, modelRow, 3);
+                tableModel.setValueAt(qty, modelRow, 4);
+                tableModel.setValueAt(new DecimalFormat("#,###đ").format(price), modelRow, 5);
+                tableModel.setValueAt(unit, modelRow, 6);
+                tableModel.setValueAt(status, modelRow, 7);
                 JOptionPane.showMessageDialog(this, "Đã cập nhật mô phỏng sản phẩm!");
             }
         }
@@ -605,7 +621,7 @@ public class ProductPanel extends javax.swing.JPanel {
         int row = dataTable.getSelectedRow();
         if (row == -1) return;
         int modelRow = dataTable.convertRowIndexToModel(row);
-        Object idObj = tableModel.getValueAt(modelRow, 6);
+        Object idObj = tableModel.getValueAt(modelRow, 8);
         int id = idObj instanceof Integer ? (int) idObj : -1;
 
         int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
@@ -642,16 +658,18 @@ public class ProductPanel extends javax.swing.JPanel {
     class ProductDialog extends JDialog {
         private JTextField txtTen = new JTextField();
         private JComboBox<DBItem> cbCategory = new JComboBox<>();
+        private JTextField txtMoTa = new JTextField();
+        private JTextField txtSoLuongDaBan = new JTextField("0");
         private JTextField txtGia = new JTextField("0");
-        private JTextField txtTonKho = new JTextField("0");
-        private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Còn hàng", "Sắp hết", "Hết hàng"});
+        private JTextField txtDonViTinh = new JTextField("Cái");
+        private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đang kinh doanh", "Ngừng kinh doanh"});
         private JButton btnSave = new JButton("Lưu sản phẩm");
         private JButton btnCancel = new JButton("Hủy");
         private boolean isSaveClicked = false;
 
         public ProductDialog(Frame owner, String title, List<DBItem> categories) {
             super(owner, title, true);
-            setSize(400, 450);
+            setSize(400, 520);
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout());
             
@@ -682,21 +700,33 @@ public class ProductPanel extends javax.swing.JPanel {
             cbCategory.setFont(fieldFont); cbCategory.setPreferredSize(new Dimension(340, 35)); content.add(cbCategory, gbc);
             
             gbc.gridy = 4;
-            JLabel lblGia = new JLabel("Giá bán (đ)"); lblGia.setFont(labelFont); content.add(lblGia, gbc);
+            JLabel lblMoTa = new JLabel("Mô tả"); lblMoTa.setFont(labelFont); content.add(lblMoTa, gbc);
             gbc.gridy = 5;
-            txtGia.setFont(fieldFont); txtGia.setPreferredSize(new Dimension(340, 35)); content.add(txtGia, gbc);
-            
+            txtMoTa.setFont(fieldFont); txtMoTa.setPreferredSize(new Dimension(340, 35)); content.add(txtMoTa, gbc);
+
             gbc.gridy = 6;
-            JLabel lblStock = new JLabel("Số lượng tồn kho"); lblStock.setFont(labelFont); content.add(lblStock, gbc);
+            JLabel lblSold = new JLabel("Số lượng đã bán"); lblSold.setFont(labelFont); content.add(lblSold, gbc);
             gbc.gridy = 7;
-            txtTonKho.setFont(fieldFont); txtTonKho.setPreferredSize(new Dimension(340, 35)); content.add(txtTonKho, gbc);
+            txtSoLuongDaBan.setFont(fieldFont); txtSoLuongDaBan.setPreferredSize(new Dimension(340, 35)); content.add(txtSoLuongDaBan, gbc);
             
             gbc.gridy = 8;
-            JLabel lblStatus = new JLabel("Trạng thái"); lblStatus.setFont(labelFont); content.add(lblStatus, gbc);
+            JLabel lblGia = new JLabel("Giá bán (đ)"); lblGia.setFont(labelFont); content.add(lblGia, gbc);
             gbc.gridy = 9;
+            txtGia.setFont(fieldFont); txtGia.setPreferredSize(new Dimension(340, 35)); content.add(txtGia, gbc);
+
+            gbc.gridy = 10;
+            JLabel lblUnit = new JLabel("Đơn vị tính"); lblUnit.setFont(labelFont); content.add(lblUnit, gbc);
+            gbc.gridy = 11;
+            txtDonViTinh.setFont(fieldFont); txtDonViTinh.setPreferredSize(new Dimension(340, 35)); content.add(txtDonViTinh, gbc);
+            
+            gbc.gridy = 12;
+            JLabel lblStatus = new JLabel("Trạng thái"); lblStatus.setFont(labelFont); content.add(lblStatus, gbc);
+            gbc.gridy = 13;
             cbTrangThai.setFont(fieldFont); cbTrangThai.setPreferredSize(new Dimension(340, 35)); content.add(cbTrangThai, gbc);
             
-            add(content, BorderLayout.CENTER);
+            JScrollPane scrollPane = new JScrollPane(content);
+            scrollPane.setBorder(null);
+            add(scrollPane, BorderLayout.CENTER);
             
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
             footer.setBackground(new Color(248, 250, 252));
@@ -735,24 +765,23 @@ public class ProductPanel extends javax.swing.JPanel {
                 }
             }
         }
+        public String getMoTa() { return txtMoTa.getText().trim(); }
+        public void setMoTa(String desc) { txtMoTa.setText(desc); }
+        public int getSoLuongDaBan() {
+            try { return Integer.parseInt(txtSoLuongDaBan.getText().trim()); } catch (Exception e) { return 0; }
+        }
+        public void setSoLuongDaBan(int qty) { txtSoLuongDaBan.setText(String.valueOf(qty)); }
         public double getGiaBan() {
             try { return Double.parseDouble(txtGia.getText().trim()); } catch (Exception e) { return 0.0; }
         }
         public void setGiaBan(double price) { txtGia.setText(String.valueOf((long)price)); }
-        public int getTonKho() {
-            try { return Integer.parseInt(txtTonKho.getText().trim()); } catch (Exception e) { return 0; }
-        }
-        public void setTonKho(int stock) { txtTonKho.setText(String.valueOf(stock)); }
+        public String getDonViTinh() { return txtDonViTinh.getText().trim(); }
+        public void setDonViTinh(String unit) { txtDonViTinh.setText(unit); }
         public String getTrangThai() { return cbTrangThai.getSelectedItem().toString(); }
         public void setTrangThai(String status) { cbTrangThai.setSelectedItem(status); }
         public boolean isSaveClicked() { return isSaveClicked; }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -768,8 +797,4 @@ public class ProductPanel extends javax.swing.JPanel {
             .addGap(0, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
 }
