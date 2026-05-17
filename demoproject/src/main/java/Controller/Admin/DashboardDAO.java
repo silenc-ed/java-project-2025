@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,26 +57,99 @@ public class DashboardDAO {
         return 0;
     }
 
-    public static Map<String, Double> getDoanhThuTheoThang(int year) {
+    public static Map<String, Double> getDoanhThuTheoNam(Date from, Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
-        String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'MM') AS THANG, " +
+        String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'YYYY') AS NAM, " +
+                     "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM HOADON " +
+                     "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
+                     "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'YYYY') " +
+                     "ORDER BY NAM";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) map.put(rs.getString("NAM"), rs.getDouble("DOANH_THU"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return map;
+    }
+
+    public static Map<String, Double> getDoanhThuTheoThangTrongNam(int year) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        for (int m = 1; m <= 12; m++) map.put("T" + m, 0.0);
+        String sql = "SELECT TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS THANG, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
                      "FROM HOADON " +
                      "WHERE EXTRACT(YEAR FROM THOI_GIAN_LAP) = ? " +
-                     "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'MM') " +
+                     "GROUP BY TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) " +
                      "ORDER BY THANG";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, year);
             try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) map.put("T" + rs.getInt("THANG"), rs.getDouble("DOANH_THU"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return map;
+    }
+
+
+    public static Map<String, Double> getDoanhThuTheoThang(Date from, Date to) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'YYYY-MM') AS YM, " +
+                     "TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS M, " +
+                     "TO_CHAR(THOI_GIAN_LAP, 'YY') AS Y2, " +
+                     "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM HOADON " +
+                     "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
+                     "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'YYYY-MM'), " +
+                     "TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')), " +
+                     "TO_CHAR(THOI_GIAN_LAP, 'YY') " +
+                     "ORDER BY YM";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    map.put("T" + Integer.parseInt(rs.getString("THANG")),
-                            rs.getDouble("DOANH_THU"));
+                    String label = "T" + rs.getInt("M") + "/" + rs.getString("Y2");
+                    map.put(label, rs.getDouble("DOANH_THU"));
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+        return map;
+    }
+
+    public static Map<String, Double> getDoanhThuTheoGio(Date ngay) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        for (int h = 0; h < 24; h += 2) map.put(String.format("%02dh", h), 0.0);
+        Calendar start = Calendar.getInstance();
+        start.setTime(ngay);
+        start.set(Calendar.HOUR_OF_DAY, 0);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.set(Calendar.MILLISECOND, 0);
+        Calendar end = (Calendar) start.clone();
+        end.add(Calendar.DAY_OF_MONTH, 1);
+        String sql = "SELECT FLOOR(TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'HH24')) / 2) * 2 AS GIO_SLOT, " +
+                     "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM HOADON " +
+                     "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
+                     "GROUP BY FLOOR(TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'HH24')) / 2) * 2 " +
+                     "ORDER BY GIO_SLOT";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(start.getTimeInMillis()));
+            ps.setTimestamp(2, new Timestamp(end.getTimeInMillis()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int slot = rs.getInt("GIO_SLOT");
+                    map.put(String.format("%02dh", slot), rs.getDouble("DOANH_THU"));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
         return map;
     }
 
