@@ -170,7 +170,7 @@ public class BillPanel extends javax.swing.JPanel {
             private void search() {
                 SwingUtilities.invokeLater(() -> {
                     String text = txtSearch.getText();
-                    if (text.trim().isEmpty() || text.equals("Tìm kiếm theo Mã PN") || txtSearch.getForeground() == Color.GRAY) {
+                    if (text.trim().isEmpty() || text.equals("Tìm kiếm theo mã hóa đơn") || txtSearch.getForeground() == Color.GRAY) {
                         sorter.setRowFilter(null);
                     } else {
                         sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
