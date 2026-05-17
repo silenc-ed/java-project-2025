@@ -79,7 +79,7 @@ public class Main extends javax.swing.JFrame {
                         showForm(new View.Admin.Product.ProductPanel());
                         break;
                     case 3: // Đơn hàng
-                        showForm(new View.Admin.Bill.BillPanel());
+                        showForm(new View.Admin.Procurement.ProcurementPanel());
                         break;
                     case 4: // Khách hàng
                         showForm(new View.Admin.Customer.CustomerPanel());
@@ -94,7 +94,7 @@ public class Main extends javax.swing.JFrame {
                         showForm(new View.Admin.Voucher.VoucherPanel());
                         break;
                     case 8: // Nhập kho
-                        showForm(new View.Admin.Procurement.ProcurementPanel());
+                        showForm(new View.Admin.Bill.BillPanel());
                         break;
                 }
             }
