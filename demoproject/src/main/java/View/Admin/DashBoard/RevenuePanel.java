@@ -18,8 +18,9 @@ public class RevenuePanel extends JPanel {
     private JSpinner spinnerMonth, spinnerMonthYear;
     private JSpinner spinnerFrom, spinnerTo;
 
-    private CardLayout pickerCardLayout;
+    private JPanel yearPicker, monthPicker, dateRangePicker;
     private JPanel pickerPanel;
+    private JButton btnLoc;
 
     private JLabel lblTongDoanhThuValue;
     private JLabel lblLoiNhuanValue;
@@ -58,25 +59,26 @@ public class RevenuePanel extends JPanel {
         bgFilter.add(rbThang);
         bgFilter.add(rbNgay);
 
-        rbNam.addActionListener(e -> { pickerCardLayout.show(pickerPanel, "NAM"); loadData(); });
-        rbThang.addActionListener(e -> { pickerCardLayout.show(pickerPanel, "THANG"); loadData(); });
-        rbNgay.addActionListener(e -> { pickerCardLayout.show(pickerPanel, "NGAY"); loadData(); });
+        yearPicker = buildYearPicker();
+        monthPicker = buildMonthPicker();
+        dateRangePicker = buildDateRangePicker();
 
-        pickerCardLayout = new CardLayout();
-        pickerPanel = new JPanel(pickerCardLayout);
+        pickerPanel = new JPanel(new BorderLayout());
         pickerPanel.setOpaque(false);
-        pickerPanel.add(buildYearPicker(), "NAM");
-        pickerPanel.add(buildMonthPicker(), "THANG");
-        pickerPanel.add(buildDateRangePicker(), "NGAY");
+        pickerPanel.add(yearPicker, BorderLayout.CENTER); // Default is "Năm"
 
-        JButton btnLoc = new JButton("Lọc");
+        btnLoc = new JButton("Lọc");
         btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(37, 99, 235));
+        btnLoc.setBackground(new Color(148, 163, 184)); // Mặc định xám vì chưa đổi
         btnLoc.setForeground(Color.WHITE);
         btnLoc.setBorder(new EmptyBorder(5, 16, 5, 16));
         btnLoc.setFocusPainted(false);
         btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLoc.addActionListener(e -> loadData());
+
+        rbNam.addActionListener(e -> { switchPicker(yearPicker); markFilterChanged(); });
+        rbThang.addActionListener(e -> { switchPicker(monthPicker); markFilterChanged(); });
+        rbNgay.addActionListener(e -> { switchPicker(dateRangePicker); markFilterChanged(); });
 
         panel.add(lbl);
         panel.add(rbNam);
@@ -88,6 +90,19 @@ public class RevenuePanel extends JPanel {
         return panel;
     }
 
+    private void switchPicker(JPanel picker) {
+        pickerPanel.removeAll();
+        pickerPanel.add(picker, BorderLayout.CENTER);
+        pickerPanel.revalidate();
+        pickerPanel.repaint();
+    }
+
+    private void markFilterChanged() {
+        if (btnLoc != null) {
+            btnLoc.setBackground(new Color(37, 99, 235)); // Màu xanh dương
+        }
+    }
+
     private JPanel buildYearPicker() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         p.setOpaque(false);
@@ -96,6 +111,7 @@ public class RevenuePanel extends JPanel {
         spinnerYear = new JSpinner(new SpinnerNumberModel(yr, 2000, 2100, 1));
         spinnerYear.setEditor(new JSpinner.NumberEditor(spinnerYear, "####"));
         spinnerYear.setPreferredSize(new Dimension(80, 28));
+        spinnerYear.addChangeListener(e -> markFilterChanged());
         p.add(lbl);
         p.add(spinnerYear);
         return p;
@@ -108,9 +124,11 @@ public class RevenuePanel extends JPanel {
         int curY = Calendar.getInstance().get(Calendar.YEAR);
         spinnerMonth = new JSpinner(new SpinnerNumberModel(curM, 1, 12, 1));
         spinnerMonth.setPreferredSize(new Dimension(52, 28));
+        spinnerMonth.addChangeListener(e -> markFilterChanged());
         spinnerMonthYear = new JSpinner(new SpinnerNumberModel(curY, 2000, 2100, 1));
         spinnerMonthYear.setEditor(new JSpinner.NumberEditor(spinnerMonthYear, "####"));
         spinnerMonthYear.setPreferredSize(new Dimension(80, 28));
+        spinnerMonthYear.addChangeListener(e -> markFilterChanged());
         p.add(makePickerLabel("Tháng:"));
         p.add(spinnerMonth);
         p.add(makePickerLabel("Năm:"));
@@ -126,9 +144,11 @@ public class RevenuePanel extends JPanel {
         spinnerFrom = new JSpinner(new SpinnerDateModel(cal.getTime(), null, new Date(), Calendar.DAY_OF_MONTH));
         spinnerFrom.setEditor(new JSpinner.DateEditor(spinnerFrom, "dd/MM/yyyy"));
         spinnerFrom.setPreferredSize(new Dimension(110, 28));
+        spinnerFrom.addChangeListener(e -> markFilterChanged());
         spinnerTo = new JSpinner(new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH));
         spinnerTo.setEditor(new JSpinner.DateEditor(spinnerTo, "dd/MM/yyyy"));
         spinnerTo.setPreferredSize(new Dimension(110, 28));
+        spinnerTo.addChangeListener(e -> markFilterChanged());
         p.add(makePickerLabel("Từ:"));
         p.add(spinnerFrom);
         p.add(makePickerLabel("Đến:"));
@@ -233,6 +253,9 @@ public class RevenuePanel extends JPanel {
     }
 
     public void loadData() {
+        if (btnLoc != null) {
+            btnLoc.setBackground(new Color(148, 163, 184)); // Xám
+        }
         if (rbNam.isSelected()) {
             loadNam();
         } else if (rbThang.isSelected()) {

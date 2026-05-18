@@ -315,6 +315,36 @@ public class DashboardDAO {
         return 0;
     }
 
+    public static List<Object[]> getHieuSuatNhanVien(Date from, Date to) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT nv.MA_NV, nv.HO_TEN, " +
+                     "COUNT(h.MA_HD) AS SO_HOA_DON, " +
+                     "NVL(SUM(h.THANH_TIEN), 0) AS TONG_TIEN " +
+                     "FROM NHANVIEN nv " +
+                     "JOIN HOADON h ON nv.MA_NV = h.MA_NV " +
+                     "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
+                     "GROUP BY nv.MA_NV, nv.HO_TEN " +
+                     "ORDER BY TONG_TIEN DESC";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[]{
+                        rs.getLong("MA_NV"),
+                        rs.getString("HO_TEN"),
+                        rs.getLong("SO_HOA_DON"),
+                        rs.getDouble("TONG_TIEN")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public static String formatVND(double amount) {
         if (amount >= 1_000_000_000) {
             return String.format("%.1f tỷ", amount / 1_000_000_000.0);

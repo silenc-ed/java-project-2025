@@ -11,11 +11,11 @@ import javax.swing.table.*;
 
 public class StatisticsPanel extends JPanel {
 
-    private JSpinner spinnerFrom;
-    private JSpinner spinnerTo;
-    private JLabel lblTongDonValue;
-    private JLabel lblDoanhThuValue;
+    private JSpinner spinnerFrom, spinnerTo;
+    private JLabel lblTongDonValue, lblDoanhThuValue;
     private DefaultTableModel tableModel;
+    private JTable table;
+    private JButton btnLoc;
 
     public StatisticsPanel() {
         setLayout(new BorderLayout());
@@ -30,18 +30,18 @@ public class StatisticsPanel extends JPanel {
         wrapper.add(Box.createVerticalStrut(16));
         wrapper.add(buildStatCards());
         wrapper.add(Box.createVerticalStrut(16));
-        wrapper.add(buildOrderTable());
-        add(wrapper, BorderLayout.CENTER);
+        wrapper.add(buildTableCard());
 
+        add(wrapper, BorderLayout.CENTER);
         loadData();
     }
 
     private JPanel buildFilterBar() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 4));
         panel.setOpaque(false);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
 
-        JLabel lbl = new JLabel("Lọc theo thời gian:");
+        JLabel lbl = new JLabel("Hiệu suất nhân viên");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lbl.setForeground(new Color(51, 65, 85));
 
@@ -54,6 +54,7 @@ public class StatisticsPanel extends JPanel {
         spinnerFrom = new JSpinner(new SpinnerDateModel(cal.getTime(), null, new Date(), Calendar.DAY_OF_MONTH));
         spinnerFrom.setEditor(new JSpinner.DateEditor(spinnerFrom, "dd/MM/yyyy"));
         spinnerFrom.setPreferredSize(new Dimension(110, 28));
+        spinnerFrom.addChangeListener(e -> markFilterChanged());
 
         JLabel lblTo = new JLabel("Đến ngày:");
         lblTo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -62,10 +63,11 @@ public class StatisticsPanel extends JPanel {
         spinnerTo = new JSpinner(new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH));
         spinnerTo.setEditor(new JSpinner.DateEditor(spinnerTo, "dd/MM/yyyy"));
         spinnerTo.setPreferredSize(new Dimension(110, 28));
+        spinnerTo.addChangeListener(e -> markFilterChanged());
 
-        JButton btnLoc = new JButton("Lọc");
+        btnLoc = new JButton("Lọc");
         btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(37, 99, 235));
+        btnLoc.setBackground(new Color(148, 163, 184)); // Default gray
         btnLoc.setForeground(Color.WHITE);
         btnLoc.setBorder(new EmptyBorder(5, 14, 5, 14));
         btnLoc.setFocusPainted(false);
@@ -79,6 +81,12 @@ public class StatisticsPanel extends JPanel {
         panel.add(spinnerTo);
         panel.add(btnLoc);
         return panel;
+    }
+
+    private void markFilterChanged() {
+        if (btnLoc != null) {
+            btnLoc.setBackground(new Color(37, 99, 235));
+        }
     }
 
     private JPanel buildStatCards() {
@@ -98,57 +106,49 @@ public class StatisticsPanel extends JPanel {
     }
 
     private JPanel card(String title, String val, Color accent, Color tint) {
-        JPanel card = new JPanel(new BorderLayout(0, 6));
-        card.setBackground(Color.WHITE);
-        card.setBorder(new CompoundBorder(
+        JPanel c = new JPanel(new BorderLayout(0, 6));
+        c.setBackground(Color.WHITE);
+        c.setBorder(new CompoundBorder(
                 new LineBorder(new Color(226, 232, 240), 1, true),
-                new EmptyBorder(12, 12, 12, 12)));
-
+                new EmptyBorder(16, 16, 16, 16)));
         JPanel stripe = new JPanel();
         stripe.setBackground(tint);
-        stripe.setPreferredSize(new Dimension(4, 0));
-
+        stripe.setPreferredSize(new Dimension(5, 0));
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTitle.setForeground(new Color(100, 116, 139));
-
         JLabel lblVal = new JLabel(val);
-        lblVal.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblVal.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblVal.setForeground(accent);
-        lblVal.putClientProperty("valueLabel", Boolean.TRUE);
+        lblVal.putClientProperty("v", Boolean.TRUE);
 
-        card.add(stripe, BorderLayout.WEST);
-        card.add(lblTitle, BorderLayout.NORTH);
-        card.add(lblVal, BorderLayout.CENTER);
-        return card;
+        c.add(stripe, BorderLayout.WEST);
+        c.add(lblTitle, BorderLayout.NORTH);
+        c.add(lblVal, BorderLayout.CENTER);
+        return c;
     }
 
-    private JLabel findLabel(JPanel card) {
-        for (Component c : card.getComponents()) {
-            if (c instanceof JLabel && Boolean.TRUE.equals(((JLabel) c).getClientProperty("valueLabel")))
+    private JLabel findLabel(JPanel p) {
+        for (Component c : p.getComponents()) {
+            if (c instanceof JLabel && Boolean.TRUE.equals(((JLabel) c).getClientProperty("v"))) {
                 return (JLabel) c;
+            }
         }
         return null;
     }
 
-    private JPanel buildOrderTable() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(new CompoundBorder(
+    private JPanel buildTableCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(new CompoundBorder(
                 new LineBorder(new Color(226, 232, 240), 1, true),
-                new EmptyBorder(16, 16, 16, 16)));
+                new EmptyBorder(1, 1, 1, 1)));
 
-        JLabel title = new JLabel("Hóa đơn gần đây");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        title.setForeground(new Color(30, 41, 59));
-        title.setBorder(new EmptyBorder(0, 0, 12, 0));
-
-        String[] cols = {"Mã HD", "Khách hàng", "Sản phẩm", "Thanh tiền (VND)", "Thời gian"};
+        String[] cols = {"STT", "Mã NV", "Họ tên NV", "Số hóa đơn đã lập", "Tổng tiền bán (VND)"};
         tableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-
-        JTable table = new JTable(tableModel);
+        table = new JTable(tableModel);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setRowHeight(36);
         table.setShowVerticalLines(false);
@@ -156,75 +156,61 @@ public class StatisticsPanel extends JPanel {
         table.setSelectionBackground(new Color(239, 246, 255));
         table.setSelectionForeground(new Color(30, 41, 59));
 
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        header.setBackground(new Color(248, 250, 252));
-        header.setForeground(new Color(71, 85, 105));
-        header.setBorder(new MatteBorder(0, 0, 1, 0, new Color(226, 232, 240)));
-
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
-        table.getColumnModel().getColumn(3).setCellRenderer(right);
+        JTableHeader th = table.getTableHeader();
+        th.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        th.setBackground(new Color(248, 250, 252));
+        th.setForeground(new Color(71, 85, 105));
+        th.setBorder(new MatteBorder(0, 0, 1, 0, new Color(226, 232, 240)));
+        th.setPreferredSize(new Dimension(0, 40));
 
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
         table.getColumnModel().getColumn(0).setCellRenderer(center);
-        table.getColumnModel().getColumn(0).setPreferredWidth(70);
+        table.getColumnModel().getColumn(0).setPreferredWidth(50);
+        table.getColumnModel().getColumn(0).setMaxWidth(50);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         scroll.getViewport().setBackground(Color.WHITE);
 
-        panel.add(title, BorderLayout.NORTH);
-        panel.add(scroll, BorderLayout.CENTER);
-        return panel;
+        card.add(scroll, BorderLayout.CENTER);
+        return card;
     }
 
     public void loadData() {
+        if (btnLoc != null) {
+            btnLoc.setBackground(new Color(148, 163, 184));
+        }
         Date from = (Date) spinnerFrom.getValue();
-        Date to = nextDay((Date) spinnerTo.getValue());
+        Calendar calTo = Calendar.getInstance();
+        calTo.setTime((Date) spinnerTo.getValue());
+        calTo.add(Calendar.DAY_OF_MONTH, 1);
+        Date to = calTo.getTime();
 
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            long tongDon;
-            double doanhThu;
+            double td, dt;
             List<Object[]> rows;
-
-            @Override
-            protected Void doInBackground() {
-                tongDon = DashboardDAO.getTongDonHang(from, to);
-                doanhThu = DashboardDAO.getTongDoanhThu(from, to);
-                rows = DashboardDAO.getDonHangGanDay(from, to, 20);
+            @Override protected Void doInBackground() {
+                td = DashboardDAO.getTongDonHang(from, to);
+                dt = DashboardDAO.getTongDoanhThu(from, to);
+                rows = DashboardDAO.getHieuSuatNhanVien(from, to);
                 return null;
             }
-
-            @Override
-            protected void done() {
-                if (lblTongDonValue != null) lblTongDonValue.setText(String.format("%,d", tongDon));
-                if (lblDoanhThuValue != null) lblDoanhThuValue.setText(DashboardDAO.formatVND(doanhThu));
+            @Override protected void done() {
+                lblTongDonValue.setText(String.format("%,d", (long) td));
+                lblDoanhThuValue.setText(DashboardDAO.formatVND(dt));
 
                 tableModel.setRowCount(0);
-                for (Object[] r : rows) {
-                    long thanhTien = ((Number) r[3]).longValue();
-                    tableModel.addRow(new Object[]{
-                        r[0],
-                        r[1],
-                        r[2],
-                        DashboardDAO.formatVND((double) thanhTien),
-                        r[4]
-                    });
+                if (rows != null) {
+                    for (int i = 0; i < rows.size(); i++) {
+                        Object[] r = rows.get(i);
+                        tableModel.addRow(new Object[]{
+                                i + 1, r[0], r[1], r[2], DashboardDAO.formatVND((Double) r[3])
+                        });
+                    }
                 }
             }
         };
         worker.execute();
     }
-
-    private Date nextDay(Date d) {
-        Calendar c = Calendar.getInstance();
-        c.setTime(d);
-        c.add(Calendar.DAY_OF_MONTH, 1);
-        return c.getTime();
-    }
-
-    public JSpinner getSpinnerFrom() { return spinnerFrom; }
-    public JSpinner getSpinnerTo() { return spinnerTo; }
 }

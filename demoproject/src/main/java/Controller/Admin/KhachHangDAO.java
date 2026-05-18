@@ -154,23 +154,52 @@ public class KhachHangDAO {
     }
 
     public static boolean capNhatTaiKhoan(long maKh, String username, String newPassword) {
-        if (newPassword != null && !newPassword.trim().isEmpty()) {
-            String sql = "UPDATE TAIKHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?";
-            try (Connection con = ConnectionUtils.getMyConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, username);
-                ps.setString(2, HashUtil.hashPassword(newPassword));
-                ps.setLong(3, maKh);
-                return ps.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
-        } else {
-            String sql = "UPDATE TAIKHOAN SET USERNAME = ? WHERE MA_KH = ?";
-            try (Connection con = ConnectionUtils.getMyConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, username);
-                ps.setLong(2, maKh);
-                return ps.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+
+            long maTk = -1;
+            String checkTK = "SELECT MA_TK FROM TAIKHOAN WHERE MA_KH = ?";
+            try (PreparedStatement ps = con.prepareStatement(checkTK)) {
+                ps.setLong(1, maKh);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) maTk = rs.getLong(1);
+                }
+            }
+
+            if (maTk != -1) {
+                boolean hasPassword = (newPassword != null && !newPassword.trim().isEmpty());
+                String updateSql = hasPassword 
+                    ? "UPDATE TAIKHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?"
+                    : "UPDATE TAIKHOAN SET USERNAME = ? WHERE MA_KH = ?";
+                try (PreparedStatement ps = con.prepareStatement(updateSql)) {
+                    ps.setString(1, username);
+                    if (hasPassword) {
+                        ps.setString(2, HashUtil.hashPassword(newPassword));
+                        ps.setLong(3, maKh);
+                    } else {
+                        ps.setLong(2, maKh);
+                    }
+                    ps.executeUpdate();
+                }
+            } else {
+                String insertSql = "INSERT INTO TAIKHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) VALUES (?, ?, ?, 'Hoạt động')";
+                try (PreparedStatement ps2 = con.prepareStatement(insertSql)) {
+                    ps2.setLong(1, maKh);
+                    ps2.setString(2, username);
+                    ps2.setString(3, HashUtil.hashPassword(newPassword));
+                    ps2.executeUpdate();
+                }
+            }
+
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            try { if (con != null) con.rollback(); } catch (Exception ex) { ex.printStackTrace(); }
+        } finally {
+            try { if (con != null) { con.setAutoCommit(true); con.close(); } } catch (Exception ex) { ex.printStackTrace(); }
         }
         return false;
     }
