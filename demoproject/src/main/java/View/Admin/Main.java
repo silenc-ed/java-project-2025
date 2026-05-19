@@ -4,6 +4,8 @@
  */
 package View.Admin;
 
+import View.Admin.DashBoard.DashboardPanel;
+
 /**
  *
  * @author DELL
@@ -68,31 +70,31 @@ public class Main extends javax.swing.JFrame {
             public void selected(int index) {
                 switch (index) {
                     case 0: // Tổng quan
-                        showForm(new View.Admin.DashboardPanel());
+                        showForm(new View.Admin.DashBoard.DashboardPanel());
                         break;
                     case 1: // Mua hàng
-                        showForm(new View.Admin.CreateInvoicePanel());
+                        showForm(new View.Admin.CreateInvoice.CreateInvoicePanel());
                         break;
                     case 2: // Quản lý SP
-                        showForm(new View.Admin.ProductPanel());
+                        showForm(new View.Admin.Product.ProductPanel());
                         break;
                     case 3: // Đơn hàng
-                        showForm(new View.Admin.BillPanel());
+                        showForm(new View.Admin.Procurement.ProcurementPanel());
                         break;
                     case 4: // Khách hàng
-                        showForm(new View.Admin.CustomerPanel());
+                        showForm(new View.Admin.Customer.CustomerPanel());
                         break;
                     case 5: // Nhân viên
-                        showForm(new View.Admin.EmployeePanel());
+                        showForm(new View.Admin.Employee.EmployeePanel());
                         break;
                     case 6: // Tồn kho CN
-                        showForm(new View.Admin.WarehousePanel());
+                        showForm(new View.Admin.Warehouse.WarehousePanel());
                         break;
                     case 7: // Khuyến mãi
-                        showForm(new View.Admin.VoucherPanel());
+                        showForm(new View.Admin.Voucher.VoucherPanel());
                         break;
                     case 8: // Nhập kho
-                        showForm(new View.Admin.ProcurementPanel());
+                        showForm(new View.Admin.Bill.BillPanel());
                         break;
                 }
             }
@@ -152,7 +154,7 @@ public class Main extends javax.swing.JFrame {
 
         // Mặc định hiển thị Dashboard khi mở
         menu1.setSelectedIndex(0);
-        showForm(new View.Admin.DashboardPanel());
+        showForm(new View.Admin.DashBoard.DashboardPanel());
     }
 
     /**
