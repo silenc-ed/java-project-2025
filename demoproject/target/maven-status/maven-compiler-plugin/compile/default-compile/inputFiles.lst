@@ -4,8 +4,10 @@ E:\Java\java-project-2025\demoproject\src\main\java\Common\HashUtil.java
 E:\Java\java-project-2025\demoproject\src\main\java\Common\TokenManager.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionOracle.java
 E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\ConnectionUtils.java
+E:\Java\java-project-2025\demoproject\src\main\java\ConnectDB\TestDB.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Admin\DashboardDAO.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Admin\KhachHangDAO.java
+E:\Java\java-project-2025\demoproject\src\main\java\Controller\Admin\NhanVienDAO.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateAccountProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\CreateAccount\CreateUserProcess.java
 E:\Java\java-project-2025\demoproject\src\main\java\Controller\Customers\Warranty\WarrantyCheckingProcess.java

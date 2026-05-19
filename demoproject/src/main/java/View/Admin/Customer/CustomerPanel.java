@@ -32,6 +32,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         wrapper.add(buildTablePanel());
 
         add(wrapper, BorderLayout.CENTER);
+        loadData();
     }
 
     private JPanel buildHeader() {
@@ -394,12 +395,10 @@ public class CustomerPanel extends javax.swing.JPanel {
                     f.setEditable(true);
                     f.setBackground(new Color(255, 255, 240));
                 }
-                if (hasAccount) {
-                    tfUsername.setEditable(true);
-                    tfUsername.setBackground(new Color(255, 255, 240));
-                    tfNewPass.setEditable(true);
-                    tfNewPass.setBackground(new Color(255, 255, 240));
-                }
+                tfUsername.setEditable(true);
+                tfUsername.setBackground(new Color(255, 255, 240));
+                tfNewPass.setEditable(true);
+                tfNewPass.setBackground(new Color(255, 255, 240));
                 btnEdit.setText("Hoàn tất");
                 btnEdit.setBackground(new Color(5, 150, 105));
             } else {
