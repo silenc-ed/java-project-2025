@@ -40,6 +40,7 @@ public class StatisticsPanel extends JPanel {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
         panel.setOpaque(false);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lbl = new JLabel("Lọc theo thời gian:");
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -65,12 +66,18 @@ public class StatisticsPanel extends JPanel {
 
         JButton btnLoc = new JButton("Lọc");
         btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(37, 99, 235));
+        btnLoc.setBackground(new Color(148, 163, 184)); // default gray
         btnLoc.setForeground(Color.WHITE);
         btnLoc.setBorder(new EmptyBorder(5, 14, 5, 14));
         btnLoc.setFocusPainted(false);
         btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLoc.addActionListener(e -> loadData());
+        btnLoc.addActionListener(e -> {
+            btnLoc.setBackground(new Color(148, 163, 184)); // reset to gray
+            loadData();
+        });
+
+        spinnerFrom.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235)));
+        spinnerTo.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235)));
 
         panel.add(lbl);
         panel.add(lblFrom);
@@ -85,6 +92,7 @@ public class StatisticsPanel extends JPanel {
         JPanel row = new JPanel(new GridLayout(1, 2, 14, 0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel c1 = card("Tổng hóa đơn", "—", new Color(37, 99, 235), new Color(219, 234, 254));
         JPanel c2 = card("Tổng doanh thu (VND)", "—", new Color(5, 150, 105), new Color(209, 250, 229));
@@ -137,6 +145,7 @@ public class StatisticsPanel extends JPanel {
         panel.setBorder(new CompoundBorder(
                 new LineBorder(new Color(226, 232, 240), 1, true),
                 new EmptyBorder(16, 16, 16, 16)));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel title = new JLabel("Hóa đơn gần đây");
         title.setFont(new Font("Segoe UI", Font.BOLD, 13));

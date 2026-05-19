@@ -66,6 +66,9 @@ public class Main extends javax.swing.JFrame {
 
         // --- Xử lý sự kiện chọn mục menu Admin ---
         menu1.addEventMenuSelected(new View.Customers.EventMenuSelected() {
+            private View.Admin.Customer.CustomerPanel cachedCustomerPanel;
+            private View.Admin.Employee.EmployeePanel cachedEmployeePanel;
+
             @Override
             public void selected(int index) {
                 switch (index) {
@@ -82,10 +85,16 @@ public class Main extends javax.swing.JFrame {
                         showForm(new View.Admin.Procurement.ProcurementPanel());
                         break;
                     case 4: // Khách hàng
-                        showForm(new View.Admin.Customer.CustomerPanel());
+                        if (cachedCustomerPanel == null) {
+                            cachedCustomerPanel = new View.Admin.Customer.CustomerPanel();
+                        }
+                        showForm(cachedCustomerPanel);
                         break;
                     case 5: // Nhân viên
-                        showForm(new View.Admin.Employee.EmployeePanel());
+                        if (cachedEmployeePanel == null) {
+                            cachedEmployeePanel = new View.Admin.Employee.EmployeePanel();
+                        }
+                        showForm(cachedEmployeePanel);
                         break;
                     case 6: // Tồn kho CN
                         showForm(new View.Admin.Warehouse.WarehousePanel());
