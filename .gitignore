@@ -1,3 +1,5 @@
+ConnectDB/
+# Bỏ qua các file biên dịch
 *.class
 target/
 
