@@ -364,7 +364,16 @@ public class ProductPanel extends javax.swing.JPanel {
                 if (text.isEmpty() || text.equals("Tìm kiếm sản phẩm...")) {
                     sorter.setRowFilter(null);
                 } else {
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 0, 1));
+                    final String searchLower = text.toLowerCase();
+                    sorter.setRowFilter(new RowFilter<DefaultTableModel, Object>() {
+                        @Override
+                        public boolean include(javax.swing.RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                            String maSp = entry.getStringValue(0).toLowerCase();
+                            String tenSp = stripHtml(entry.getStringValue(1)).toLowerCase();
+                            String danhMuc = entry.getStringValue(2).toLowerCase();
+                            return maSp.contains(searchLower) || tenSp.contains(searchLower) || danhMuc.contains(searchLower);
+                        }
+                    });
                 }
             }
         });

@@ -68,36 +68,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
         centerPanel.setOpaque(false);
 
-        // Search Bar
-        JPanel searchPanel = new JPanel(new BorderLayout());
-        searchPanel.setBackground(Color.WHITE);
-        searchPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(175, 122, 197), 1),
-            BorderFactory.createEmptyBorder(5, 15, 5, 15)
-        ));
-
-        JTextField txtSearch = new JTextField("Tìm kiếm đơn hàng...");
-        txtSearch.setBorder(null);
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        txtSearch.setForeground(Color.GRAY);
-        txtSearch.addFocusListener(new FocusAdapter() {
-            @Override public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Tìm kiếm đơn hàng...")) {
-                    txtSearch.setText("");
-                    txtSearch.setForeground(new Color(30, 41, 59));
-                }
-            }
-            @Override public void focusLost(FocusEvent e) {
-                if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Tìm kiếm đơn hàng...");
-                    txtSearch.setForeground(Color.GRAY);
-                }
-            }
-        });
-        searchPanel.add(txtSearch, BorderLayout.CENTER);
-        centerPanel.add(searchPanel, BorderLayout.NORTH);
-
-        // Table
+        // Table Model and Sorter
         String[] columns = {"", "Mã HD", "Khách hàng", "Mã nhân viên", "Thời gian", "Tổng tiền", "Giảm giá", "Thành tiền", "Thanh toán"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public Class<?> getColumnClass(int c) { return c == 0 ? Boolean.class : Object.class; }
@@ -108,6 +79,64 @@ public class ProcurementPanel extends javax.swing.JPanel {
         dataTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         dataTable.setSelectionBackground(new Color(245, 235, 250)); // Orchid pink-purple soft background
         dataTable.setSelectionForeground(new Color(142, 68, 173));  // Dark orchid text
+        
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+        dataTable.setRowSorter(sorter);
+
+        // Search Bar
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel.setBackground(Color.WHITE);
+        searchPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(175, 122, 197), 1),
+            BorderFactory.createEmptyBorder(5, 15, 5, 15)
+        ));
+
+        JTextField txtSearch = new JTextField("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...");
+        txtSearch.setBorder(null);
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtSearch.setForeground(Color.GRAY);
+        txtSearch.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
+                if (txtSearch.getText().equals("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...")) {
+                    txtSearch.setText("");
+                    txtSearch.setForeground(new Color(30, 41, 59));
+                }
+            }
+            @Override public void focusLost(FocusEvent e) {
+                if (txtSearch.getText().isEmpty()) {
+                    txtSearch.setText("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...");
+                    txtSearch.setForeground(Color.GRAY);
+                }
+            }
+        });
+        
+        txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            private void search() {
+                SwingUtilities.invokeLater(() -> {
+                    String text = txtSearch.getText().trim();
+                    if (text.isEmpty() || text.equals("Tìm kiếm theo Mã HD, Khách hàng, Mã nhân viên...") || txtSearch.getForeground() == Color.GRAY) {
+                        sorter.setRowFilter(null);
+                    } else {
+                        final String searchLower = text.toLowerCase();
+                        sorter.setRowFilter(new RowFilter<DefaultTableModel, Object>() {
+                            @Override
+                            public boolean include(javax.swing.RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                                String maHd = entry.getStringValue(1).toLowerCase();
+                                String kh = entry.getStringValue(2).toLowerCase();
+                                String maNv = entry.getStringValue(3).toLowerCase();
+                                return maHd.contains(searchLower) || kh.contains(searchLower) || maNv.contains(searchLower);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+        centerPanel.add(searchPanel, BorderLayout.NORTH);
         
         // Table Header styling & centering
         dataTable.getTableHeader().setPreferredSize(new Dimension(0, 45));

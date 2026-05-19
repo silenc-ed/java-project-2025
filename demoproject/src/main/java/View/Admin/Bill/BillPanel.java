@@ -89,7 +89,7 @@ public class BillPanel extends javax.swing.JPanel {
         topSearchPanel.setOpaque(false);
         topSearchPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JTextField txtSearch = new JTextField("Tìm kiếm theo Mã PN");
+        JTextField txtSearch = new JTextField("Tìm kiếm theo Mã PN, Nhà cung cấp, Mã NV, Mã CN...");
         txtSearch.setPreferredSize(new Dimension(0, 30));
         txtSearch.setBackground(new Color(225, 225, 225));
         txtSearch.setForeground(Color.GRAY);
@@ -99,7 +99,7 @@ public class BillPanel extends javax.swing.JPanel {
         txtSearch.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Tìm kiếm theo Mã PN")) {
+                if (txtSearch.getText().equals("Tìm kiếm theo Mã PN, Nhà cung cấp, Mã NV, Mã CN...")) {
                     txtSearch.setText("");
                     txtSearch.setForeground(Color.BLACK);
                 }
@@ -109,7 +109,7 @@ public class BillPanel extends javax.swing.JPanel {
             public void focusLost(FocusEvent e) {
                 if (txtSearch.getText().isEmpty()) {
                     txtSearch.setForeground(Color.GRAY);
-                    txtSearch.setText("Tìm kiếm theo Mã PN");
+                    txtSearch.setText("Tìm kiếm theo Mã PN, Nhà cung cấp, Mã NV, Mã CN...");
                 }
             }
         });
@@ -169,11 +169,21 @@ public class BillPanel extends javax.swing.JPanel {
             public void changedUpdate(javax.swing.event.DocumentEvent e) { search(); }
             private void search() {
                 SwingUtilities.invokeLater(() -> {
-                    String text = txtSearch.getText();
-                    if (text.trim().isEmpty() || text.equals("Tìm kiếm theo Mã PN") || txtSearch.getForeground() == Color.GRAY) {
+                    String text = txtSearch.getText().trim();
+                    if (text.isEmpty() || text.equals("Tìm kiếm theo Mã PN, Nhà cung cấp, Mã NV, Mã CN...") || txtSearch.getForeground() == Color.GRAY) {
                         sorter.setRowFilter(null);
                     } else {
-                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 1));
+                        final String searchLower = text.toLowerCase();
+                        sorter.setRowFilter(new RowFilter<DefaultTableModel, Object>() {
+                            @Override
+                            public boolean include(javax.swing.RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                                String maPn = entry.getStringValue(1).toLowerCase();
+                                String ncc = entry.getStringValue(2).toLowerCase();
+                                String maNv = entry.getStringValue(3).toLowerCase();
+                                String maCn = entry.getStringValue(4).toLowerCase();
+                                return maPn.contains(searchLower) || ncc.contains(searchLower) || maNv.contains(searchLower) || maCn.contains(searchLower);
+                            }
+                        });
                     }
                 });
             }
