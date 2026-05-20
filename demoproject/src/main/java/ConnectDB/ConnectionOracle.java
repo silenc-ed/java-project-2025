@@ -25,11 +25,11 @@ public class ConnectionOracle {
         //Host name
         String hostName = "localhost";
         //SID Oralce
-        String sid = "orclpdb";
+        String sid = "orcl";
         //Username
-        String userName = "AdminTestingVN_K";
+        String userName = "AdminTestingVN";
         //Password
-        String password = "123";
+        String password = "Admin123";
         
         // Khai báo class Driver cho DB Oracle
         // Việc này cần thiết với Java 5
