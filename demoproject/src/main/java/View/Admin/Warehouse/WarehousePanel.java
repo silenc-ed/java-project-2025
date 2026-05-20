@@ -1,57 +1,546 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package View.Admin.Warehouse;
 
+import Controller.Admin.TonKho.TonKhoDAO;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Map;
+
 /**
- *
- * @author DELL
+ * Panel tồn kho chi nhánh — 3 cấp drill-down:
+ * Chi nhánh → Sản phẩm (số lượng) → Serial (trạng thái)
  */
 public class WarehousePanel extends javax.swing.JPanel {
 
-    /**
-     * Creates new form WarehousePanel
-     */
+    private TonKhoDAO dao;
+    private CardLayout cardLayout;
+    private JPanel cardContainer;
+
+    // State
+    private int currentMaCN = -1;
+    private String currentTenCN = "";
+    private int currentMaBienthe = -1;
+    private String currentTenSP = "";
+    private String currentTenBienthe = "";
+
+    // Tables
+    private DefaultTableModel branchModel, productModel, serialModel;
+    private JTable branchTable, productTable, serialTable;
+    private JTextField txtSearchBranch, txtSearchProduct, txtSearchSerial;
+
+    private static final DecimalFormat DF = new DecimalFormat("#,###");
+    private static final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    private static final Color PURPLE = new Color(142, 68, 173);
+    private static final Color PURPLE_LIGHT = new Color(175, 122, 197);
+    private static final Color BG = new Color(248, 250, 252);
+
     public WarehousePanel() {
-        initComponents();
+        dao = new TonKhoDAO();
+        initUI();
+        loadBranches(null);
     }
 
+    private void initUI() {
+        this.setLayout(new BorderLayout());
+        this.setBackground(BG);
+
+        cardLayout = new CardLayout();
+        cardContainer = new JPanel(cardLayout);
+        cardContainer.setBackground(BG);
+
+        cardContainer.add(buildBranchCard(), "branches");
+        cardContainer.add(buildProductCard(), "products");
+        cardContainer.add(buildSerialCard(), "serials");
+
+        this.add(cardContainer, BorderLayout.CENTER);
+        cardLayout.show(cardContainer, "branches");
+    }
+
+    // =====================================================================
+    //  CARD 1: DANH SÁCH CHI NHÁNH
+    // =====================================================================
+
+    private JPanel buildBranchCard() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setBackground(BG);
+
+        // Header
+        JPanel header = createHeader("Tồn kho chi nhánh", null, null);
+        txtSearchBranch = addSearchToHeader(header, "Tìm chi nhánh...", e -> loadBranches(getSearchText(txtSearchBranch)));
+        panel.add(header, BorderLayout.NORTH);
+
+        // Table
+        String[] cols = {"Mã CN", "Tên chi nhánh", "Địa chỉ", "SĐT Hotline", "Trạng thái", "Tổng tồn kho"};
+        branchModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        branchTable = buildStyledTable(branchModel);
+        branchTable.getColumnModel().getColumn(0).setPreferredWidth(60);
+        branchTable.getColumnModel().getColumn(0).setMaxWidth(80);
+        branchTable.getColumnModel().getColumn(1).setPreferredWidth(180);
+        branchTable.getColumnModel().getColumn(2).setPreferredWidth(250);
+        branchTable.getColumnModel().getColumn(3).setPreferredWidth(110);
+        branchTable.getColumnModel().getColumn(4).setPreferredWidth(130);
+        branchTable.getColumnModel().getColumn(5).setPreferredWidth(120);
+
+        // Status renderer
+        branchTable.getColumnModel().getColumn(4).setCellRenderer(new StatusRenderer());
+        // Right-align stock
+        DefaultTableCellRenderer rightBold = new DefaultTableCellRenderer();
+        rightBold.setHorizontalAlignment(SwingConstants.CENTER);
+        rightBold.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        branchTable.getColumnModel().getColumn(5).setCellRenderer(rightBold);
+        // Center MA_CN
+        DefaultTableCellRenderer centerR = new DefaultTableCellRenderer();
+        centerR.setHorizontalAlignment(SwingConstants.CENTER);
+        branchTable.getColumnModel().getColumn(0).setCellRenderer(centerR);
+        branchTable.getColumnModel().getColumn(3).setCellRenderer(centerR);
+
+        // Double-click → drill into branch
+        branchTable.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = branchTable.getSelectedRow();
+                    if (row >= 0) {
+                        int modelRow = branchTable.convertRowIndexToModel(row);
+                        currentMaCN = (int) branchModel.getValueAt(modelRow, 0);
+                        currentTenCN = (String) branchModel.getValueAt(modelRow, 1);
+                        showProducts();
+                    }
+                }
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(branchTable);
+        sp.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        sp.getViewport().setBackground(Color.WHITE);
+        panel.add(sp, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private void loadBranches(String keyword) {
+        branchModel.setRowCount(0);
+        try {
+            List<Map<String, Object>> list = dao.getAllBranches(keyword);
+            for (Map<String, Object> r : list) {
+                branchModel.addRow(new Object[]{
+                    r.get("MA_CN"),
+                    r.get("TEN_CN"),
+                    r.get("DIA_CHI") != null ? r.get("DIA_CHI") : "",
+                    r.get("SDT_HOTLINE") != null ? r.get("SDT_HOTLINE") : "",
+                    r.get("TRANG_THAI") != null ? r.get("TRANG_THAI") : "",
+                    r.get("TONG_TON")
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    // =====================================================================
+    //  CARD 2: SẢN PHẨM TỒN KHO TẠI CHI NHÁNH
+    // =====================================================================
+
+    private JLabel lblProductTitle;
+
+    private JPanel buildProductCard() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setBackground(BG);
+
+        // Header with back button
+        lblProductTitle = new JLabel();
+        JPanel header = createHeader("", "← Quay lại", e -> {
+            cardLayout.show(cardContainer, "branches");
+        });
+        txtSearchProduct = addSearchToHeader(header, "Tìm sản phẩm...", e -> loadProducts(getSearchText(txtSearchProduct)));
+
+        // Replace title label
+        for (Component c : ((JPanel) header.getComponent(0)).getComponents()) {
+            if (c instanceof JLabel && !(c instanceof JButton)) {
+                lblProductTitle = (JLabel) c;
+                break;
+            }
+        }
+        panel.add(header, BorderLayout.NORTH);
+
+        // Table
+        String[] cols = {"Mã SP", "Tên sản phẩm", "Biến thể", "Giá bán", "Số lượng tồn", "Cập nhật"};
+        productModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        productTable = buildStyledTable(productModel);
+        productTable.getColumnModel().getColumn(0).setPreferredWidth(60);
+        productTable.getColumnModel().getColumn(0).setMaxWidth(80);
+        productTable.getColumnModel().getColumn(1).setPreferredWidth(220);
+        productTable.getColumnModel().getColumn(2).setPreferredWidth(150);
+        productTable.getColumnModel().getColumn(3).setPreferredWidth(120);
+        productTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+        productTable.getColumnModel().getColumn(5).setPreferredWidth(130);
+
+        // Center columns
+        DefaultTableCellRenderer centerR = new DefaultTableCellRenderer();
+        centerR.setHorizontalAlignment(SwingConstants.CENTER);
+        productTable.getColumnModel().getColumn(0).setCellRenderer(centerR);
+        productTable.getColumnModel().getColumn(5).setCellRenderer(centerR);
+
+        // Right-align price
+        DefaultTableCellRenderer priceR = new DefaultTableCellRenderer();
+        priceR.setHorizontalAlignment(SwingConstants.RIGHT);
+        productTable.getColumnModel().getColumn(3).setCellRenderer(priceR);
+
+        // Bold stock count
+        DefaultTableCellRenderer stockR = new DefaultTableCellRenderer() {
+            @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, v, s, f, r, c);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                long qty = 0;
+                try { qty = Long.parseLong(v.toString()); } catch (Exception ignored) {}
+                if (!s) {
+                    if (qty == 0) lbl.setForeground(new Color(185, 28, 28));
+                    else if (qty < 5) lbl.setForeground(new Color(180, 130, 0));
+                    else lbl.setForeground(new Color(5, 122, 85));
+                }
+                return lbl;
+            }
+        };
+        productTable.getColumnModel().getColumn(4).setCellRenderer(stockR);
+
+        // Store MA_BIENTHE as hidden data
+        // Double-click → drill into serials
+        productTable.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = productTable.getSelectedRow();
+                    if (row >= 0) {
+                        int modelRow = productTable.convertRowIndexToModel(row);
+                        currentMaBienthe = (int) productTable.getClientProperty("bt_" + modelRow);
+                        currentTenSP = (String) productModel.getValueAt(modelRow, 1);
+                        currentTenBienthe = (String) productModel.getValueAt(modelRow, 2);
+                        showSerials();
+                    }
+                }
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(productTable);
+        sp.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        sp.getViewport().setBackground(Color.WHITE);
+        panel.add(sp, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private void showProducts() {
+        lblProductTitle.setText("Tồn kho — " + currentTenCN);
+        loadProducts(null);
+        if (txtSearchProduct != null) txtSearchProduct.setText("");
+        cardLayout.show(cardContainer, "products");
+    }
+
+    private void loadProducts(String keyword) {
+        productModel.setRowCount(0);
+        try {
+            List<Map<String, Object>> list = dao.getProductsByBranch(currentMaCN, keyword);
+            for (int i = 0; i < list.size(); i++) {
+                Map<String, Object> r = list.get(i);
+                Timestamp ts = (Timestamp) r.get("NGAY_CAP_NHAT");
+                productModel.addRow(new Object[]{
+                    r.get("MA_SP"),
+                    r.get("TEN_SP"),
+                    r.get("TEN_BIENTHE") != null ? r.get("TEN_BIENTHE") : "",
+                    DF.format((long) r.get("GIA_BAN")) + "đ",
+                    r.get("SO_LUONG_TON"),
+                    ts != null ? SDF.format(ts) : ""
+                });
+                productTable.putClientProperty("bt_" + i, r.get("MA_BIENTHE"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    // =====================================================================
+    //  CARD 3: DANH SÁCH SERIAL
+    // =====================================================================
+
+    private JLabel lblSerialTitle;
+    private JLabel lblStats;
+
+    private JPanel buildSerialCard() {
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.setBackground(BG);
+
+        // Header
+        lblSerialTitle = new JLabel();
+        JPanel header = createHeader("", "← Quay lại", e -> {
+            cardLayout.show(cardContainer, "products");
+        });
+        txtSearchSerial = addSearchToHeader(header, "Tìm serial...", e -> loadSerials(getSearchText(txtSearchSerial)));
+
+        for (Component c : ((JPanel) header.getComponent(0)).getComponents()) {
+            if (c instanceof JLabel && !(c instanceof JButton)) {
+                lblSerialTitle = (JLabel) c;
+                break;
+            }
+        }
+        panel.add(header, BorderLayout.NORTH);
+
+        // Stats bar
+        lblStats = new JLabel(" ");
+        lblStats.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblStats.setBorder(new EmptyBorder(0, 25, 8, 25));
+        lblStats.setOpaque(true);
+        lblStats.setBackground(BG);
+        panel.add(lblStats, BorderLayout.SOUTH);
+
+        // Table
+        String[] cols = {"ID", "Serial Number", "Phiếu nhập", "Trạng thái"};
+        serialModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        serialTable = buildStyledTable(serialModel);
+        serialTable.getColumnModel().getColumn(0).setPreferredWidth(60);
+        serialTable.getColumnModel().getColumn(0).setMaxWidth(80);
+        serialTable.getColumnModel().getColumn(1).setPreferredWidth(250);
+        serialTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        serialTable.getColumnModel().getColumn(3).setPreferredWidth(150);
+
+        DefaultTableCellRenderer centerR = new DefaultTableCellRenderer();
+        centerR.setHorizontalAlignment(SwingConstants.CENTER);
+        serialTable.getColumnModel().getColumn(0).setCellRenderer(centerR);
+        serialTable.getColumnModel().getColumn(2).setCellRenderer(centerR);
+
+        // Serial status badge
+        serialTable.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, v, s, f, r, c);
+                lbl.setHorizontalAlignment(SwingConstants.CENTER);
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                lbl.setOpaque(true);
+                String status = v != null ? v.toString() : "";
+                if (!s) {
+                    switch (status) {
+                        case "KHA_DUNG":
+                            lbl.setText("● Khả dụng");
+                            lbl.setForeground(new Color(5, 122, 85));
+                            lbl.setBackground(new Color(220, 252, 231));
+                            break;
+                        case "DANG_DUOC_DAT":
+                            lbl.setText("● Đang đặt");
+                            lbl.setForeground(new Color(180, 130, 0));
+                            lbl.setBackground(new Color(255, 249, 219));
+                            break;
+                        case "DA_BAN":
+                            lbl.setText("● Đã bán");
+                            lbl.setForeground(new Color(185, 28, 28));
+                            lbl.setBackground(new Color(254, 226, 226));
+                            break;
+                        default:
+                            lbl.setText("● " + status);
+                            lbl.setForeground(new Color(100, 116, 139));
+                            lbl.setBackground(new Color(241, 245, 249));
+                    }
+                }
+                return lbl;
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(serialTable);
+        sp.setBorder(BorderFactory.createEmptyBorder(0, 20, 10, 20));
+        sp.getViewport().setBackground(Color.WHITE);
+        panel.add(sp, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private void showSerials() {
+        String title = currentTenSP;
+        if (currentTenBienthe != null && !currentTenBienthe.isEmpty()) {
+            title += " (" + currentTenBienthe + ")";
+        }
+        title += " — " + currentTenCN;
+        lblSerialTitle.setText("Serial — " + title);
+        loadSerials(null);
+        loadStats();
+        if (txtSearchSerial != null) txtSearchSerial.setText("");
+        cardLayout.show(cardContainer, "serials");
+    }
+
+    private void loadSerials(String keyword) {
+        serialModel.setRowCount(0);
+        try {
+            List<Map<String, Object>> list = dao.getSerialsByVariantAndBranch(currentMaBienthe, currentMaCN, keyword);
+            for (Map<String, Object> r : list) {
+                serialModel.addRow(new Object[]{
+                    r.get("ID_SERIAL"),
+                    r.get("SERIAL_NUMBER"),
+                    r.get("MA_PN") != null ? "PN#" + r.get("MA_PN") : "",
+                    r.get("TRANG_THAI")
+                });
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void loadStats() {
+        try {
+            Map<String, Integer> counts = dao.countSerialsByStatus(currentMaBienthe, currentMaCN);
+            int total = counts.values().stream().mapToInt(Integer::intValue).sum();
+            int khaDung = counts.getOrDefault("KHA_DUNG", 0);
+            int dangDat = counts.getOrDefault("DANG_DUOC_DAT", 0);
+            int daBan = counts.getOrDefault("DA_BAN", 0);
+            int khac = total - khaDung - dangDat - daBan;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Tổng: ").append(total).append("  |  ");
+            sb.append("🟢 Khả dụng: ").append(khaDung).append("  |  ");
+            sb.append("🟡 Đang đặt: ").append(dangDat).append("  |  ");
+            sb.append("🔴 Đã bán: ").append(daBan);
+            if (khac > 0) sb.append("  |  ⚪ Khác: ").append(khac);
+            lblStats.setText(sb.toString());
+        } catch (Exception e) {
+            lblStats.setText(" ");
+        }
+    }
+
+    // =====================================================================
+    //  UI FACTORY
+    // =====================================================================
+
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Header: [BackBtn] [Title]       [SearchField] [SearchBtn]
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    private JPanel createHeader(String title, String backText, ActionListener backAction) {
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setBackground(Color.WHITE);
+        header.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, PURPLE_LIGHT),
+            new EmptyBorder(14, 20, 14, 20)
+        ));
 
-        jLabel2 = new javax.swing.JLabel();
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        leftPanel.setOpaque(false);
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jLabel2.setText("Tồn kho chi nhánh");
+        if (backText != null && backAction != null) {
+            JButton btnBack = new JButton(backText);
+            btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            btnBack.setForeground(PURPLE);
+            btnBack.setBackground(new Color(245, 235, 250));
+            btnBack.setBorderPainted(false);
+            btnBack.setFocusPainted(false);
+            btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            btnBack.setPreferredSize(new Dimension(110, 32));
+            btnBack.addActionListener(backAction);
+            leftPanel.add(btnBack);
+        }
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addContainerGap(244, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(250, Short.MAX_VALUE))
-        );
-    }// </editor-fold>//GEN-END:initComponents
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setForeground(new Color(30, 41, 59));
+        leftPanel.add(lblTitle);
 
+        header.add(leftPanel, BorderLayout.WEST);
+        return header;
+    }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel2;
-    // End of variables declaration//GEN-END:variables
+    private JTextField addSearchToHeader(JPanel header, String placeholder, ActionListener searchAction) {
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        searchPanel.setOpaque(false);
+        searchPanel.setPreferredSize(new Dimension(300, 35));
+
+        JTextField txt = new JTextField(placeholder);
+        txt.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        txt.setForeground(Color.GRAY);
+        txt.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
+                if (txt.getForeground() == Color.GRAY) { txt.setText(""); txt.setForeground(new Color(30, 41, 59)); }
+            }
+            @Override public void focusLost(FocusEvent e) {
+                if (txt.getText().isEmpty()) { txt.setText(placeholder); txt.setForeground(Color.GRAY); }
+            }
+        });
+        txt.addActionListener(searchAction);
+
+        JButton btnSearch = new JButton("🔍");
+        btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnSearch.setPreferredSize(new Dimension(40, 35));
+        btnSearch.setBackground(PURPLE);
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setBorderPainted(false);
+        btnSearch.setFocusPainted(false);
+        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSearch.addActionListener(searchAction);
+
+        searchPanel.add(txt, BorderLayout.CENTER);
+        searchPanel.add(btnSearch, BorderLayout.EAST);
+        header.add(searchPanel, BorderLayout.EAST);
+
+        return txt;
+    }
+
+    private String getSearchText(JTextField txt) {
+        if (txt == null || txt.getForeground() == Color.GRAY) return null;
+        String t = txt.getText().trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private JTable buildStyledTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setRowHeight(42);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setShowHorizontalLines(true);
+        table.setShowVerticalLines(false);
+        table.setGridColor(new Color(240, 240, 240));
+        table.setSelectionBackground(new Color(245, 235, 250));
+        table.setSelectionForeground(PURPLE);
+        table.setIntercellSpacing(new Dimension(0, 1));
+
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getTableHeader().setBackground(new Color(248, 248, 252));
+        table.getTableHeader().setForeground(new Color(100, 100, 130));
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+
+        table.setRowSorter(new TableRowSorter<>(model));
+
+        // Hover effect
+        table.addMouseMotionListener(new MouseMotionAdapter() {
+            int lastRow = -1;
+            @Override public void mouseMoved(MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                if (row != lastRow) {
+                    lastRow = row;
+                    table.setCursor(row >= 0 ? new Cursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor());
+                }
+            }
+        });
+
+        return table;
+    }
+
+    /** Badge renderer for branch status */
+    private static class StatusRenderer extends DefaultTableCellRenderer {
+        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+            JLabel lbl = (JLabel) super.getTableCellRendererComponent(t, v, s, f, r, c);
+            lbl.setHorizontalAlignment(SwingConstants.CENTER);
+            lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            lbl.setOpaque(true);
+            String status = v != null ? v.toString() : "";
+            if (!s) {
+                if (status.contains("Hoạt động") && !status.contains("Ngừng")) {
+                    lbl.setForeground(new Color(5, 122, 85));
+                    lbl.setBackground(new Color(220, 252, 231));
+                } else {
+                    lbl.setForeground(new Color(185, 28, 28));
+                    lbl.setBackground(new Color(254, 226, 226));
+                }
+            }
+            return lbl;
+        }
+    }
 }
-
