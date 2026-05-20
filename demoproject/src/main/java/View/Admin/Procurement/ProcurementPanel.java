@@ -53,7 +53,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         headerPanel.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Quản lý hóa đơn bán hàng");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
@@ -465,10 +465,22 @@ public class ProcurementPanel extends javax.swing.JPanel {
                 Color colorTop = new Color(175, 122, 197); 
                 Color colorBottom = new Color(210, 160, 205); 
                 
+                String cleanText = getText().trim().toLowerCase();
+                if (cleanText.contains("thêm")) {
+                    colorTop = new Color(40, 167, 69);
+                    colorBottom = new Color(46, 204, 113);
+                } else if (cleanText.contains("sửa")) {
+                    colorTop = new Color(0, 123, 255);
+                    colorBottom = new Color(52, 152, 219);
+                } else if (cleanText.contains("xóa")) {
+                    colorTop = new Color(220, 53, 69);
+                    colorBottom = new Color(231, 76, 60);
+                }
+                
                 GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
                 g2d.setPaint(gp);
                 
-                g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
 
                 g2d.dispose();
                 super.paintComponent(g);

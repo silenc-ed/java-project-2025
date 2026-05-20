@@ -28,7 +28,7 @@ public class WarrantyPanel extends javax.swing.JPanel {
 
         jLabel2 = new javax.swing.JLabel();
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20)); // NOI18N
         jLabel2.setText("Bảo hành");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

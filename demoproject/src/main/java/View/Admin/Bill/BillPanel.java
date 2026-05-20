@@ -43,7 +43,7 @@ public class BillPanel extends javax.swing.JPanel {
 
     private void setupCustomUI() {
         JPanel mainContainer = new JPanel(new BorderLayout(10, 10));
-        mainContainer.setBackground(new Color(245, 247, 250));
+        mainContainer.setBackground(Color.WHITE);
         mainContainer.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         // ================= HEADER =================
@@ -52,12 +52,12 @@ public class BillPanel extends javax.swing.JPanel {
         headerPanel.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Quản lý đơn nhập hàng");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JSeparator separator = new JSeparator();
         separator.setAlignmentX(Component.LEFT_ALIGNMENT);
-        separator.setForeground(new Color(200, 200, 200));
+        separator.setForeground(new Color(226, 232, 240));
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
         headerPanel.add(lblTitle);
@@ -69,29 +69,20 @@ public class BillPanel extends javax.swing.JPanel {
 
         // ================= CENTER =================
         JPanel centerPanel = new JPanel(new BorderLayout(0, 0));
-        centerPanel.setBackground(new Color(215, 215, 215));
-        centerPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
 
         // Phần Search Bar
-        JPanel topSearchPanel = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                Color colorTop = new Color(175, 122, 197); 
-                Color colorBottom = new Color(210, 160, 205); 
-                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
-                g2d.setPaint(gp);
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-                g2d.dispose();
-                super.paintComponent(g);
-            }
-        };
-        topSearchPanel.setOpaque(false);
-        topSearchPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel topSearchPanel = new JPanel(new BorderLayout());
+        topSearchPanel.setBackground(Color.WHITE);
+        topSearchPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
 
         JTextField txtSearch = new JTextField("Tìm kiếm theo Mã PN, Nhà cung cấp, Mã NV, Mã CN...");
-        txtSearch.setPreferredSize(new Dimension(0, 30));
-        txtSearch.setBackground(new Color(225, 225, 225));
+        txtSearch.setPreferredSize(new Dimension(0, 35));
+        txtSearch.setBackground(new Color(248, 250, 252));
         txtSearch.setForeground(Color.GRAY);
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
@@ -135,9 +126,10 @@ public class BillPanel extends javax.swing.JPanel {
         table.setRowHeight(35);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.getTableHeader().setBackground(new Color(230, 230, 230));
+        table.getTableHeader().setBackground(new Color(241, 245, 249));
+        table.getTableHeader().setForeground(new Color(100, 116, 139));
         table.getTableHeader().setPreferredSize(new Dimension(0, 35));
-        table.setBackground(new Color(215, 215, 215)); 
+        table.setBackground(Color.WHITE); 
         table.setShowGrid(false);
 
         table.getColumnModel().getColumn(0).setMaxWidth(40);
@@ -145,7 +137,7 @@ public class BillPanel extends javax.swing.JPanel {
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(new Color(215, 215, 215)); 
+        scrollPane.getViewport().setBackground(Color.WHITE); 
         
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
@@ -191,8 +183,11 @@ public class BillPanel extends javax.swing.JPanel {
         
         // ================= ADD FORM PANEL =================
         JPanel addFormPanel = new JPanel(new BorderLayout(10, 10));
-        addFormPanel.setBackground(new Color(230, 240, 250));
-        addFormPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        addFormPanel.setBackground(new Color(248, 250, 252));
+        addFormPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+            new EmptyBorder(10, 10, 10, 10)
+        ));
         
         JPanel inputGrid = new JPanel(new GridLayout(2, 8, 10, 5));
         inputGrid.setOpaque(false);
@@ -547,7 +542,26 @@ public class BillPanel extends javax.swing.JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, new Color(142, 68, 173), 0, getHeight(), new Color(175, 122, 197));
+                
+                Color colorTop = new Color(175, 122, 197); 
+                Color colorBottom = new Color(210, 160, 205); 
+                
+                String cleanText = getText().trim().toLowerCase();
+                if (cleanText.contains("thêm") || cleanText.equals("lưu")) {
+                    colorTop = new Color(40, 167, 69);
+                    colorBottom = new Color(46, 204, 113);
+                } else if (cleanText.contains("sửa")) {
+                    colorTop = new Color(0, 123, 255);
+                    colorBottom = new Color(52, 152, 219);
+                } else if (cleanText.contains("xóa")) {
+                    colorTop = new Color(220, 53, 69);
+                    colorBottom = new Color(231, 76, 60);
+                } else if (cleanText.contains("hủy")) {
+                    colorTop = new Color(108, 117, 125);
+                    colorBottom = new Color(148, 163, 184);
+                }
+                
+                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
                 g2d.setPaint(gp);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2d.dispose();

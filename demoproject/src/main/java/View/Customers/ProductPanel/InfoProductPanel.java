@@ -74,7 +74,7 @@ public class InfoProductPanel extends javax.swing.JPanel {
             javax.swing.JOptionPane.showMessageDialog(this, "Đã thêm vào giỏ hàng!");
             java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
             if (window instanceof View.Customers.Main) {
-                View.Customers.CartDrawer drawer = ((View.Customers.Main) window).cartDrawer;
+                View.Customers.Cart.CartDrawer drawer = ((View.Customers.Main) window).cartDrawer;
                 if (drawer != null && drawer.isShowingDrawer()) {
                     drawer.updateCartContent();
                 }

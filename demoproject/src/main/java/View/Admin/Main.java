@@ -27,6 +27,12 @@ public class Main extends javax.swing.JFrame {
         mainBody.revalidate();
     }
 
+    public void setFullName(String hoTen) {
+        if (menu1 != null) {
+            menu1.setFullName(hoTen);
+        }
+    }
+
     public Main() {
         initComponents();
         this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
@@ -116,7 +122,7 @@ public class Main extends javax.swing.JFrame {
                 javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
                 popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
 
-                View.Customers.UserOptionPanel optionPanel = new View.Customers.UserOptionPanel();
+                View.Customers.UserOption.UserOptionPanel optionPanel = new View.Customers.UserOption.UserOptionPanel();
 
                 // Thêm sự kiện cho list các chức năng (Hồ sơ, Cài đặt, ...)
                 optionPanel.getListOptionUser().addListSelectionListener(e -> {
@@ -128,7 +134,10 @@ public class Main extends javax.swing.JFrame {
                         popupMenu.setVisible(false);
                         optionPanel.getListOptionUser().clearSelection();
 
-                        if ("Đăng xuất".equals(selected)) {
+                        if ("Hồ sơ".equals(selected)) {
+                            menu1.clearSelection();
+                            showForm(new View.Customers.UserAccount.UserAccountPanel());
+                        } else if ("Đăng xuất".equals(selected)) {
                             int confirm = javax.swing.JOptionPane.showConfirmDialog(Main.this,
                                     "Bạn có chắc chắn muốn đăng xuất không?", "Xác nhận đăng xuất",
                                     javax.swing.JOptionPane.YES_NO_OPTION);
@@ -155,9 +164,8 @@ public class Main extends javax.swing.JFrame {
         menu1.addEventUserNameClicked(new Runnable() {
             @Override
             public void run() {
-                // Admin profile panel can be implemented here later
-                javax.swing.JOptionPane.showMessageDialog(Main.this, "Chức năng xem hồ sơ Admin đang phát triển.",
-                        "Thông báo", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                menu1.clearSelection();
+                showForm(new View.Customers.UserAccount.UserAccountPanel());
             }
         });
 

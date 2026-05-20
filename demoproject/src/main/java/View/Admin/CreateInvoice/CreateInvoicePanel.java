@@ -74,7 +74,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             new EmptyBorder(18, 25, 18, 25)
         ));
         JLabel lblTitle = new JLabel("Tạo đơn đặt hàng");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         headerPanel.add(lblTitle, BorderLayout.WEST);
         this.add(headerPanel, BorderLayout.NORTH);

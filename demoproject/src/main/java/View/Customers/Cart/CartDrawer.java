@@ -1,5 +1,6 @@
-package View.Customers;
+package View.Customers.Cart;
 
+import View.Customers.Main;
 import View.Customers.StockPanel.PacketPanel;
 import Model.CartItem;
 import Model.CartManager;
@@ -58,7 +59,7 @@ public class CartDrawer extends JPanel {
         
         JButton processBtn = new JButton("Xử lý giỏ hàng");
         processBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        processBtn.setBackground(new Color(79, 70, 229));
+        processBtn.setBackground(new Color(40, 167, 69));
         processBtn.setForeground(Color.WHITE);
         processBtn.setFocusPainted(false);
         processBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -173,6 +174,9 @@ public class CartDrawer extends JPanel {
                 // Remove button
                 JButton removeBtn = new JButton("Xóa");
                 removeBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                removeBtn.setBackground(new Color(220, 53, 69));
+                removeBtn.setForeground(Color.WHITE);
+                removeBtn.setFocusPainted(false);
                 removeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 removeBtn.addActionListener(e -> {
                     CartManager.getInstance().getItems().remove(item);

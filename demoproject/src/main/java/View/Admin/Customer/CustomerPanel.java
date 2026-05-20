@@ -41,7 +41,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
 
         JLabel title = new JLabel("Quản lý khách hàng");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
         title.setForeground(new Color(30, 41, 59));
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -57,7 +57,7 @@ public class CustomerPanel extends javax.swing.JPanel {
 
         JButton btnAdd = new JButton("+ Thêm khách hàng");
         btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnAdd.setBackground(new Color(37, 99, 235));
+        btnAdd.setBackground(new Color(40, 167, 69));
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBorder(new EmptyBorder(8, 18, 8, 18));
         btnAdd.setFocusPainted(false);
@@ -66,7 +66,7 @@ public class CustomerPanel extends javax.swing.JPanel {
 
         JButton btnRefresh = new JButton("↻ Cập nhật");
         btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnRefresh.setBackground(new Color(5, 150, 105));
+        btnRefresh.setBackground(new Color(40, 167, 69));
         btnRefresh.setForeground(Color.WHITE);
         btnRefresh.setBorder(new EmptyBorder(8, 16, 8, 16));
         btnRefresh.setFocusPainted(false);
@@ -250,7 +250,7 @@ public class CustomerPanel extends javax.swing.JPanel {
 
         JButton btnSave = new JButton("Lưu");
         btnSave.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnSave.setBackground(new Color(37, 99, 235));
+        btnSave.setBackground(new Color(40, 167, 69));
         btnSave.setForeground(Color.WHITE);
         btnSave.setBorder(new EmptyBorder(10, 0, 10, 0));
         btnSave.setFocusPainted(false);
@@ -366,7 +366,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         boolean isActive = "Hoạt động".equals(trangThaiTk);
         if (hasAccount) {
             btnToggle.setText(isActive ? "Khóa TK" : "Mở khóa TK");
-            btnToggle.setBackground(isActive ? new Color(220, 38, 38) : new Color(5, 150, 105));
+            btnToggle.setBackground(isActive ? new Color(220, 53, 69) : new Color(40, 167, 69));
         } else {
             btnToggle.setText("Chưa có TK");
             btnToggle.setBackground(new Color(148, 163, 184));
@@ -384,7 +384,7 @@ public class CustomerPanel extends javax.swing.JPanel {
 
         JButton btnEdit = new JButton("Chỉnh sửa");
         btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnEdit.setBackground(new Color(37, 99, 235));
+        btnEdit.setBackground(new Color(0, 123, 255));
         btnEdit.setForeground(Color.WHITE);
         btnEdit.setBorder(new EmptyBorder(8, 18, 8, 18));
         btnEdit.setFocusPainted(false);
@@ -400,7 +400,7 @@ public class CustomerPanel extends javax.swing.JPanel {
                 tfNewPass.setEditable(true);
                 tfNewPass.setBackground(new Color(255, 255, 240));
                 btnEdit.setText("Hoàn tất");
-                btnEdit.setBackground(new Color(5, 150, 105));
+                btnEdit.setBackground(new Color(40, 167, 69));
             } else {
                 String hoTen = tfHoTen.getText().trim();
                 String sdt = tfSdt.getText().trim();

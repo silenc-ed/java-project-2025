@@ -240,7 +240,7 @@ public class ProductPanel extends javax.swing.JPanel {
         headerPanel.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Quản lý sản phẩm");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(15, 23, 42));
         headerPanel.add(lblTitle, BorderLayout.WEST);
 
@@ -249,7 +249,7 @@ public class ProductPanel extends javax.swing.JPanel {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, new Color(175, 122, 197), 0, getHeight(), new Color(210, 160, 205));
+                GradientPaint gp = new GradientPaint(0, 0, new Color(40, 167, 69), 0, getHeight(), new Color(46, 204, 113));
                 g2.setPaint(gp);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.dispose();
@@ -783,16 +783,18 @@ public class ProductPanel extends javax.swing.JPanel {
             footer.setBackground(new Color(248, 250, 252));
             
             btnSave.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            btnSave.setBackground(new Color(37, 99, 235));
+            btnSave.setBackground(new Color(40, 167, 69));
             btnSave.setForeground(Color.WHITE);
             btnSave.setFocusPainted(false);
             btnSave.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+            btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
             
             btnCancel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            btnCancel.setBackground(new Color(226, 232, 240));
-            btnCancel.setForeground(new Color(71, 85, 105));
+            btnCancel.setBackground(new Color(220, 53, 69));
+            btnCancel.setForeground(Color.WHITE);
             btnCancel.setFocusPainted(false);
             btnCancel.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+            btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
             
             footer.add(btnCancel);
             footer.add(btnSave);

@@ -132,7 +132,7 @@ public class CategoryPopupDialog extends JDialog {
 
         JButton btnSearchBudget = new JButton("TÌM SẢN PHẨM");
         btnSearchBudget.putClientProperty("JButton.buttonType", "roundRect");
-        btnSearchBudget.setBackground(ACCENT_PRIMARY);
+        btnSearchBudget.setBackground(new Color(0, 123, 255));
         btnSearchBudget.setForeground(Color.WHITE);
         btnSearchBudget.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSearchBudget.setFocusPainted(false);

@@ -441,7 +441,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         }
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         leftPanel.add(lblTitle);
 
@@ -470,7 +470,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         JButton btnSearch = new JButton("🔍");
         btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnSearch.setPreferredSize(new Dimension(40, 35));
-        btnSearch.setBackground(PURPLE);
+        btnSearch.setBackground(new Color(0, 123, 255));
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setBorderPainted(false);
         btnSearch.setFocusPainted(false);

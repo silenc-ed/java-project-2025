@@ -36,7 +36,7 @@ public class DashboardPanel extends JPanel {
         header.setPreferredSize(new Dimension(0, 52));
 
         JLabel lblTitle = new JLabel("Tổng quan");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         lblTitle.setBorder(new EmptyBorder(0, 0, 0, 28));
 

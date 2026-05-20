@@ -7,6 +7,11 @@ package View.Customers;
 import View.Customers.Warranty.WarrantyPanel;
 import View.Customers.StockPanel.PacketPanel;
 import View.Customers.ProductPanel.ProductPanel;
+import View.Customers.Cart.CartDrawer;
+import View.Customers.Voucher.VoucherPanel;
+import View.Customers.UserAccount.UserAccountPanel;
+import View.Customers.UserOption.UserOptionPanel;
+
 
 /**
  *
@@ -24,6 +29,12 @@ public class Main extends javax.swing.JFrame {
 
     public Menu getMenu() {
         return menu1;
+    }
+    
+    public void setFullName(String hoTen) {
+        if (menu1 != null) {
+            menu1.setFullName(hoTen);
+        }
     }
     
     public void toggleCartDrawer() {
@@ -94,7 +105,7 @@ public class Main extends javax.swing.JFrame {
                 javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
                 popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
                 
-                View.Customers.UserOptionPanel optionPanel = new View.Customers.UserOptionPanel();
+                UserOptionPanel optionPanel = new UserOptionPanel();
                 
                 // Thêm sự kiện cho list các chức năng (Hồ sơ, Cài đặt, ...)
                 optionPanel.getListOptionUser().addListSelectionListener(e -> {

@@ -149,41 +149,16 @@ public class ProductPanel extends javax.swing.JPanel {
                     return;
                 }
 
-                // Chạy API request trên một thread riêng biệt để không làm đơ UI
+                // Chạy tìm kiếm trong database trên một thread riêng biệt để không làm đơ UI
                 new Thread(() -> {
                     java.util.List<String> suggestions = new java.util.ArrayList<>();
                     try {
-                        String urlStr = "http://suggestqueries.google.com/complete/search?client=chrome&q=" + java.net.URLEncoder.encode(text, "UTF-8");
-                        java.net.URL url = new java.net.URL(urlStr);
-                        java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("GET");
-                        conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                        conn.setConnectTimeout(2000);
-                        conn.setReadTimeout(2000);
-
-                        java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream(), "UTF-8"));
-                        StringBuilder response = new StringBuilder();
-                        String inputLine;
-                        while ((inputLine = in.readLine()) != null) {
-                            response.append(inputLine);
-                        }
-                        in.close();
-
-                        // Parse kết quả JSON đơn giản
-                        String res = response.toString();
-                        int startIndex = res.indexOf(",[");
-                        if (startIndex != -1) {
-                            String arrayPart = res.substring(startIndex + 1);
-                            int endIndex = arrayPart.indexOf("]");
-                            if (endIndex != -1) {
-                                java.util.regex.Pattern p = java.util.regex.Pattern.compile("\"([^\"]*)\"");
-                                java.util.regex.Matcher m = p.matcher(arrayPart);
-                                int count = 0;
-                                while (m.find() && count < 6) {
-                                    suggestions.add(m.group(1));
-                                    count++;
-                                }
-                            }
+                        java.util.List<Model.SanPham> list = Controller.SanPhamDAO.searchByName(text);
+                        int count = 0;
+                        for (Model.SanPham sp : list) {
+                            if (count >= 6) break;
+                            suggestions.add(sp.getTenSp());
+                            count++;
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();

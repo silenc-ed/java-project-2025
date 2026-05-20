@@ -52,42 +52,25 @@ public class PacketPanel extends javax.swing.JPanel {
         // ================= HEADER =================
 
         JPanel headerContainer = new JPanel(new BorderLayout(15, 0));
-headerContainer.setOpaque(false);
+        headerContainer.setOpaque(false);
 
-// Tạo nút Trở về
-JButton btnBack = new JButton("<");
-btnBack.setFont(new Font("Segoe UI", Font.BOLD, 22));
-btnBack.setContentAreaFilled(false); // Làm trong suốt nền nút
-btnBack.setBorderPainted(false);     // Xóa viền nút
-btnBack.setFocusPainted(false);
-btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
-btnBack.addActionListener(e -> {
-    Window window = SwingUtilities.getWindowAncestor(PacketPanel.this);
-    if (window instanceof View.Customers.Main) {
-        View.Customers.Main mainFrame = (View.Customers.Main) window;
-        mainFrame.getMenu().setSelectedIndex(0);
-        mainFrame.showForm(new View.Customers.ProductPanel.ProductPanel());
-    }
-});
+        // Panel chứa text tiêu đề
+        JPanel titleTextPanel = new JPanel();
+        titleTextPanel.setLayout(new BoxLayout(titleTextPanel, BoxLayout.Y_AXIS));
+        titleTextPanel.setOpaque(false);
 
-// Panel chứa text tiêu đề
-JPanel titleTextPanel = new JPanel();
-titleTextPanel.setLayout(new BoxLayout(titleTextPanel, BoxLayout.Y_AXIS));
-titleTextPanel.setOpaque(false);
+        JLabel lblTitle = new JLabel("Giỏ hàng của bạn");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
-JLabel lblTitle = new JLabel("Giỏ hàng của bạn");
-lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblSub = new JLabel("Bạn có 0 sản phẩm trong giỏ hàng");
+        lblSub.setForeground(Color.GRAY);
 
-lblSub = new JLabel("Bạn có 0 sản phẩm trong giỏ hàng");
-lblSub.setForeground(Color.GRAY);
+        titleTextPanel.add(lblTitle);
+        titleTextPanel.add(lblSub);
 
-titleTextPanel.add(lblTitle);
-titleTextPanel.add(lblSub);
+        headerContainer.add(titleTextPanel, BorderLayout.CENTER);
 
-headerContainer.add(btnBack, BorderLayout.WEST);
-headerContainer.add(titleTextPanel, BorderLayout.CENTER);
-
-add(headerContainer, BorderLayout.NORTH);
+        add(headerContainer, BorderLayout.NORTH);
         // ================= MAIN =================
 
         JPanel main = new JPanel(new BorderLayout(20, 0));
@@ -247,7 +230,7 @@ add(headerContainer, BorderLayout.NORTH);
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnPanel.setOpaque(false);
 
-        GradientButton btnSaveShipping = new GradientButton("Lưu thông tin");
+        GradientButton btnSaveShipping = new GradientButton("Lưu thông tin", new Color(40, 167, 69), new Color(46, 204, 113));
         btnSaveShipping.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSaveShipping.setPreferredSize(new Dimension(150, 40));
         btnSaveShipping.addActionListener(e -> {
@@ -303,7 +286,7 @@ add(headerContainer, BorderLayout.NORTH);
         cbPromo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         cbPromo.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        GradientButton btnApply = new GradientButton("Áp dụng");
+        GradientButton btnApply = new GradientButton("Áp dụng", new Color(0, 123, 255), new Color(51, 153, 255));
         btnApply.setBorder(new EmptyBorder(5, 15, 5, 15));
         btnApply.addActionListener(e -> {
             int selected = cbPromo.getSelectedIndex();
@@ -392,7 +375,7 @@ add(headerContainer, BorderLayout.NORTH);
 
         summary.add(Box.createVerticalStrut(25));
 
-      GradientButton btnOrder = new GradientButton("Đặt hàng ngay");
+      GradientButton btnOrder = new GradientButton("Đặt hàng ngay", new Color(40, 167, 69), new Color(46, 204, 113));
       btnOrder.setFont(new Font("Segoe UI", Font.BOLD, 18));
       btnOrder.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
@@ -491,8 +474,8 @@ add(headerContainer, BorderLayout.NORTH);
                 actionPanel.setOpaque(false);
                 JButton removeBtn = new JButton("Xóa");
                 removeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                removeBtn.setBackground(new Color(255, 235, 238));
-                removeBtn.setForeground(new Color(220, 53, 69));
+                removeBtn.setBackground(new Color(220, 53, 69));
+                removeBtn.setForeground(Color.WHITE);
                 removeBtn.setFocusPainted(false);
                 removeBtn.setBorder(new EmptyBorder(5, 15, 5, 15));
                 removeBtn.addActionListener(e -> {
@@ -540,34 +523,39 @@ add(headerContainer, BorderLayout.NORTH);
         return border;
     }
     private static class GradientButton extends JButton {
-    public GradientButton(String text) {
-        super(text);
-        setContentAreaFilled(false); // Quan trọng: Để không vẽ nền mặc định
-        setFocusPainted(false);
-        setBorder(new EmptyBorder(10, 20, 10, 20));
-        setForeground(Color.WHITE);
-        setCursor(new Cursor(Cursor.HAND_CURSOR));
+        private Color color1 = new Color(106, 76, 156); // Tím
+        private Color color2 = new Color(230, 190, 210); // Hồng nhạt
+
+        public GradientButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorder(new EmptyBorder(10, 20, 10, 20));
+            setForeground(Color.WHITE);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+
+        public GradientButton(String text, Color c1, Color c2) {
+            this(text);
+            this.color1 = c1;
+            this.color2 = c2;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Vẽ Gradient từ trái sang phải
+            GradientPaint gp = new GradientPaint(0, 0, color1, getWidth(), 0, color2);
+            g2d.setPaint(gp);
+            
+            // Vẽ hình chữ nhật bo góc (15px)
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+
+            super.paintComponent(g);
+        }
     }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Định nghĩa dải màu Gradient (Tím -> Hồng)
-        Color color1 = new Color(106, 76, 156); // Tím
-        Color color2 = new Color(230, 190, 210); // Hồng nhạt
-        
-        // Vẽ Gradient từ trái sang phải
-        GradientPaint gp = new GradientPaint(0, 0, color1, getWidth(), 0, color2);
-        g2d.setPaint(gp);
-        
-        // Vẽ hình chữ nhật bo góc (15px)
-        g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-
-        super.paintComponent(g);
-    }
-}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

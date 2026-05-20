@@ -56,7 +56,7 @@ public class VoucherPanel extends javax.swing.JPanel {
             new EmptyBorder(14, 20, 14, 20)
         ));
         JLabel lblTitle = new JLabel("Quản lý khuyến mãi");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         header.add(lblTitle, BorderLayout.WEST);
 
@@ -78,7 +78,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         txtSearch.addActionListener(e -> loadData(getSearchKeyword()));
         JButton btnSearch = new JButton("🔍");
         btnSearch.setPreferredSize(new Dimension(40, 35));
-        btnSearch.setBackground(PURPLE);
+        btnSearch.setBackground(new Color(0, 123, 255));
         btnSearch.setForeground(Color.WHITE);
         btnSearch.setBorderPainted(false);
         btnSearch.setFocusPainted(false);
@@ -292,9 +292,9 @@ public class VoucherPanel extends javax.swing.JPanel {
         btnPanel.setBackground(Color.WHITE);
         btnPanel.setBorder(new EmptyBorder(12, 0, 0, 0));
 
-        JButton btnAdd = makeButton("Thêm", new Color(16, 185, 129));
-        JButton btnUpdate = makeButton("Sửa", new Color(59, 130, 246));
-        JButton btnDelete = makeButton("Xóa", new Color(220, 38, 38));
+        JButton btnAdd = makeButton("Thêm", new Color(40, 167, 69));
+        JButton btnUpdate = makeButton("Sửa", new Color(0, 123, 255));
+        JButton btnDelete = makeButton("Xóa", new Color(220, 53, 69));
         JButton btnClear = makeButton("Mới", new Color(148, 163, 184));
 
         btnAdd.addActionListener(e -> addPromotion());
