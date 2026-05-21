@@ -19,7 +19,7 @@ public class LoginProcess {
         try (Connection con = ConnectionUtils.getMyConnection()) {
 
             String SQL = "SELECT MA_TK, PASSWORD_HASH, MA_NV "
-                    + " FROM TAIKHOAN "
+                    + " FROM TAI_KHOAN "
                     + " WHERE TRIM(USERNAME) = ? ";
 
             PreparedStatement ps = con.prepareStatement(SQL);

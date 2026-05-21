@@ -16,14 +16,14 @@ public class DashboardDAO {
 
     public static double getTongLoiNhuan(Date from, Date to) {
         String sql = "SELECT NVL(SUM(h.THANH_TIEN - NVL(cost.CHI_PHI, 0)), 0) AS LOI_NHUAN " +
-                     "FROM HOADON h " +
+                     "FROM HOA_DON h " +
                      "LEFT JOIN (" +
                      "  SELECT ct.MA_HD, SUM(ct.SO_LUONG * cpn.DON_GIA_NHAP) AS CHI_PHI " +
-                     "  FROM CHITIET_HOADON ct " +
-                     "  JOIN BIENTHE_SANPHAM bt ON ct.MA_SP = bt.MA_SP " +
-                     "  JOIN (SELECT MA_BIENTHE, DON_GIA_NHAP FROM CHITIET_PHIEUNHAP " +
+                     "  FROM CHI_TIET_HOA_DON ct " +
+                     "  JOIN BIEN_THE_SAN_PHAM bt ON ct.MA_SP = bt.MA_SP " +
+                     "  JOIN (SELECT MA_BIENTHE, DON_GIA_NHAP FROM CHI_TIET_PHIEU_NHAP " +
                      "        WHERE (MA_BIENTHE, MA_PN) IN " +
-                     "        (SELECT MA_BIENTHE, MAX(MA_PN) FROM CHITIET_PHIEUNHAP GROUP BY MA_BIENTHE)) cpn " +
+                     "        (SELECT MA_BIENTHE, MAX(MA_PN) FROM CHI_TIET_PHIEU_NHAP GROUP BY MA_BIENTHE)) cpn " +
                      "  ON bt.MA_BIENTHE = cpn.MA_BIENTHE " +
                      "  GROUP BY ct.MA_HD" +
                      ") cost ON h.MA_HD = cost.MA_HD " +
@@ -42,7 +42,7 @@ public class DashboardDAO {
     }
 
     public static double getTongDoanhThu(Date from, Date to) {
-        String sql = "SELECT NVL(SUM(THANH_TIEN), 0) AS DOANH_THU FROM HOADON " +
+        String sql = "SELECT NVL(SUM(THANH_TIEN), 0) AS DOANH_THU FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -61,7 +61,7 @@ public class DashboardDAO {
         Map<String, Double> map = new LinkedHashMap<>();
         String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'YYYY') AS NAM, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM HOADON " +
+                     "FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
                      "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'YYYY') " +
                      "ORDER BY NAM";
@@ -81,7 +81,7 @@ public class DashboardDAO {
         for (int m = 1; m <= 12; m++) map.put("T" + m, 0.0);
         String sql = "SELECT TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS THANG, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM HOADON " +
+                     "FROM HOA_DON " +
                      "WHERE EXTRACT(YEAR FROM THOI_GIAN_LAP) = ? " +
                      "GROUP BY TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) " +
                      "ORDER BY THANG";
@@ -102,7 +102,7 @@ public class DashboardDAO {
                      "TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS M, " +
                      "TO_CHAR(THOI_GIAN_LAP, 'YY') AS Y2, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM HOADON " +
+                     "FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
                      "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'YYYY-MM'), " +
                      "TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')), " +
@@ -135,7 +135,7 @@ public class DashboardDAO {
         end.add(Calendar.DAY_OF_MONTH, 1);
         String sql = "SELECT FLOOR(TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'HH24')) / 2) * 2 AS GIO_SLOT, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM HOADON " +
+                     "FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
                      "GROUP BY FLOOR(TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'HH24')) / 2) * 2 " +
                      "ORDER BY GIO_SLOT";
@@ -157,7 +157,7 @@ public class DashboardDAO {
         Map<String, Double> map = new LinkedHashMap<>();
         String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'DD/MM') AS NGAY, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM HOADON " +
+                     "FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
                      "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'DD/MM') " +
                      "ORDER BY MIN(THOI_GIAN_LAP)";
@@ -181,9 +181,9 @@ public class DashboardDAO {
         String sql = "SELECT sp.TEN_SP, lsp.TEN_LSP, " +
                      "NVL(SUM(ct.SO_LUONG), 0) AS TONG_BAN, " +
                      "NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM CHITIET_HOADON ct " +
-                     "JOIN HOADON h ON ct.MA_HD = h.MA_HD " +
-                     "JOIN SANPHAM sp ON ct.MA_SP = sp.MA_SP " +
+                     "FROM CHI_TIET_HOA_DON ct " +
+                     "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
+                     "JOIN SAN_PHAM sp ON ct.MA_SP = sp.MA_SP " +
                      "JOIN LOAI_SANPHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY sp.MA_SP, sp.TEN_SP, lsp.TEN_LSP " +
@@ -215,9 +215,9 @@ public class DashboardDAO {
         String sql = "SELECT lsp.TEN_LSP, " +
                      "NVL(SUM(ct.SO_LUONG), 0) AS TONG_BAN, " +
                      "NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
-                     "FROM CHITIET_HOADON ct " +
-                     "JOIN HOADON h ON ct.MA_HD = h.MA_HD " +
-                     "JOIN SANPHAM sp ON ct.MA_SP = sp.MA_SP " +
+                     "FROM CHI_TIET_HOA_DON ct " +
+                     "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
+                     "JOIN SAN_PHAM sp ON ct.MA_SP = sp.MA_SP " +
                      "JOIN LOAI_SANPHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY lsp.MA_LSP, lsp.TEN_LSP " +
@@ -244,8 +244,8 @@ public class DashboardDAO {
     }
 
     public static long getTongSanPhamBan(Date from, Date to) {
-        String sql = "SELECT NVL(SUM(ct.SO_LUONG), 0) AS TONG FROM CHITIET_HOADON ct " +
-                     "JOIN HOADON h ON ct.MA_HD = h.MA_HD " +
+        String sql = "SELECT NVL(SUM(ct.SO_LUONG), 0) AS TONG FROM CHI_TIET_HOA_DON ct " +
+                     "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -261,7 +261,7 @@ public class DashboardDAO {
     }
 
     public static long getTongDonHang(Date from, Date to) {
-        String sql = "SELECT COUNT(*) AS TONG FROM HOADON " +
+        String sql = "SELECT COUNT(*) AS TONG FROM HOA_DON " +
                      "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ?";
         return countQuery(sql, from, to);
     }
@@ -270,12 +270,12 @@ public class DashboardDAO {
         List<Object[]> list = new ArrayList<>();
         String sql = "SELECT h.MA_HD, NVL(kh.HO_TEN, 'Khách lẻ') AS HO_TEN, " +
                      "(SELECT LISTAGG(sp.TEN_SP, ', ') WITHIN GROUP (ORDER BY sp.TEN_SP) " +
-                     " FROM CHITIET_HOADON ct2 JOIN SANPHAM sp ON ct2.MA_SP = sp.MA_SP " +
+                     " FROM CHI_TIET_HOA_DON ct2 JOIN SAN_PHAM sp ON ct2.MA_SP = sp.MA_SP " +
                      " WHERE ct2.MA_HD = h.MA_HD AND ROWNUM <= 2) AS SAN_PHAM, " +
                      "h.THANH_TIEN, " +
                      "TO_CHAR(h.THOI_GIAN_LAP, 'DD/MM/YYYY HH24:MI') AS THOI_GIAN " +
-                     "FROM HOADON h " +
-                     "LEFT JOIN KHACHHANG kh ON h.MA_KH = kh.MA_KH " +
+                     "FROM HOA_DON h " +
+                     "LEFT JOIN KHACH_HANG kh ON h.MA_KH = kh.MA_KH " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "ORDER BY h.THOI_GIAN_LAP DESC " +
                      "FETCH FIRST ? ROWS ONLY";

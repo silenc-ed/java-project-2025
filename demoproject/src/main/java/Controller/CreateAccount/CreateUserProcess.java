@@ -19,7 +19,7 @@ public class CreateUserProcess {
         try (Connection con = ConnectionUtils.getMyConnection()) {
         
         String SQL = "SELECT * "
-                + " FROM KHACHHANG " 
+                + " FROM KHACH_HANG " 
                 + " WHERE (SDT = ? "
                 + " OR EMAIL = ?) ";
         

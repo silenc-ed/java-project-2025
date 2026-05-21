@@ -16,8 +16,8 @@ public class KhachHangDAO {
                      "kh.DIEM_TICH_LUY, " +
                      "NVL(tk.TRANG_THAI, 'Chưa có TK') AS TRANG_THAI_TK, " +
                      "tk.USERNAME " +
-                     "FROM KHACHHANG kh " +
-                     "LEFT JOIN TAIKHOAN tk ON kh.MA_KH = tk.MA_KH " +
+                     "FROM KHACH_HANG kh " +
+                     "LEFT JOIN TAI_KHOAN tk ON kh.MA_KH = tk.MA_KH " +
                      "ORDER BY kh.MA_KH DESC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -45,8 +45,8 @@ public class KhachHangDAO {
                      "kh.DIEM_TICH_LUY, " +
                      "NVL(tk.TRANG_THAI, 'Chưa có TK') AS TRANG_THAI_TK, " +
                      "tk.USERNAME " +
-                     "FROM KHACHHANG kh " +
-                     "LEFT JOIN TAIKHOAN tk ON kh.MA_KH = tk.MA_KH " +
+                     "FROM KHACH_HANG kh " +
+                     "LEFT JOIN TAI_KHOAN tk ON kh.MA_KH = tk.MA_KH " +
                      "WHERE kh.MA_KH = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -78,7 +78,7 @@ public class KhachHangDAO {
             con = ConnectionUtils.getMyConnection();
             con.setAutoCommit(false);
 
-            String sqlKH = "INSERT INTO KHACHHANG (HO_TEN, SDT, DIA_CHI, EMAIL) VALUES (?, ?, ?, ?)";
+            String sqlKH = "INSERT INTO KHACH_HANG (HO_TEN, SDT, DIA_CHI, EMAIL) VALUES (?, ?, ?, ?)";
             long maKh;
             try (PreparedStatement ps = con.prepareStatement(sqlKH, new String[]{"MA_KH"})) {
                 ps.setString(1, hoTen);
@@ -93,7 +93,7 @@ public class KhachHangDAO {
             }
 
             if (username != null && !username.trim().isEmpty()) {
-                String sqlTK = "INSERT INTO TAIKHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
+                String sqlTK = "INSERT INTO TAI_KHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
                                "VALUES (?, ?, ?, 'Hoạt động')";
                 try (PreparedStatement ps2 = con.prepareStatement(sqlTK)) {
                     ps2.setLong(1, maKh);
@@ -115,7 +115,7 @@ public class KhachHangDAO {
     }
 
     public static boolean capNhatKhachHang(long maKh, String hoTen, String sdt, String diaChi, String email) {
-        String sql = "UPDATE KHACHHANG SET HO_TEN = ?, SDT = ?, DIA_CHI = ?, EMAIL = ? WHERE MA_KH = ?";
+        String sql = "UPDATE KHACH_HANG SET HO_TEN = ?, SDT = ?, DIA_CHI = ?, EMAIL = ? WHERE MA_KH = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, hoTen);
@@ -131,7 +131,7 @@ public class KhachHangDAO {
     }
 
     public static String toggleTrangThaiTK(long maKh) {
-        String sqlGet = "SELECT TRANG_THAI FROM TAIKHOAN WHERE MA_KH = ?";
+        String sqlGet = "SELECT TRANG_THAI FROM TAI_KHOAN WHERE MA_KH = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sqlGet)) {
             ps.setLong(1, maKh);
@@ -139,7 +139,7 @@ public class KhachHangDAO {
                 if (!rs.next()) return null;
                 String current = rs.getString("TRANG_THAI");
                 String next = "Hoạt động".equals(current) ? "Bị khóa" : "Hoạt động";
-                String sqlUpd = "UPDATE TAIKHOAN SET TRANG_THAI = ? WHERE MA_KH = ?";
+                String sqlUpd = "UPDATE TAI_KHOAN SET TRANG_THAI = ? WHERE MA_KH = ?";
                 try (PreparedStatement ps2 = con.prepareStatement(sqlUpd)) {
                     ps2.setString(1, next);
                     ps2.setLong(2, maKh);
@@ -155,7 +155,7 @@ public class KhachHangDAO {
 
     public static boolean capNhatTaiKhoan(long maKh, String username, String newPassword) {
         if (newPassword != null && !newPassword.trim().isEmpty()) {
-            String sql = "UPDATE TAIKHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?";
+            String sql = "UPDATE TAI_KHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?";
             try (Connection con = ConnectionUtils.getMyConnection();
                  PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, username);
@@ -164,7 +164,7 @@ public class KhachHangDAO {
                 return ps.executeUpdate() > 0;
             } catch (Exception e) { e.printStackTrace(); }
         } else {
-            String sql = "UPDATE TAIKHOAN SET USERNAME = ? WHERE MA_KH = ?";
+            String sql = "UPDATE TAI_KHOAN SET USERNAME = ? WHERE MA_KH = ?";
             try (Connection con = ConnectionUtils.getMyConnection();
                  PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, username);
@@ -181,8 +181,8 @@ public class KhachHangDAO {
                      "kh.DIEM_TICH_LUY, " +
                      "NVL(tk.TRANG_THAI, 'Chưa có TK') AS TRANG_THAI_TK, " +
                      "tk.USERNAME " +
-                     "FROM KHACHHANG kh " +
-                     "LEFT JOIN TAIKHOAN tk ON kh.MA_KH = tk.MA_KH " +
+                     "FROM KHACH_HANG kh " +
+                     "LEFT JOIN TAI_KHOAN tk ON kh.MA_KH = tk.MA_KH " +
                      "WHERE LOWER(kh.HO_TEN) LIKE ? OR kh.SDT LIKE ? " +
                      "OR LOWER(kh.EMAIL) LIKE ? OR TO_CHAR(kh.MA_KH) LIKE ? " +
                      "ORDER BY kh.MA_KH DESC";

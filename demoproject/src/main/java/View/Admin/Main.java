@@ -5,6 +5,7 @@
 package View.Admin;
 
 import View.Admin.DashBoard.DashboardPanel;
+import Common.LoadingOverlay;
 
 /**
  *
@@ -19,12 +20,28 @@ public class Main extends javax.swing.JFrame {
      * Creates new form Main
      */
     private javax.swing.JPanel mainBody;
+    private final LoadingOverlay loadingOverlay = new LoadingOverlay();
 
     private void showForm(javax.swing.JComponent com) {
-        mainBody.removeAll();
-        mainBody.add(com);
-        mainBody.repaint();
-        mainBody.revalidate();
+        loadingOverlay.showLoading(mainBody);
+
+        javax.swing.SwingWorker<Void, Void> worker = new javax.swing.SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                Thread.sleep(350); // Thời gian tối thiểu hiển thị spinner
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                mainBody.removeAll();
+                mainBody.add(com);
+                mainBody.repaint();
+                mainBody.revalidate();
+                loadingOverlay.hideLoading();
+            }
+        };
+        worker.execute();
     }
 
     public void setFullName(String hoTen) {

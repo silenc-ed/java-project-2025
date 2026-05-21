@@ -62,6 +62,7 @@ public class EmployeePanel extends JPanel {
         btnAdd.setBackground(new Color(40, 167, 69));
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setBorder(new EmptyBorder(8, 18, 8, 18));
+        btnAdd.setPreferredSize(new Dimension(160, 36));
         btnAdd.setFocusPainted(false);
         btnAdd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAdd.addActionListener(e -> showAddDialog());
@@ -71,6 +72,7 @@ public class EmployeePanel extends JPanel {
         btnRefresh.setBackground(new Color(40, 167, 69));
         btnRefresh.setForeground(Color.WHITE);
         btnRefresh.setBorder(new EmptyBorder(8, 16, 8, 16));
+        btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.setFocusPainted(false);
         btnRefresh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRefresh.addActionListener(e -> loadData());

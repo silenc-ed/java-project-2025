@@ -22,7 +22,7 @@ public class CreateInvoiceProcess {
 
         
 
-        String SQL = "SELECT * FROM KHACHHANG WHERE SDT = ?";
+        String SQL = "SELECT * FROM KHACH_HANG WHERE SDT = ?";
 
         
 

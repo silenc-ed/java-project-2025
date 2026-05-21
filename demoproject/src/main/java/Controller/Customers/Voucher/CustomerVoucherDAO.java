@@ -26,19 +26,19 @@ public class CustomerVoucherDAO {
      */
     public synchronized void initializeDatabaseSchema() throws Exception {
         try (Connection con = ConnectionUtils.getMyConnection()) {
-            // 1. Kiểm tra và bổ sung cột DIEM_DOI cho KHUYENMAI
-            if (!isColumnExist(con, "KHUYENMAI", "DIEM_DOI")) {
+            // 1. Kiểm tra và bổ sung cột DIEM_DOI cho KHUYEN_MAI
+            if (!isColumnExist(con, "KHUYEN_MAI", "DIEM_DOI")) {
                 try (Statement st = con.createStatement()) {
-                    st.execute("ALTER TABLE KHUYENMAI ADD DIEM_DOI NUMBER(10, 0) DEFAULT 0 CHECK (DIEM_DOI >= 0)");
-                    System.out.println("Đã thêm cột DIEM_DOI vào bảng KHUYENMAI thành công!");
+                    st.execute("ALTER TABLE KHUYEN_MAI ADD DIEM_DOI NUMBER(10, 0) DEFAULT 0 CHECK (DIEM_DOI >= 0)");
+                    System.out.println("Đã thêm cột DIEM_DOI vào bảng KHUYEN_MAI thành công!");
                 }
             }
 
-            // 2. Kiểm tra và bổ sung cột SO_LUONG_CL cho KHUYENMAI
-            if (!isColumnExist(con, "KHUYENMAI", "SO_LUONG_CL")) {
+            // 2. Kiểm tra và bổ sung cột SO_LUONG_CL cho KHUYEN_MAI
+            if (!isColumnExist(con, "KHUYEN_MAI", "SO_LUONG_CL")) {
                 try (Statement st = con.createStatement()) {
-                    st.execute("ALTER TABLE KHUYENMAI ADD SO_LUONG_CL NUMBER(10, 0) DEFAULT 0 CHECK (SO_LUONG_CL >= 0)");
-                    System.out.println("Đã thêm cột SO_LUONG_CL vào bảng KHUYENMAI thành công!");
+                    st.execute("ALTER TABLE KHUYEN_MAI ADD SO_LUONG_CL NUMBER(10, 0) DEFAULT 0 CHECK (SO_LUONG_CL >= 0)");
+                    System.out.println("Đã thêm cột SO_LUONG_CL vào bảng KHUYEN_MAI thành công!");
                 }
             }
 
@@ -50,8 +50,8 @@ public class CustomerVoucherDAO {
                         + "    SO_LUONG NUMBER(5, 0) DEFAULT 1, "
                         + "    NGAY_LUU DATE DEFAULT SYSDATE, "
                         + "    PRIMARY KEY (MA_KH, MA_KM), "
-                        + "    CONSTRAINT FK_VV_KH FOREIGN KEY (MA_KH) REFERENCES KHACHHANG(MA_KH), "
-                        + "    CONSTRAINT FK_VV_KM FOREIGN KEY (MA_KM) REFERENCES KHUYENMAI(MA_KM), "
+                        + "    CONSTRAINT FK_VV_KH FOREIGN KEY (MA_KH) REFERENCES KHACH_HANG(MA_KH), "
+                        + "    CONSTRAINT FK_VV_KM FOREIGN KEY (MA_KM) REFERENCES KHUYEN_MAI(MA_KM), "
                         + "    CONSTRAINT CHK_VV_SL CHECK (SO_LUONG >= 0) "
                         + ")";
                 try (Statement st = con.createStatement()) {
@@ -96,8 +96,8 @@ public class CustomerVoucherDAO {
         String sql = "SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, "
                    + "KM.NGAY_BAT_DAU, KM.NGAY_KET_THUC, KM.DIEM_DOI, KM.SO_LUONG_CL, "
                    + "LKM.TEN_LOAI_KM "
-                   + "FROM KHUYENMAI KM "
-                   + "JOIN LOAI_KHUYENMAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM "
+                   + "FROM KHUYEN_MAI KM "
+                   + "JOIN LOAI_KHUYEN_MAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM "
                    + "WHERE KM.TRANG_THAI = 'Có hiệu lực' "
                    + "  AND KM.NGAY_BAT_DAU <= CURRENT_TIMESTAMP "
                    + "  AND KM.NGAY_KET_THUC >= CURRENT_TIMESTAMP "
@@ -132,8 +132,8 @@ public class CustomerVoucherDAO {
                    + "KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, KM.NGAY_KET_THUC, "
                    + "LKM.TEN_LOAI_KM "
                    + "FROM VI_KHUYENMAI VK "
-                   + "JOIN KHUYENMAI KM ON VK.MA_KM = KM.MA_KM "
-                   + "JOIN LOAI_KHUYENMAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM "
+                   + "JOIN KHUYEN_MAI KM ON VK.MA_KM = KM.MA_KM "
+                   + "JOIN LOAI_KHUYEN_MAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM "
                    + "WHERE VK.MA_KH = ? "
                    + "ORDER BY VK.NGAY_LUU DESC";
 
@@ -174,7 +174,7 @@ public class CustomerVoucherDAO {
             con.setAutoCommit(false); // Bắt đầu Transaction
 
             // 1. Lock và kiểm tra điểm tích lũy của khách hàng
-            String lockKHSQL = "SELECT DIEM_TICH_LUY FROM KHACHHANG WHERE MA_KH = ? FOR UPDATE";
+            String lockKHSQL = "SELECT DIEM_TICH_LUY FROM KHACH_HANG WHERE MA_KH = ? FOR UPDATE";
             psLockKH = con.prepareStatement(lockKHSQL);
             psLockKH.setLong(1, maKH);
             long diemHienTai = 0;
@@ -191,7 +191,7 @@ public class CustomerVoucherDAO {
             }
 
             // 2. Lock và kiểm tra tồn kho của mã khuyến mãi
-            String lockKMSQL = "SELECT SO_LUONG_CL, TRANG_THAI, NGAY_KET_THUC FROM KHUYENMAI WHERE MA_KM = ? FOR UPDATE";
+            String lockKMSQL = "SELECT SO_LUONG_CL, TRANG_THAI, NGAY_KET_THUC FROM KHUYEN_MAI WHERE MA_KM = ? FOR UPDATE";
             psLockKM = con.prepareStatement(lockKMSQL);
             psLockKM.setInt(1, maKM);
             int tonKho = 0;
@@ -219,14 +219,14 @@ public class CustomerVoucherDAO {
             }
 
             // 3. Thực hiện trừ điểm khách hàng
-            String subDiemSQL = "UPDATE KHACHHANG SET DIEM_TICH_LUY = DIEM_TICH_LUY - ? WHERE MA_KH = ?";
+            String subDiemSQL = "UPDATE KHACH_HANG SET DIEM_TICH_LUY = DIEM_TICH_LUY - ? WHERE MA_KH = ?";
             psSubDiem = con.prepareStatement(subDiemSQL);
             psSubDiem.setInt(1, diemCanDoi);
             psSubDiem.setLong(2, maKH);
             psSubDiem.executeUpdate();
 
             // 4. Giảm số lượng voucher còn lại
-            String subStockSQL = "UPDATE KHUYENMAI SET SO_LUONG_CL = SO_LUONG_CL - 1 WHERE MA_KM = ?";
+            String subStockSQL = "UPDATE KHUYEN_MAI SET SO_LUONG_CL = SO_LUONG_CL - 1 WHERE MA_KM = ?";
             psSubStock = con.prepareStatement(subStockSQL);
             psSubStock.setInt(1, maKM);
             psSubStock.executeUpdate();

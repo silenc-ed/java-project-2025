@@ -35,7 +35,7 @@ public class ProfileDAO {
         }
         String sql = "SELECT tk.MA_NV, tk.MA_KH, tk.USERNAME "
                    + "FROM ACCOUNT_TOKEN atok "
-                   + "JOIN TAIKHOAN tk ON atok.MA_TK = tk.MA_TK "
+                   + "JOIN TAI_KHOAN tk ON atok.MA_TK = tk.MA_TK "
                    + "WHERE atok.TOKEN_VALUE = ? "
                    + "  AND atok.THOI_GIAN_HET_HAN > CURRENT_TIMESTAMP "
                    + "  AND atok.TRANG_THAI = 'Y'";
@@ -50,7 +50,7 @@ public class ProfileDAO {
                      String username = rs.getString("USERNAME");
                      if (maNVObj != null) {
                          long maNV = ((Number) maNVObj).longValue();
-                         String sqlNV = "SELECT HO_TEN, SDT, EMAIL FROM NHANVIEN WHERE MA_NV = ?";
+                         String sqlNV = "SELECT HO_TEN, SDT, EMAIL FROM NHAN_VIEN WHERE MA_NV = ?";
                          try (PreparedStatement psNV = con.prepareStatement(sqlNV)) {
                              psNV.setLong(1, maNV);
                              try (ResultSet rsNV = psNV.executeQuery()) {
@@ -61,7 +61,7 @@ public class ProfileDAO {
                          }
                      } else if (maKHObj != null) {
                          long maKH = ((Number) maKHObj).longValue();
-                         String sqlKH = "SELECT HO_TEN, SDT, EMAIL, DIA_CHI, DIEM_TICH_LUY FROM KHACHHANG WHERE MA_KH = ?";
+                         String sqlKH = "SELECT HO_TEN, SDT, EMAIL, DIA_CHI, DIEM_TICH_LUY FROM KHACH_HANG WHERE MA_KH = ?";
                          try (PreparedStatement psKH = con.prepareStatement(sqlKH)) {
                              psKH.setLong(1, maKH);
                              try (ResultSet rsKH = psKH.executeQuery()) {
@@ -89,7 +89,7 @@ public class ProfileDAO {
         
         try (Connection con = ConnectionUtils.getMyConnection()) {
             if ("ADMIN".equals(profile.role)) {
-                String sql = "UPDATE NHANVIEN SET HO_TEN = ?, SDT = ?, EMAIL = ? WHERE MA_NV = ?";
+                String sql = "UPDATE NHAN_VIEN SET HO_TEN = ?, SDT = ?, EMAIL = ? WHERE MA_NV = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, hoTen);
                     ps.setString(2, sdt);
@@ -98,7 +98,7 @@ public class ProfileDAO {
                     return ps.executeUpdate() > 0;
                 }
             } else if ("CUSTOMER".equals(profile.role)) {
-                String sql = "UPDATE KHACHHANG SET HO_TEN = ?, SDT = ?, EMAIL = ?, DIA_CHI = ? WHERE MA_KH = ?";
+                String sql = "UPDATE KHACH_HANG SET HO_TEN = ?, SDT = ?, EMAIL = ?, DIA_CHI = ? WHERE MA_KH = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, hoTen);
                     ps.setString(2, sdt);
@@ -120,7 +120,7 @@ public class ProfileDAO {
         }
         String sql = "SELECT tk.MA_TK, tk.PASSWORD_HASH "
                    + "FROM ACCOUNT_TOKEN atok "
-                   + "JOIN TAIKHOAN tk ON atok.MA_TK = tk.MA_TK "
+                   + "JOIN TAI_KHOAN tk ON atok.MA_TK = tk.MA_TK "
                    + "WHERE atok.TOKEN_VALUE = ? "
                    + "  AND atok.THOI_GIAN_HET_HAN > CURRENT_TIMESTAMP "
                    + "  AND atok.TRANG_THAI = 'Y'";
@@ -149,7 +149,7 @@ public class ProfileDAO {
             
             // Hash and update new password
             String newHash = Common.HashUtil.hashPassword(newPassword.trim());
-            String sqlUpdate = "UPDATE TAIKHOAN SET PASSWORD_HASH = ? WHERE MA_TK = ?";
+            String sqlUpdate = "UPDATE TAI_KHOAN SET PASSWORD_HASH = ? WHERE MA_TK = ?";
             try (PreparedStatement psUp = con.prepareStatement(sqlUpdate)) {
                 psUp.setString(1, newHash);
                 psUp.setLong(2, maTk);

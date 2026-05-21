@@ -11,8 +11,8 @@ import java.util.List;
 public class SanPhamDAO {
     public static List<SanPham> getAllSanPham() {
         List<SanPham> list = new ArrayList<>();
-        // Lấy thông tin cơ bản từ SANPHAM và giá bán nhỏ nhất từ BIENTHE_SANPHAM
-        String sql = "SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIENTHE_SANPHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SANPHAM SP";
+        // Lấy thông tin cơ bản từ SAN_PHAM và giá bán nhỏ nhất từ BIEN_THE_SAN_PHAM
+        String sql = "SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP";
         try (Connection con = ConnectionUtils.getMyConnection();
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery()) {
@@ -40,7 +40,7 @@ public class SanPhamDAO {
 
     public static List<SanPham> searchAdvanced(List<Integer> catIds, List<String> catNames, Double minPrice, Double maxPrice) {
         List<SanPham> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM SANPHAM WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) WHERE 1=1 ");
         
         if (minPrice != null) {
             sql.append(" AND GIA_BAN >= ").append(minPrice);
@@ -96,7 +96,7 @@ public class SanPhamDAO {
 
     public static List<SanPham> searchByName(String keyword) {
         List<SanPham> list = new ArrayList<>();
-        String sql = "SELECT * FROM SANPHAM WHERE LOWER(TEN_SP) LIKE LOWER(?)";
+        String sql = "SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) WHERE LOWER(TEN_SP) LIKE LOWER(?)";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, "%" + keyword + "%");
@@ -113,7 +113,7 @@ public class SanPhamDAO {
 
     public static List<SanPham> getProductsByCategory(int maLsp) {
         List<SanPham> list = new ArrayList<>();
-        String sql = "SELECT * FROM SANPHAM WHERE MA_LSP = ?";
+        String sql = "SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) WHERE MA_LSP = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maLsp);
@@ -145,7 +145,7 @@ public class SanPhamDAO {
 
     public static List<Model.BienTheSanPham> getBienTheByMaSp(int maSp) {
         List<Model.BienTheSanPham> list = new ArrayList<>();
-        String sql = "SELECT * FROM BIENTHE_SANPHAM WHERE MA_SP = ? AND TRANG_THAI != 'Ngừng kinh doanh'";
+        String sql = "SELECT * FROM BIEN_THE_SAN_PHAM WHERE MA_SP = ? AND TRANG_THAI != 'Ngừng kinh doanh'";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maSp);
@@ -164,5 +164,132 @@ public class SanPhamDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public static boolean addSanPham(SanPham sp, double giaBan) throws Exception {
+        String sqlSp = "INSERT INTO SAN_PHAM (MA_LSP, TEN_SP, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlBt = "INSERT INTO BIEN_THE_SAN_PHAM (MA_SP, TEN_BIENTHE, GIA_BAN, TRANG_THAI) VALUES (?, ?, ?, ?)";
+        
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            int maSp = -1;
+            try (PreparedStatement psSp = con.prepareStatement(sqlSp, new String[]{"MA_SP"})) {
+                psSp.setInt(1, sp.getMaLsp());
+                psSp.setString(2, sp.getTenSp());
+                psSp.setString(3, sp.getTrangThai());
+                psSp.setInt(4, sp.getSoLuongDaBan());
+                psSp.setString(5, sp.getDonViTinh());
+                psSp.setString(6, sp.getMoTa());
+                psSp.executeUpdate();
+                
+                try (ResultSet rs = psSp.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        maSp = rs.getInt(1);
+                    }
+                }
+            }
+            
+            if (maSp == -1) {
+                con.rollback();
+                return false;
+            }
+            
+            try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                psBt.setInt(1, maSp);
+                psBt.setString(2, sp.getTenSp());
+                psBt.setDouble(3, giaBan);
+                psBt.setString(4, sp.getTrangThai());
+                psBt.executeUpdate();
+            }
+            
+            con.commit();
+            return true;
+        } catch (Exception ex) {
+            if (con != null) {
+                try { con.rollback(); } catch (Exception ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public static boolean updateSanPham(SanPham sp, double giaBan) throws Exception {
+        String sqlSp = "UPDATE SAN_PHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
+        String sqlBt = "UPDATE BIEN_THE_SAN_PHAM SET GIA_BAN = ?, TRANG_THAI = ? WHERE MA_SP = ?";
+        
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            try (PreparedStatement psSp = con.prepareStatement(sqlSp)) {
+                psSp.setInt(1, sp.getMaLsp());
+                psSp.setString(2, sp.getTenSp());
+                psSp.setString(3, sp.getTrangThai());
+                psSp.setInt(4, sp.getSoLuongDaBan());
+                psSp.setString(5, sp.getDonViTinh());
+                psSp.setString(6, sp.getMoTa());
+                psSp.setInt(7, sp.getMaSp());
+                psSp.executeUpdate();
+            }
+            
+            try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                psBt.setDouble(1, giaBan);
+                psBt.setString(2, sp.getTrangThai());
+                psBt.setInt(3, sp.getMaSp());
+                psBt.executeUpdate();
+            }
+            
+            con.commit();
+            return true;
+        } catch (Exception ex) {
+            if (con != null) {
+                try { con.rollback(); } catch (Exception ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public static boolean deleteSanPham(int maSp) throws Exception {
+        String sqlBt = "DELETE FROM BIEN_THE_SAN_PHAM WHERE MA_SP = ?";
+        String sqlSp = "DELETE FROM SAN_PHAM WHERE MA_SP = ?";
+        
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                psBt.setInt(1, maSp);
+                psBt.executeUpdate();
+            }
+            
+            try (PreparedStatement psSp = con.prepareStatement(sqlSp)) {
+                psSp.setInt(1, maSp);
+                psSp.executeUpdate();
+            }
+            
+            con.commit();
+            return true;
+        } catch (Exception ex) {
+            if (con != null) {
+                try { con.rollback(); } catch (Exception ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
+        }
     }
 }

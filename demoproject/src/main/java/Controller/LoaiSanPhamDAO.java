@@ -11,7 +11,7 @@ import java.util.List;
 public class LoaiSanPhamDAO {
     public static List<LoaiSanPham> getAllLoaiSanPham() {
         List<LoaiSanPham> list = new ArrayList<>();
-        String sql = "SELECT * FROM LOAISANPHAM"; // Assuming table name is LOAISANPHAM
+        String sql = "SELECT * FROM LOAI_SAN_PHAM";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

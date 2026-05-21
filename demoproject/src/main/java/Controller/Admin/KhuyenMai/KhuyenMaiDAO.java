@@ -23,8 +23,8 @@ public class KhuyenMaiDAO {
         sql.append("SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, ");
         sql.append("KM.NGAY_BAT_DAU, KM.NGAY_KET_THUC, KM.TRANG_THAI, ");
         sql.append("LKM.MA_LOAI_KM, LKM.TEN_LOAI_KM ");
-        sql.append("FROM KHUYENMAI KM ");
-        sql.append("JOIN LOAI_KHUYENMAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM ");
+        sql.append("FROM KHUYEN_MAI KM ");
+        sql.append("JOIN LOAI_KHUYEN_MAI LKM ON KM.MA_LOAI_KM = LKM.MA_LOAI_KM ");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("WHERE UPPER(KM.TEN_KM) LIKE UPPER(?) OR UPPER(LKM.TEN_LOAI_KM) LIKE UPPER(?) ");
         }
@@ -61,7 +61,7 @@ public class KhuyenMaiDAO {
      */
     public List<Map<String, Object>> getAllPromoTypes() throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
-        String sql = "SELECT MA_LOAI_KM, TEN_LOAI_KM, MO_TA FROM LOAI_KHUYENMAI ORDER BY MA_LOAI_KM";
+        String sql = "SELECT MA_LOAI_KM, TEN_LOAI_KM, MO_TA FROM LOAI_KHUYEN_MAI ORDER BY MA_LOAI_KM";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -81,7 +81,7 @@ public class KhuyenMaiDAO {
      */
     public int addPromotion(int maLoaiKM, String tenKM, long giaTri, String rangBuoc,
                             Timestamp ngayBD, Timestamp ngayKT, String trangThai) throws Exception {
-        String sql = "INSERT INTO KHUYENMAI (MA_LOAI_KM, TEN_KM, GIA_TRI, RANG_BUOC_GIA_TRI, " +
+        String sql = "INSERT INTO KHUYEN_MAI (MA_LOAI_KM, TEN_KM, GIA_TRI, RANG_BUOC_GIA_TRI, " +
                      "NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql, new String[]{"MA_KM"})) {
@@ -105,7 +105,7 @@ public class KhuyenMaiDAO {
      */
     public void updatePromotion(int maKM, int maLoaiKM, String tenKM, long giaTri,
                                 String rangBuoc, Timestamp ngayBD, Timestamp ngayKT, String trangThai) throws Exception {
-        String sql = "UPDATE KHUYENMAI SET MA_LOAI_KM=?, TEN_KM=?, GIA_TRI=?, RANG_BUOC_GIA_TRI=?, " +
+        String sql = "UPDATE KHUYEN_MAI SET MA_LOAI_KM=?, TEN_KM=?, GIA_TRI=?, RANG_BUOC_GIA_TRI=?, " +
                      "NGAY_BAT_DAU=?, NGAY_KET_THUC=?, TRANG_THAI=? WHERE MA_KM=?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -125,7 +125,7 @@ public class KhuyenMaiDAO {
      * Xóa khuyến mãi
      */
     public void deletePromotion(int maKM) throws Exception {
-        String sql = "DELETE FROM KHUYENMAI WHERE MA_KM = ?";
+        String sql = "DELETE FROM KHUYEN_MAI WHERE MA_KM = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maKM);

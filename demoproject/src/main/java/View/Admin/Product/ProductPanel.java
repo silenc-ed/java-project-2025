@@ -223,6 +223,7 @@ public class ProductPanel extends javax.swing.JPanel {
     private DefaultTableModel tableModel;
     private JTable dataTable;
     private List<DBItem> categoryList = new ArrayList<>();
+    private JLabel lblLastUpdate;
 
     public ProductPanel() {
         initComponents();
@@ -239,31 +240,70 @@ public class ProductPanel extends javax.swing.JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
 
+        JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftHeader.setOpaque(false);
+        
         JLabel lblTitle = new JLabel("Quản lý sản phẩm");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(15, 23, 42));
-        headerPanel.add(lblTitle, BorderLayout.WEST);
+        
+        lblLastUpdate = new JLabel("Chưa cập nhật");
+        lblLastUpdate.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblLastUpdate.setForeground(new Color(148, 163, 184));
+        
+        leftHeader.add(lblTitle);
+        leftHeader.add(lblLastUpdate);
+
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightHeader.setOpaque(false);
+
+        JButton btnRefresh = new JButton("↻ Cập nhật") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(40, 167, 69));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setFocusPainted(false);
+        btnRefresh.setContentAreaFilled(false);
+        btnRefresh.setBorderPainted(false);
+        btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnRefresh.setPreferredSize(new Dimension(130, 36));
+        btnRefresh.addActionListener(e -> {
+            loadCategories();
+            loadDataToTable();
+        });
 
         JButton btnAdd = new JButton("+ Thêm sản phẩm") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                GradientPaint gp = new GradientPaint(0, 0, new Color(40, 167, 69), 0, getHeight(), new Color(46, 204, 113));
-                g2.setPaint(gp);
+                g2.setColor(new Color(40, 167, 69));
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnAdd.setForeground(Color.WHITE);
         btnAdd.setFocusPainted(false);
         btnAdd.setContentAreaFilled(false);
         btnAdd.setBorderPainted(false);
         btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAdd.setPreferredSize(new Dimension(160, 40));
-        headerPanel.add(btnAdd, BorderLayout.EAST);
+        btnAdd.setPreferredSize(new Dimension(160, 36));
+
+        rightHeader.add(btnRefresh);
+        rightHeader.add(btnAdd);
+
+        headerPanel.add(leftHeader, BorderLayout.WEST);
+        headerPanel.add(rightHeader, BorderLayout.EAST);
 
         this.add(headerPanel, BorderLayout.NORTH);
 
@@ -388,12 +428,10 @@ public class ProductPanel extends javax.swing.JPanel {
 
     private void loadCategories() {
         categoryList.clear();
-        String sql = "SELECT MA_LSP, TEN_LSP FROM LOAI_SANPHAM";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                categoryList.add(new DBItem(rs.getInt("MA_LSP"), rs.getString("TEN_LSP")));
+        try {
+            List<Model.LoaiSanPham> list = Controller.LoaiSanPhamDAO.getAllLoaiSanPham();
+            for (Model.LoaiSanPham lsp : list) {
+                categoryList.add(new DBItem(lsp.getMaLsp(), lsp.getTenLsp()));
             }
         } catch (Exception e) {
             // Fallback sample categories
@@ -406,32 +444,37 @@ public class ProductPanel extends javax.swing.JPanel {
 
     private void loadDataToTable() {
         tableModel.setRowCount(0);
-        String sql = "SELECT SP.*, LSP.TEN_LSP, " +
-                     "(SELECT NVL(MIN(BT.GIA_BAN), 0) FROM BIENTHE_SANPHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN " +
-                     "FROM SANPHAM SP " +
-                     "LEFT JOIN LOAI_SANPHAM LSP ON SP.MA_LSP = LSP.MA_LSP " +
-                     "ORDER BY SP.MA_SP DESC";
+        String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+        if (lblLastUpdate != null) {
+            lblLastUpdate.setText("Cập nhật lúc: " + time);
+        }
         DecimalFormat df = new DecimalFormat("#,###đ");
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
+        try {
+            List<Model.SanPham> list = Controller.SanPhamDAO.getAllSanPham();
             boolean hasData = false;
-            while (rs.next()) {
+            for (Model.SanPham sp : list) {
                 hasData = true;
-                int id = rs.getInt("MA_SP");
-                String name = rs.getString("TEN_SP");
-                String cat = rs.getString("TEN_LSP");
-                String desc = rs.getString("MO_TA");
-                int qty = rs.getInt("SO_LUONG_DA_BAN");
-                double price = rs.getDouble("GIA_BAN");
-                String donVi = rs.getString("DON_VI_TINH");
-                String status = rs.getString("TRANG_THAI");
+                int id = sp.getMaSp();
+                String name = sp.getTenSp();
+                
+                String cat = "Danh mục khác";
+                for (DBItem item : categoryList) {
+                    if (item.getId() == sp.getMaLsp()) {
+                        cat = item.getName();
+                        break;
+                    }
+                }
+                
+                String desc = sp.getMoTa();
+                int qty = sp.getSoLuongDaBan();
+                double price = sp.getGiaBan();
+                String donVi = sp.getDonViTinh();
+                String status = sp.getTrangThai();
 
                 tableModel.addRow(new Object[]{
                     "SP" + String.format("%03d", id),
                     formatProductHtml(name),
-                    cat != null ? cat : "Danh mục khác",
+                    cat,
                     desc != null ? desc : "",
                     qty,
                     df.format(price),
@@ -445,6 +488,7 @@ public class ProductPanel extends javax.swing.JPanel {
                 loadSampleData();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             loadSampleData();
         }
     }
@@ -518,43 +562,24 @@ public class ProductPanel extends javax.swing.JPanel {
                 return;
             }
 
-            String sqlSp = "INSERT INTO SANPHAM (MA_LSP, TEN_SP, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?)";
-            try (Connection con = ConnectionUtils.getMyConnection()) {
-                con.setAutoCommit(false);
-                try (PreparedStatement psSp = con.prepareStatement(sqlSp, new String[]{"MA_SP"})) {
-                    psSp.setInt(1, cat.getId());
-                    psSp.setString(2, name);
-                    psSp.setString(3, status);
-                    psSp.setInt(4, qty);
-                    psSp.setString(5, unit);
-                    psSp.setString(6, desc);
-                    psSp.executeUpdate();
-                    
-                    int maSp = -1;
-                    try (ResultSet rs = psSp.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            maSp = rs.getInt(1);
-                        }
-                    }
-                    
-                    if (maSp != -1) {
-                        String sqlBt = "INSERT INTO BIENTHE_SANPHAM (MA_SP, TEN_BIENTHE, GIA_BAN, TRANG_THAI) VALUES (?, ?, ?, ?)";
-                        try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
-                            psBt.setInt(1, maSp);
-                            psBt.setString(2, name);
-                            psBt.setDouble(3, price);
-                            psBt.setString(4, status);
-                            psBt.executeUpdate();
-                        }
-                    }
-                    con.commit();
+            try {
+                Model.SanPham sp = new Model.SanPham();
+                sp.setMaLsp(cat.getId());
+                sp.setTenSp(name);
+                sp.setTrangThai(status);
+                sp.setSoLuongDaBan(qty);
+                sp.setDonViTinh(unit);
+                sp.setMoTa(desc);
+                
+                boolean success = Controller.SanPhamDAO.addSanPham(sp, price);
+                if (success) {
                     loadDataToTable();
                     JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
-                } catch (Exception ex) {
-                    con.rollback();
-                    throw ex;
+                } else {
+                    throw new Exception("Không thể thêm sản phẩm");
                 }
             } catch (Exception ex) {
+                ex.printStackTrace();
                 // Fallback simulation
                 tableModel.insertRow(0, new Object[]{
                     "SP" + String.format("%03d", (int)(Math.random() * 900) + 100),
@@ -622,33 +647,22 @@ public class ProductPanel extends javax.swing.JPanel {
             if (name.isEmpty() || cat == null) return;
 
             if (id != -1) {
-                String sqlSp = "UPDATE SANPHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
-                String sqlBt = "UPDATE BIENTHE_SANPHAM SET GIA_BAN = ?, TRANG_THAI = ? WHERE MA_SP = ?";
-                try (Connection con = ConnectionUtils.getMyConnection()) {
-                    con.setAutoCommit(false);
-                    try (PreparedStatement psSp = con.prepareStatement(sqlSp);
-                         PreparedStatement psBt = con.prepareStatement(sqlBt)) {
-                        
-                        psSp.setInt(1, cat.getId());
-                        psSp.setString(2, name);
-                        psSp.setString(3, status);
-                        psSp.setInt(4, qty);
-                        psSp.setString(5, unit);
-                        psSp.setString(6, desc);
-                        psSp.setInt(7, id);
-                        psSp.executeUpdate();
-                        
-                        psBt.setDouble(1, price);
-                        psBt.setString(2, status);
-                        psBt.setInt(3, id);
-                        psBt.executeUpdate();
-                        
-                        con.commit();
+                try {
+                    Model.SanPham sp = new Model.SanPham();
+                    sp.setMaSp(id);
+                    sp.setMaLsp(cat.getId());
+                    sp.setTenSp(name);
+                    sp.setTrangThai(status);
+                    sp.setSoLuongDaBan(qty);
+                    sp.setDonViTinh(unit);
+                    sp.setMoTa(desc);
+                    
+                    boolean success = Controller.SanPhamDAO.updateSanPham(sp, price);
+                    if (success) {
                         loadDataToTable();
                         JOptionPane.showMessageDialog(this, "Cập nhật sản phẩm thành công!");
-                    } catch (Exception ex) {
-                        con.rollback();
-                        throw ex;
+                    } else {
+                        throw new Exception("Không thể cập nhật sản phẩm");
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -678,21 +692,13 @@ public class ProductPanel extends javax.swing.JPanel {
         int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             if (id != -1) {
-                // Delete children first due to constraints
-                try (Connection con = ConnectionUtils.getMyConnection()) {
-                    con.setAutoCommit(false);
-                    try (PreparedStatement psBt = con.prepareStatement("DELETE FROM BIENTHE_SANPHAM WHERE MA_SP = ?");
-                         PreparedStatement psSp = con.prepareStatement("DELETE FROM SANPHAM WHERE MA_SP = ?")) {
-                        psBt.setInt(1, id);
-                        psBt.executeUpdate();
-                        psSp.setInt(1, id);
-                        psSp.executeUpdate();
-                        con.commit();
+                try {
+                    boolean success = Controller.SanPhamDAO.deleteSanPham(id);
+                    if (success) {
                         loadDataToTable();
                         JOptionPane.showMessageDialog(this, "Xóa sản phẩm thành công!");
-                    } catch (Exception ex) {
-                        con.rollback();
-                        throw ex;
+                    } else {
+                        throw new Exception("Không thể xóa sản phẩm");
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();

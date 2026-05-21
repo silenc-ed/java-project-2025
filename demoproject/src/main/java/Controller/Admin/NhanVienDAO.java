@@ -11,7 +11,7 @@ public class NhanVienDAO {
     // ─── Lấy danh sách chi nhánh cho ComboBox ────────────────────────
     public static List<Object[]> getAllChiNhanh() {
         List<Object[]> list = new ArrayList<>();
-        String sql = "SELECT MA_CN, TEN_CN FROM CHINHANH WHERE TRANG_THAI = N'Đang hoạt động' ORDER BY MA_CN";
+        String sql = "SELECT MA_CN, TEN_CN FROM CHI_NHANH WHERE TRANG_THAI = N'Đang hoạt động' ORDER BY MA_CN";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -37,9 +37,9 @@ public class NhanVienDAO {
                      " FROM ACCOUNT_ASSIGN_ROLEGROUP aarg " +
                      " JOIN ROLE_GROUP rg ON aarg.MA_ROLEGRP = rg.MA_ROLEGRP " +
                      " WHERE aarg.MA_TK = tk.MA_TK) AS TEN_NHOM " +
-                     "FROM NHANVIEN nv " +
-                     "JOIN CHINHANH cn ON nv.MA_CN = cn.MA_CN " +
-                     "LEFT JOIN TAIKHOAN tk ON nv.MA_NV = tk.MA_NV " +
+                     "FROM NHAN_VIEN nv " +
+                     "JOIN CHI_NHANH cn ON nv.MA_CN = cn.MA_CN " +
+                     "LEFT JOIN TAI_KHOAN tk ON nv.MA_NV = tk.MA_NV " +
                      "ORDER BY nv.MA_NV DESC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
@@ -78,9 +78,9 @@ public class NhanVienDAO {
                      " FROM ACCOUNT_ASSIGN_ROLEGROUP aarg " +
                      " JOIN ROLE_GROUP rg ON aarg.MA_ROLEGRP = rg.MA_ROLEGRP " +
                      " WHERE aarg.MA_TK = tk.MA_TK) AS TEN_NHOM " +
-                     "FROM NHANVIEN nv " +
-                     "JOIN CHINHANH cn ON nv.MA_CN = cn.MA_CN " +
-                     "LEFT JOIN TAIKHOAN tk ON nv.MA_NV = tk.MA_NV " +
+                     "FROM NHAN_VIEN nv " +
+                     "JOIN CHI_NHANH cn ON nv.MA_CN = cn.MA_CN " +
+                     "LEFT JOIN TAI_KHOAN tk ON nv.MA_NV = tk.MA_NV " +
                      "WHERE CAST(nv.MA_NV AS VARCHAR2(20)) LIKE ? " +
                      "OR LOWER(nv.HO_TEN) LIKE ? OR nv.SDT LIKE ? " +
                      "OR LOWER(nv.EMAIL) LIKE ? OR nv.CCCD LIKE ? " +
@@ -126,9 +126,9 @@ public class NhanVienDAO {
                      " FROM ACCOUNT_ASSIGN_ROLEGROUP aarg " +
                      " JOIN ROLE_GROUP rg ON aarg.MA_ROLEGRP = rg.MA_ROLEGRP " +
                      " WHERE aarg.MA_TK = tk.MA_TK) AS TEN_NHOM " +
-                     "FROM NHANVIEN nv " +
-                     "JOIN CHINHANH cn ON nv.MA_CN = cn.MA_CN " +
-                     "LEFT JOIN TAIKHOAN tk ON nv.MA_NV = tk.MA_NV " +
+                     "FROM NHAN_VIEN nv " +
+                     "JOIN CHI_NHANH cn ON nv.MA_CN = cn.MA_CN " +
+                     "LEFT JOIN TAI_KHOAN tk ON nv.MA_NV = tk.MA_NV " +
                      "WHERE nv.MA_NV = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -168,7 +168,7 @@ public class NhanVienDAO {
             con = ConnectionUtils.getMyConnection();
             con.setAutoCommit(false);
 
-            String sqlNV = "INSERT INTO NHANVIEN (MA_CN, HO_TEN, NGAY_SINH, CCCD, SDT, EMAIL, LUONG_CO_BAN, NGAY_VAO_LAM, TRANG_THAI) " +
+            String sqlNV = "INSERT INTO NHAN_VIEN (MA_CN, HO_TEN, NGAY_SINH, CCCD, SDT, EMAIL, LUONG_CO_BAN, NGAY_VAO_LAM, TRANG_THAI) " +
                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             long maNV = -1;
             try (PreparedStatement ps = con.prepareStatement(sqlNV, new String[]{"MA_NV"})) {
@@ -189,7 +189,7 @@ public class NhanVienDAO {
 
             if (maNV != -1 && username != null && !username.trim().isEmpty()
                     && pass != null && !pass.trim().isEmpty()) {
-                String sqlTK = "INSERT INTO TAIKHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
+                String sqlTK = "INSERT INTO TAI_KHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
                                "VALUES (?, ?, ?, N'Hoạt động')";
                 try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
                     ps.setLong(1, maNV);
@@ -215,7 +215,7 @@ public class NhanVienDAO {
                                            String sdt, String email,
                                            long luongCoBan, java.sql.Date ngayVaoLam,
                                            String trangThai) {
-        String sql = "UPDATE NHANVIEN SET MA_CN=?, HO_TEN=?, NGAY_SINH=?, CCCD=?, SDT=?, EMAIL=?, " +
+        String sql = "UPDATE NHAN_VIEN SET MA_CN=?, HO_TEN=?, NGAY_SINH=?, CCCD=?, SDT=?, EMAIL=?, " +
                      "LUONG_CO_BAN=?, NGAY_VAO_LAM=?, TRANG_THAI=? WHERE MA_NV=?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -242,23 +242,23 @@ public class NhanVienDAO {
 
             // Xóa role group assignments nếu có tài khoản
             try (PreparedStatement ps = con.prepareStatement(
-                    "DELETE FROM ACCOUNT_ASSIGN_ROLEGROUP WHERE MA_TK IN (SELECT MA_TK FROM TAIKHOAN WHERE MA_NV = ?)")) {
+                    "DELETE FROM ACCOUNT_ASSIGN_ROLEGROUP WHERE MA_TK IN (SELECT MA_TK FROM TAI_KHOAN WHERE MA_NV = ?)")) {
                 ps.setLong(1, maNV);
                 ps.executeUpdate();
             }
             // Xóa role assignments nếu có
             try (PreparedStatement ps = con.prepareStatement(
-                    "DELETE FROM ACCOUNT_ASSIGN_ROLE WHERE MA_TK IN (SELECT MA_TK FROM TAIKHOAN WHERE MA_NV = ?)")) {
+                    "DELETE FROM ACCOUNT_ASSIGN_ROLE WHERE MA_TK IN (SELECT MA_TK FROM TAI_KHOAN WHERE MA_NV = ?)")) {
                 ps.setLong(1, maNV);
                 ps.executeUpdate();
             }
             // Xóa tài khoản
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM TAIKHOAN WHERE MA_NV = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM TAI_KHOAN WHERE MA_NV = ?")) {
                 ps.setLong(1, maNV);
                 ps.executeUpdate();
             }
             // Xóa nhân viên
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM NHANVIEN WHERE MA_NV = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("DELETE FROM NHAN_VIEN WHERE MA_NV = ?")) {
                 ps.setLong(1, maNV);
                 ps.executeUpdate();
             }
@@ -276,7 +276,7 @@ public class NhanVienDAO {
 
     // ─── Toggle trạng thái tài khoản ─────────────────────────────────
     public static String toggleTrangThaiTK(long maNV) {
-        String sqlGet = "SELECT TRANG_THAI FROM TAIKHOAN WHERE MA_NV = ?";
+        String sqlGet = "SELECT TRANG_THAI FROM TAI_KHOAN WHERE MA_NV = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps1 = con.prepareStatement(sqlGet)) {
             ps1.setLong(1, maNV);
@@ -284,7 +284,7 @@ public class NhanVienDAO {
                 if (rs.next()) {
                     String current = rs.getString("TRANG_THAI");
                     String next = "Hoạt động".equals(current) ? "Bị khóa" : "Hoạt động";
-                    try (PreparedStatement ps2 = con.prepareStatement("UPDATE TAIKHOAN SET TRANG_THAI = ? WHERE MA_NV = ?")) {
+                    try (PreparedStatement ps2 = con.prepareStatement("UPDATE TAI_KHOAN SET TRANG_THAI = ? WHERE MA_NV = ?")) {
                         ps2.setString(1, next);
                         ps2.setLong(2, maNV);
                         ps2.executeUpdate();
@@ -303,7 +303,7 @@ public class NhanVienDAO {
             con = ConnectionUtils.getMyConnection();
             con.setAutoCommit(false);
 
-            String checkSql = "SELECT MA_TK FROM TAIKHOAN WHERE MA_NV = ?";
+            String checkSql = "SELECT MA_TK FROM TAI_KHOAN WHERE MA_NV = ?";
             boolean hasTk = false;
             try (PreparedStatement ps = con.prepareStatement(checkSql)) {
                 ps.setLong(1, maNV);
@@ -313,7 +313,7 @@ public class NhanVienDAO {
             if (!hasTk) {
                 if (username != null && !username.trim().isEmpty()
                         && newPass != null && !newPass.trim().isEmpty()) {
-                    String sqlTK = "INSERT INTO TAIKHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
+                    String sqlTK = "INSERT INTO TAI_KHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
                                    "VALUES (?, ?, ?, N'Hoạt động')";
                     try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
                         ps.setLong(1, maNV);
@@ -324,7 +324,7 @@ public class NhanVienDAO {
                 }
             } else {
                 if (newPass != null && !newPass.trim().isEmpty()) {
-                    String sql = "UPDATE TAIKHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_NV = ?";
+                    String sql = "UPDATE TAI_KHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_NV = ?";
                     try (PreparedStatement ps = con.prepareStatement(sql)) {
                         ps.setString(1, username);
                         ps.setString(2, HashUtil.hashPassword(newPass));
@@ -332,7 +332,7 @@ public class NhanVienDAO {
                         ps.executeUpdate();
                     }
                 } else if (username != null && !username.trim().isEmpty()) {
-                    String sql = "UPDATE TAIKHOAN SET USERNAME = ? WHERE MA_NV = ?";
+                    String sql = "UPDATE TAI_KHOAN SET USERNAME = ? WHERE MA_NV = ?";
                     try (PreparedStatement ps = con.prepareStatement(sql)) {
                         ps.setString(1, username);
                         ps.setLong(2, maNV);

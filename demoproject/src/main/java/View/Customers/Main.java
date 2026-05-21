@@ -11,6 +11,7 @@ import View.Customers.Cart.CartDrawer;
 import View.Customers.Voucher.VoucherPanel;
 import View.Customers.UserAccount.UserAccountPanel;
 import View.Customers.UserOption.UserOptionPanel;
+import Common.LoadingOverlay;
 
 
 /**
@@ -26,6 +27,7 @@ public class Main extends javax.swing.JFrame {
      */
     private javax.swing.JPanel mainBody;
     public CartDrawer cartDrawer;
+    private final LoadingOverlay loadingOverlay = new LoadingOverlay();
 
     public Menu getMenu() {
         return menu1;
@@ -42,10 +44,25 @@ public class Main extends javax.swing.JFrame {
     }
 
     public void showForm(javax.swing.JComponent com) {
-        mainBody.removeAll();
-        mainBody.add(com);
-        mainBody.repaint();
-        mainBody.revalidate();
+        loadingOverlay.showLoading(mainBody);
+
+        javax.swing.SwingWorker<Void, Void> worker = new javax.swing.SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                Thread.sleep(350); // Thời gian tối thiểu hiển thị spinner
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                mainBody.removeAll();
+                mainBody.add(com);
+                mainBody.repaint();
+                mainBody.revalidate();
+                loadingOverlay.hideLoading();
+            }
+        };
+        worker.execute();
     }
 
     public Main() {

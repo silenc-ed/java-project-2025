@@ -14,7 +14,7 @@ public class CreateAccountProcess {
             con.setAutoCommit(false); 
 
             try {
-                String sqlKH = "INSERT INTO KHACHHANG (HO_TEN, EMAIL, SDT, DIA_CHI) VALUES (?, ?, ?, ?)";
+                String sqlKH = "INSERT INTO KHACH_HANG (HO_TEN, EMAIL, SDT, DIA_CHI) VALUES (?, ?, ?, ?)";
                 
                 String[] returnId = {"MA_KH"}; 
                 PreparedStatement psKH = con.prepareStatement(sqlKH, returnId);
@@ -29,7 +29,7 @@ public class CreateAccountProcess {
                 if (rs.next()) {
                     long maKH = rs.getLong(1);
 
-                    String sqlTK = "INSERT INTO TAIKHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) VALUES (?, ?, ?, 'Đã kích hoạt')";
+                    String sqlTK = "INSERT INTO TAI_KHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) VALUES (?, ?, ?, 'Đã kích hoạt')";
                     PreparedStatement psTK = con.prepareStatement(sqlTK);
                     
                     psTK.setLong(1, maKH); 
@@ -63,7 +63,7 @@ public class CreateAccountProcess {
     public boolean checkUsernameExists(String username) {
         boolean exists = false;
         try (Connection con = ConnectionUtils.getMyConnection()) {
-            String sql = "SELECT USERNAME FROM TAIKHOAN WHERE USERNAME = ?";
+            String sql = "SELECT USERNAME FROM TAI_KHOAN WHERE USERNAME = ?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username.trim());
             ResultSet rs = ps.executeQuery();

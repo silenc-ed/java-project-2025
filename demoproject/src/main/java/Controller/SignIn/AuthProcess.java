@@ -49,7 +49,7 @@ public class AuthProcess {
             // Join with TAIKHOAN to determine Role based on MA_NV
             String SQL = "SELECT tk.MA_NV "
                        + "FROM ACCOUNT_TOKEN atok "
-                       + "JOIN TAIKHOAN tk ON atok.MA_TK = tk.MA_TK "
+                       + "JOIN TAI_KHOAN tk ON atok.MA_TK = tk.MA_TK "
                        + "WHERE atok.TOKEN_VALUE = ? "
                        + "  AND atok.THOI_GIAN_HET_HAN > CURRENT_TIMESTAMP "
                        + "  AND atok.TRANG_THAI = 'Y'";
@@ -105,7 +105,7 @@ public class AuthProcess {
         try (Connection con = ConnectionUtils.getMyConnection()) {
             String SQL = "SELECT tk.MA_NV, tk.MA_KH "
                        + "FROM ACCOUNT_TOKEN atok "
-                       + "JOIN TAIKHOAN tk ON atok.MA_TK = tk.MA_TK "
+                       + "JOIN TAI_KHOAN tk ON atok.MA_TK = tk.MA_TK "
                        + "WHERE atok.TOKEN_VALUE = ? "
                        + "  AND atok.THOI_GIAN_HET_HAN > CURRENT_TIMESTAMP "
                        + "  AND atok.TRANG_THAI = 'Y'";
@@ -118,7 +118,7 @@ public class AuthProcess {
                         Object maKH = rs.getObject("MA_KH");
 
                         if (maNV != null) {
-                            String sqlNV = "SELECT * FROM NHANVIEN WHERE MA_NV = ?";
+                            String sqlNV = "SELECT * FROM NHAN_VIEN WHERE MA_NV = ?";
                             try (PreparedStatement psNV = con.prepareStatement(sqlNV)) {
                                 psNV.setObject(1, maNV);
                                 try (ResultSet rsNV = psNV.executeQuery()) {
@@ -136,7 +136,7 @@ public class AuthProcess {
                                 }
                             }
                         } else if (maKH != null) {
-                            String sqlKH = "SELECT * FROM KHACHHANG WHERE MA_KH = ?";
+                            String sqlKH = "SELECT * FROM KHACH_HANG WHERE MA_KH = ?";
                             try (PreparedStatement psKH = con.prepareStatement(sqlKH)) {
                                 psKH.setObject(1, maKH);
                                 try (ResultSet rsKH = psKH.executeQuery()) {

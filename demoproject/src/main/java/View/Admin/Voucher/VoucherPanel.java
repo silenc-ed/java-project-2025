@@ -24,6 +24,7 @@ public class VoucherPanel extends javax.swing.JPanel {
     private DefaultTableModel tableModel;
     private JTable table;
     private JTextField txtSearch;
+    private JLabel lblLastUpdate;
 
     // Form fields
     private JTextField txtTenKM, txtGiaTri, txtRangBuoc;
@@ -55,15 +56,28 @@ public class VoucherPanel extends javax.swing.JPanel {
             BorderFactory.createMatteBorder(0, 0, 2, 0, PURPLE_LIGHT),
             new EmptyBorder(14, 20, 14, 20)
         ));
+
+        JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftHeader.setOpaque(false);
         JLabel lblTitle = new JLabel("Quản lý khuyến mãi");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
-        header.add(lblTitle, BorderLayout.WEST);
+        
+        lblLastUpdate = new JLabel("Chưa cập nhật");
+        lblLastUpdate.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblLastUpdate.setForeground(new Color(148, 163, 184));
+        
+        leftHeader.add(lblTitle);
+        leftHeader.add(lblLastUpdate);
+        header.add(leftHeader, BorderLayout.WEST);
 
-        // Search
+        // Search Panel + Refresh
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightHeader.setOpaque(false);
+
         JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
         searchPanel.setOpaque(false);
-        searchPanel.setPreferredSize(new Dimension(280, 35));
+        searchPanel.setPreferredSize(new Dimension(240, 35));
         txtSearch = new JTextField("Tìm khuyến mãi...");
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         txtSearch.setForeground(Color.GRAY);
@@ -86,7 +100,19 @@ public class VoucherPanel extends javax.swing.JPanel {
         btnSearch.addActionListener(e -> loadData(getSearchKeyword()));
         searchPanel.add(txtSearch, BorderLayout.CENTER);
         searchPanel.add(btnSearch, BorderLayout.EAST);
-        header.add(searchPanel, BorderLayout.EAST);
+
+        JButton btnRefresh = new JButton("↻ Cập nhật");
+        btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnRefresh.setBackground(new Color(40, 167, 69));
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setPreferredSize(new Dimension(130, 36));
+        btnRefresh.setFocusPainted(false);
+        btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnRefresh.addActionListener(e -> loadData(getSearchKeyword()));
+
+        rightHeader.add(searchPanel);
+        rightHeader.add(btnRefresh);
+        header.add(rightHeader, BorderLayout.EAST);
         this.add(header, BorderLayout.NORTH);
 
         // Split: Left = Table, Right = Form
@@ -315,6 +341,10 @@ public class VoucherPanel extends javax.swing.JPanel {
 
     private void loadData(String keyword) {
         tableModel.setRowCount(0);
+        String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+        if (lblLastUpdate != null) {
+            lblLastUpdate.setText("Cập nhật lúc: " + time);
+        }
         try {
             List<Map<String, Object>> list = dao.getAllPromotions(keyword);
             for (Map<String, Object> r : list) {

@@ -32,6 +32,7 @@ public class BillPanel extends javax.swing.JPanel {
     // === KHAI BÁO CÁC BIẾN TOÀN CỤC BỊ THIẾU ===
     private boolean isEdit = false;
     private int editingMaPn = -1;
+    private JLabel lblLastUpdate;
 
     /**
      * Creates new form BillPanel
@@ -46,24 +47,48 @@ public class BillPanel extends javax.swing.JPanel {
         mainContainer.setBackground(Color.WHITE);
         mainContainer.setBorder(new EmptyBorder(15, 15, 15, 15));
 
+        // Bảng dữ liệu
+        String[] columns = {"", "Mã PN", "Nhà cung cấp", "Mã NV", "Mã CN", "Ngày nhập", "Số lượng", "Đơn giá", "Tổng tiền", "Trạng thái", "Ghi chú"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) return Boolean.class; 
+                return super.getColumnClass(columnIndex);
+            }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0; 
+            }
+        };
+
         // ================= HEADER =================
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
 
+        JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftHeader.setOpaque(false);
+        
         JLabel lblTitle = new JLabel("Quản lý đơn nhập hàng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblTitle.setForeground(new Color(30, 41, 59));
+        
+        lblLastUpdate = new JLabel("Chưa cập nhật");
+        lblLastUpdate.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblLastUpdate.setForeground(new Color(148, 163, 184));
+        
+        leftHeader.add(lblTitle);
+        leftHeader.add(lblLastUpdate);
 
-        JSeparator separator = new JSeparator();
-        separator.setAlignmentX(Component.LEFT_ALIGNMENT);
-        separator.setForeground(new Color(226, 232, 240));
-        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightHeader.setOpaque(false);
 
-        headerPanel.add(lblTitle);
-        headerPanel.add(Box.createVerticalStrut(10));
-        headerPanel.add(separator);
-        headerPanel.add(Box.createVerticalStrut(5));
+        JButton btnRefresh = createGradientButton("↻ Cập nhật");
+        btnRefresh.setPreferredSize(new Dimension(130, 36));
+        btnRefresh.addActionListener(e -> loadDataToTable(model));
+        rightHeader.add(btnRefresh);
+
+        headerPanel.add(leftHeader, BorderLayout.WEST);
+        headerPanel.add(rightHeader, BorderLayout.EAST);
 
         mainContainer.add(headerPanel, BorderLayout.NORTH);
 
@@ -108,19 +133,7 @@ public class BillPanel extends javax.swing.JPanel {
         topSearchPanel.add(txtSearch, BorderLayout.CENTER);
         centerPanel.add(topSearchPanel, BorderLayout.NORTH);
 
-        // Bảng dữ liệu
-        String[] columns = {"", "Mã PN", "Nhà cung cấp", "Mã NV", "Mã CN", "Ngày nhập", "Số lượng", "Đơn giá", "Tổng tiền", "Trạng thái", "Ghi chú"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 0) return Boolean.class; 
-                return super.getColumnClass(columnIndex);
-            }
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 0; 
-            }
-        };
+        // Bảng dữ liệu đã khởi tạo ở trên
 
         JTable table = new JTable(model);
         table.setRowHeight(35);
@@ -276,111 +289,26 @@ public class BillPanel extends javax.swing.JPanel {
                 return;
             }
 
-            try (Connection con = ConnectionUtils.getMyConnection()) {
-                con.setAutoCommit(false); 
-                int maNcc = -1;
-                String checkSql = "SELECT MA_NCC FROM NHACUNGCAP WHERE UPPER(TEN_NCC) = UPPER(?)";
-                try (PreparedStatement psCheck = con.prepareStatement(checkSql)) {
-                    psCheck.setString(1, supplierName);
-                    try (ResultSet rsCheck = psCheck.executeQuery()) {
-                        if (rsCheck.next()) maNcc = rsCheck.getInt("MA_NCC");
-                    }
-                }
+            try {
+                int maNv = Integer.parseInt(txtMaNV.getText().trim());
+                int maCn = Integer.parseInt(txtMaCN.getText().trim());
+                int qty = Integer.parseInt(txtSoLuong.getText().trim());
+                double price = Double.parseDouble(txtDonGia.getText().trim());
+                double total = Double.parseDouble(txtTongTien.getText().trim());
+                int status = Integer.parseInt(cbTrangThai.getSelectedItem().toString());
+                String note = txtGhiChu.getText().trim();
 
-                if (maNcc == -1) {
-                    String insNccSql = "INSERT INTO NHACUNGCAP (TEN_NCC) VALUES (?)";
-                    try (PreparedStatement psInsNcc = con.prepareStatement(insNccSql, Statement.RETURN_GENERATED_KEYS)) {
-                        psInsNcc.setString(1, supplierName);
-                        psInsNcc.executeUpdate();
-                        try (ResultSet rsKey = psInsNcc.getGeneratedKeys()) {
-                            if (rsKey.next()) maNcc = rsKey.getInt(1);
-                        }
-                    }
-                }
+                boolean success = Controller.Admin.PhieuNhap.PhieuNhapDAO.savePhieuNhap(
+                    editingMaPn, supplierName, maNv, maCn, qty, price, total, status, note, isEdit
+                );
 
-                if (!isEdit) {
-                    String sql = "INSERT INTO PHIEU_NHAP (MA_NCC, MA_NV, MA_CN, TONG_TIEN, TRANG_THAI, GHI_CHU) VALUES (?, ?, ?, ?, ?, ?)";
-                    try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                        ps.setInt(1, maNcc);
-                        ps.setInt(2, Integer.parseInt(txtMaNV.getText().trim()));
-                        ps.setInt(3, Integer.parseInt(txtMaCN.getText().trim()));
-                        ps.setDouble(4, Double.parseDouble(txtTongTien.getText().trim()));
-                        ps.setInt(5, Integer.parseInt(cbTrangThai.getSelectedItem().toString()));
-                        ps.setString(6, txtGhiChu.getText().trim());
-                        ps.executeUpdate();
-                        
-                        try (ResultSet rsPn = ps.getGeneratedKeys()) {
-                            if (rsPn.next()) {
-                                int newMaPn = rsPn.getInt(1);
-                                int maBienthe = 1;
-                                try (PreparedStatement psBt = con.prepareStatement("SELECT NVL(MIN(MA_BIENTHE), 1) FROM BIENTHE_SANPHAM")) {
-                                    try (ResultSet rsBt = psBt.executeQuery()) {
-                                        if (rsBt.next()) maBienthe = rsBt.getInt(1);
-                                    }
-                                }
-                                String sqlCt = "INSERT INTO CHITIET_PHIEUNHAP (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) VALUES (?, ?, ?, ?)";
-                                try (PreparedStatement psCt = con.prepareStatement(sqlCt)) {
-                                    psCt.setInt(1, newMaPn);
-                                    psCt.setInt(2, maBienthe);
-                                    psCt.setInt(3, Integer.parseInt(txtSoLuong.getText().trim()));
-                                    psCt.setDouble(4, Double.parseDouble(txtDonGia.getText().trim()));
-                                    psCt.executeUpdate();
-                                }
-                            }
-                        }
-                    }
+                if (success) {
+                    JOptionPane.showMessageDialog(this, isEdit ? "Cập nhật thành công!" : "Thêm phiếu nhập thành công!");
+                    btnCancelAdd.doClick();
+                    loadDataToTable(model);
                 } else {
-                    String sql = "UPDATE PHIEU_NHAP SET MA_NCC=?, MA_NV=?, MA_CN=?, TONG_TIEN=?, TRANG_THAI=?, GHI_CHU=? WHERE MA_PN=?";
-                    try (PreparedStatement ps = con.prepareStatement(sql)) {
-                        ps.setInt(1, maNcc);
-                        ps.setInt(2, Integer.parseInt(txtMaNV.getText().trim()));
-                        ps.setInt(3, Integer.parseInt(txtMaCN.getText().trim()));
-                        ps.setDouble(4, Double.parseDouble(txtTongTien.getText().trim()));
-                        ps.setInt(5, Integer.parseInt(cbTrangThai.getSelectedItem().toString()));
-                        ps.setString(6, txtGhiChu.getText().trim());
-                        ps.setInt(7, editingMaPn);
-                        ps.executeUpdate();
-                    }
-                    
-                    String sqlCtCheck = "SELECT COUNT(*) FROM CHITIET_PHIEUNHAP WHERE MA_PN = ?";
-                    boolean hasDetail = false;
-                    try (PreparedStatement psCtCheck = con.prepareStatement(sqlCtCheck)) {
-                        psCtCheck.setInt(1, editingMaPn);
-                        try (ResultSet rsCt = psCtCheck.executeQuery()) {
-                            if (rsCt.next() && rsCt.getInt(1) > 0) hasDetail = true;
-                        }
-                    }
-                    
-                    if (hasDetail) {
-                        String sqlCtUpd = "UPDATE CHITIET_PHIEUNHAP SET SO_LUONG=?, DON_GIA_NHAP=? WHERE MA_PN=?";
-                        try (PreparedStatement psCtUpd = con.prepareStatement(sqlCtUpd)) {
-                            psCtUpd.setInt(1, Integer.parseInt(txtSoLuong.getText().trim()));
-                            psCtUpd.setDouble(2, Double.parseDouble(txtDonGia.getText().trim()));
-                            psCtUpd.setInt(3, editingMaPn);
-                            psCtUpd.executeUpdate();
-                        }
-                    } else {
-                        int maBienthe = 1;
-                        try (PreparedStatement psBt = con.prepareStatement("SELECT NVL(MIN(MA_BIENTHE), 1) FROM BIENTHE_SANPHAM")) {
-                            try (ResultSet rsBt = psBt.executeQuery()) {
-                                if (rsBt.next()) maBienthe = rsBt.getInt(1);
-                            }
-                        }
-                        String sqlCtIns = "INSERT INTO CHITIET_PHIEUNHAP (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) VALUES (?, ?, ?, ?)";
-                        try (PreparedStatement psCtIns = con.prepareStatement(sqlCtIns)) {
-                            psCtIns.setInt(1, editingMaPn);
-                            psCtIns.setInt(2, maBienthe);
-                            psCtIns.setInt(3, Integer.parseInt(txtSoLuong.getText().trim()));
-                            psCtIns.setDouble(4, Double.parseDouble(txtDonGia.getText().trim()));
-                            psCtIns.executeUpdate();
-                        }
-                    }
+                    throw new Exception("Lỗi khi lưu phiếu nhập");
                 }
-
-                con.commit();
-                JOptionPane.showMessageDialog(this, isEdit ? "Cập nhật thành công!" : "Thêm phiếu nhập thành công!");
-                btnCancelAdd.doClick();
-                loadDataToTable(model);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Lỗi xử lý: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -395,6 +323,7 @@ public class BillPanel extends javax.swing.JPanel {
         bottomPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
 
         JButton btnEdit = createGradientButton("Sửa");
+        btnEdit.setPreferredSize(new Dimension(130, 36));
         btnEdit.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow == -1) {
@@ -428,6 +357,7 @@ public class BillPanel extends javax.swing.JPanel {
         JPanel rightButtonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         rightButtonsPanel.setOpaque(false);
         JButton btnAdd = createGradientButton("Thêm");
+        btnAdd.setPreferredSize(new Dimension(130, 36));
         btnAdd.addActionListener(e -> {
             isEdit = false;
             editingMaPn = -1;
@@ -445,80 +375,53 @@ public class BillPanel extends javax.swing.JPanel {
         });
         
         JButton btnDelete = createGradientButton("Xóa");
+        btnDelete.setPreferredSize(new Dimension(130, 36));
         btnDelete.addActionListener(e -> {
-            boolean hasChecked = false;
+            java.util.List<Integer> toDelete = new java.util.ArrayList<>();
+            java.util.List<Integer> modelRows = new java.util.ArrayList<>();
+
             for (int i = model.getRowCount() - 1; i >= 0; i--) {
                 Boolean isChecked = (Boolean) model.getValueAt(i, 0);
                 if (isChecked != null && isChecked) {
-                    hasChecked = true;
-                    break;
+                    toDelete.add((int) model.getValueAt(i, 1));
+                    modelRows.add(i);
                 }
             }
 
-            if (hasChecked) {
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa các phiếu nhập đã chọn?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    try (Connection con = ConnectionUtils.getMyConnection()) {
-                        con.setAutoCommit(false);
-                        try (PreparedStatement psCt = con.prepareStatement("DELETE FROM CHITIET_PHIEUNHAP WHERE MA_PN = ?");
-                             PreparedStatement psPn = con.prepareStatement("DELETE FROM PHIEU_NHAP WHERE MA_PN = ?")) {
-                            for (int i = model.getRowCount() - 1; i >= 0; i--) {
-                                Boolean isChecked = (Boolean) model.getValueAt(i, 0);
-                                if (isChecked != null && isChecked) {
-                                    int maPn = (int) model.getValueAt(i, 1);
-                                    
-                                    psCt.setInt(1, maPn);
-                                    psCt.executeUpdate();
-                                    
-                                    psPn.setInt(1, maPn);
-                                    psPn.executeUpdate();
-                                    
-                                    model.removeRow(i);
-                                }
-                            }
-                            con.commit();
-                            JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                        } catch (Exception ex) {
-                            con.rollback();
-                            throw ex;
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            } else {
+            if (toDelete.isEmpty()) {
                 int selectedRow = table.getSelectedRow();
                 if (selectedRow != -1) {
-                    int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa phiếu nhập này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int modelRow = table.convertRowIndexToModel(selectedRow);
-                        int maPn = (int) model.getValueAt(modelRow, 1);
-                        try (Connection con = ConnectionUtils.getMyConnection()) {
-                            con.setAutoCommit(false);
-                            try (PreparedStatement psCt = con.prepareStatement("DELETE FROM CHITIET_PHIEUNHAP WHERE MA_PN = ?");
-                                 PreparedStatement psPn = con.prepareStatement("DELETE FROM PHIEU_NHAP WHERE MA_PN = ?")) {
-                                psCt.setInt(1, maPn);
-                                psCt.executeUpdate();
-                                
-                                psPn.setInt(1, maPn);
-                                psPn.executeUpdate();
-                                
-                                con.commit();
-                                model.removeRow(modelRow);
-                                JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                            } catch (Exception ex) {
-                                con.rollback();
-                                throw ex;
-                            }
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, "Vui lòng chọn hoặc đánh dấu phiếu nhập cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    int modelRow = table.convertRowIndexToModel(selectedRow);
+                    toDelete.add((int) model.getValueAt(modelRow, 1));
+                    modelRows.add(modelRow);
                 }
+            }
+
+            if (toDelete.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn hoặc đánh dấu phiếu nhập cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                "Bạn có chắc chắn muốn xóa " + toDelete.size() + " phiếu nhập đã chọn?", 
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            try {
+                boolean success = Controller.Admin.PhieuNhap.PhieuNhapDAO.deletePhieuNhaps(toDelete);
+                if (success) {
+                    // Remove rows from table model (from bottom to top to avoid index shifts)
+                    java.util.Collections.sort(modelRows, java.util.Collections.reverseOrder());
+                    for (int r : modelRows) {
+                        model.removeRow(r);
+                    }
+                    JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                } else {
+                    throw new Exception("Lỗi khi xóa phiếu nhập");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
         
@@ -547,18 +450,18 @@ public class BillPanel extends javax.swing.JPanel {
                 Color colorBottom = new Color(210, 160, 205); 
                 
                 String cleanText = getText().trim().toLowerCase();
-                if (cleanText.contains("thêm") || cleanText.equals("lưu")) {
+                if (cleanText.contains("thêm") || cleanText.equals("lưu") || cleanText.contains("cập nhật")) {
                     colorTop = new Color(40, 167, 69);
-                    colorBottom = new Color(46, 204, 113);
+                    colorBottom = new Color(40, 167, 69);
                 } else if (cleanText.contains("sửa")) {
                     colorTop = new Color(0, 123, 255);
-                    colorBottom = new Color(52, 152, 219);
+                    colorBottom = new Color(0, 123, 255);
                 } else if (cleanText.contains("xóa")) {
                     colorTop = new Color(220, 53, 69);
-                    colorBottom = new Color(231, 76, 60);
+                    colorBottom = new Color(220, 53, 69);
                 } else if (cleanText.contains("hủy")) {
                     colorTop = new Color(108, 117, 125);
-                    colorBottom = new Color(148, 163, 184);
+                    colorBottom = new Color(108, 117, 125);
                 }
                 
                 GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
@@ -580,28 +483,25 @@ public class BillPanel extends javax.swing.JPanel {
     // === HÀM LOAD DỮ LIỆU TỪ DATABASE BỊ THIẾU ===
     private void loadDataToTable(DefaultTableModel model) {
         model.setRowCount(0);
-        String sql = "SELECT p.MA_PN, n.TEN_NCC, p.MA_NV, p.MA_CN, p.NGAY_NHAP, c.SO_LUONG, c.DON_GIA_NHAP, p.TONG_TIEN, p.TRANG_THAI, p.GHI_CHU " +
-                     "FROM PHIEU_NHAP p " +
-                     "LEFT JOIN NHACUNGCAP n ON p.MA_NCC = n.MA_NCC " +
-                     "LEFT JOIN CHITIET_PHIEUNHAP c ON p.MA_PN = c.MA_PN " +
-                     "ORDER BY p.MA_PN DESC";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
-            while (rs.next()) {
+        String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+        if (lblLastUpdate != null) {
+            lblLastUpdate.setText("Cập nhật lúc: " + time);
+        }
+        try {
+            java.util.List<java.util.Map<String, Object>> list = Controller.Admin.PhieuNhap.PhieuNhapDAO.getAllPhieuNhap();
+            for (java.util.Map<String, Object> row : list) {
                 model.addRow(new Object[]{
                     false, // Ô checkbox cột 0
-                    rs.getInt("MA_PN"),
-                    rs.getString("TEN_NCC"),
-                    rs.getInt("MA_NV"),
-                    rs.getInt("MA_CN"),
-                    rs.getTimestamp("NGAY_NHAP"),
-                    rs.getInt("SO_LUONG"),
-                    rs.getDouble("DON_GIA_NHAP"),
-                    rs.getDouble("TONG_TIEN"),
-                    rs.getInt("TRANG_THAI"),
-                    rs.getString("GHI_CHU")
+                    row.get("MA_PN"),
+                    row.get("TEN_NCC"),
+                    row.get("MA_NV"),
+                    row.get("MA_CN"),
+                    row.get("NGAY_NHAP"),
+                    row.get("SO_LUONG"),
+                    row.get("DON_GIA_NHAP"),
+                    row.get("TONG_TIEN"),
+                    row.get("TRANG_THAI"),
+                    row.get("GHI_CHU")
                 });
             }
         } catch (Exception e) {

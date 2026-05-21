@@ -363,23 +363,15 @@ public class WarrantyPanel extends javax.swing.JPanel {
             
             @Override
             protected String doInBackground() throws Exception {
-                // Fetch product details using join query first
-                String checkProdSQL = "SELECT SP.TEN_SP, BT.TEN_BIENTHE "
-                                    + "FROM KHO_SERIAL KS "
-                                    + "JOIN BIENTHE_SANPHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE "
-                                    + "JOIN SANPHAM SP ON BT.MA_SP = SP.MA_SP "
-                                    + "WHERE KS.SERIAL_NUMBER = ?";
-                try (Connection con = ConnectionUtils.getMyConnection();
-                     PreparedStatement ps = con.prepareStatement(checkProdSQL)) {
-                    ps.setString(1, imei);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            prodName = rs.getString("TEN_SP");
-                            prodConfig = rs.getString("TEN_BIENTHE");
-                        }
+                // Fetch product details using BaoHanhDAO
+                java.util.Map<String, String> details = Controller.Admin.BaoHanh.BaoHanhDAO.getProductDetailsByImei(imei);
+                if (details != null && !details.isEmpty()) {
+                    if (details.containsKey("TEN_SP")) {
+                        prodName = details.get("TEN_SP");
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    if (details.containsKey("TEN_BIENTHE")) {
+                        prodConfig = details.get("TEN_BIENTHE");
+                    }
                 }
                 
                 return checkingWarranty.checking(sdt, imei, thoiGian);

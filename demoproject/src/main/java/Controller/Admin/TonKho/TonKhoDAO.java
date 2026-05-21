@@ -21,8 +21,8 @@ public class TonKhoDAO {
         List<Map<String, Object>> results = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT CN.MA_CN, CN.TEN_CN, CN.DIA_CHI, CN.SDT_HOTLINE, CN.TRANG_THAI, ");
-        sql.append("NVL((SELECT SUM(TK.SO_LUONG_TON) FROM TONKHO TK WHERE TK.MA_CN = CN.MA_CN), 0) AS TONG_TON ");
-        sql.append("FROM CHINHANH CN ");
+        sql.append("NVL((SELECT SUM(TK.SO_LUONG_TON) FROM TON_KHO TK WHERE TK.MA_CN = CN.MA_CN), 0) AS TONG_TON ");
+        sql.append("FROM CHI_NHANH CN ");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("WHERE UPPER(CN.TEN_CN) LIKE UPPER(?) OR UPPER(CN.DIA_CHI) LIKE UPPER(?) ");
         }
@@ -59,9 +59,9 @@ public class TonKhoDAO {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT SP.MA_SP, SP.TEN_SP, BT.MA_BIENTHE, BT.TEN_BIENTHE, BT.GIA_BAN, ");
         sql.append("TK.SO_LUONG_TON, TK.NGAY_CAP_NHAT_CUOI ");
-        sql.append("FROM TONKHO TK ");
-        sql.append("JOIN BIENTHE_SANPHAM BT ON TK.MA_BIENTHE = BT.MA_BIENTHE ");
-        sql.append("JOIN SANPHAM SP ON BT.MA_SP = SP.MA_SP ");
+        sql.append("FROM TON_KHO TK ");
+        sql.append("JOIN BIEN_THE_SAN_PHAM BT ON TK.MA_BIENTHE = BT.MA_BIENTHE ");
+        sql.append("JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP ");
         sql.append("WHERE TK.MA_CN = ? ");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND (UPPER(SP.TEN_SP) LIKE UPPER(?) OR UPPER(BT.TEN_BIENTHE) LIKE UPPER(?)) ");
@@ -154,12 +154,28 @@ public class TonKhoDAO {
      */
     public String getBranchName(int maCN) throws Exception {
         try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement("SELECT TEN_CN FROM CHINHANH WHERE MA_CN = ?")) {
+             PreparedStatement ps = con.prepareStatement("SELECT TEN_CN FROM CHI_NHANH WHERE MA_CN = ?")) {
             ps.setInt(1, maCN);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getString("TEN_CN");
             }
         }
         return "Chi nhánh #" + maCN;
+    }
+
+    /**
+     * Cập nhật thông tin chi nhánh
+     */
+    public boolean updateBranch(int maCN, String tenCN, String diaChi, String sdtHotline, String trangThai) throws Exception {
+        String sql = "UPDATE CHI_NHANH SET TEN_CN = ?, DIA_CHI = ?, SDT_HOTLINE = ?, TRANG_THAI = ? WHERE MA_CN = ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenCN);
+            ps.setString(2, diaChi);
+            ps.setString(3, sdtHotline);
+            ps.setString(4, trangThai);
+            ps.setInt(5, maCN);
+            return ps.executeUpdate() > 0;
+        }
     }
 }

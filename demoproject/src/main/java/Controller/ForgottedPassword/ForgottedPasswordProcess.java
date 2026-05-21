@@ -18,8 +18,8 @@ public class ForgottedPasswordProcess {
             // Join giữa TAIKHOAN và KHACHHANG
             // Hiện tại chỉ hỗ trợ lấy email của khách hàng.
             String sql = "SELECT KH.EMAIL, TK.USERNAME "
-                       + "FROM TAIKHOAN TK "
-                       + "JOIN KHACHHANG KH ON TK.MA_KH = KH.MA_KH "
+                       + "FROM TAI_KHOAN TK "
+                       + "JOIN KHACH_HANG KH ON TK.MA_KH = KH.MA_KH "
                        + "WHERE TK.USERNAME = ? OR KH.EMAIL = ?";
             
             PreparedStatement ps = con.prepareStatement(sql);
@@ -48,7 +48,7 @@ public class ForgottedPasswordProcess {
     public boolean resetPassword(String username, String newPassword) {
         boolean isSuccess = false;
         try (Connection con = ConnectionUtils.getMyConnection()) {
-            String sql = "UPDATE TAIKHOAN SET PASSWORD_HASH = ? WHERE USERNAME = ?";
+            String sql = "UPDATE TAI_KHOAN SET PASSWORD_HASH = ? WHERE USERNAME = ?";
             PreparedStatement ps = con.prepareStatement(sql);
             
             String hashedPassword = Common.HashUtil.hashPassword(newPassword.trim());

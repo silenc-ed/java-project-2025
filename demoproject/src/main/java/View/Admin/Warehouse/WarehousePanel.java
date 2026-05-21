@@ -36,6 +36,7 @@ public class WarehousePanel extends javax.swing.JPanel {
     private DefaultTableModel branchModel, productModel, serialModel;
     private JTable branchTable, productTable, serialTable;
     private JTextField txtSearchBranch, txtSearchProduct, txtSearchSerial;
+    private JLabel lblLastUpdate;
 
     private static final DecimalFormat DF = new DecimalFormat("#,###");
     private static final SimpleDateFormat SDF = new SimpleDateFormat("dd/MM/yyyy HH:mm");
@@ -73,9 +74,79 @@ public class WarehousePanel extends javax.swing.JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setBackground(BG);
 
-        // Header
-        JPanel header = createHeader("Tồn kho chi nhánh", null, null);
-        txtSearchBranch = addSearchToHeader(header, "Tìm chi nhánh...", e -> loadBranches(getSearchText(txtSearchBranch)));
+        // Custom Header for branch card
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setBackground(Color.WHITE);
+        header.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, PURPLE_LIGHT),
+            new EmptyBorder(14, 20, 14, 20)
+        ));
+
+        // Left Header: Title + Timestamp
+        JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        leftHeader.setOpaque(false);
+        
+        JLabel lblTitle = new JLabel("Tồn kho chi nhánh");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setForeground(new Color(30, 41, 59));
+        leftHeader.add(lblTitle);
+
+        lblLastUpdate = new JLabel("Chưa cập nhật");
+        lblLastUpdate.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblLastUpdate.setForeground(new Color(148, 163, 184));
+        leftHeader.add(lblLastUpdate);
+        
+        header.add(leftHeader, BorderLayout.WEST);
+
+        // Right Header: Search Panel + Cập nhật Button + Sửa chi nhánh Button
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        rightHeader.setOpaque(false);
+
+        // Search Panel
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        searchPanel.setOpaque(false);
+        searchPanel.setPreferredSize(new Dimension(200, 36));
+
+        txtSearchBranch = new JTextField("Tìm chi nhánh...");
+        txtSearchBranch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        txtSearchBranch.setForeground(Color.GRAY);
+        txtSearchBranch.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
+                if (txtSearchBranch.getForeground() == Color.GRAY) { txtSearchBranch.setText(""); txtSearchBranch.setForeground(new Color(30, 41, 59)); }
+            }
+            @Override public void focusLost(FocusEvent e) {
+                if (txtSearchBranch.getText().isEmpty()) { txtSearchBranch.setText("Tìm chi nhánh..."); txtSearchBranch.setForeground(Color.GRAY); }
+            }
+        });
+        txtSearchBranch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
+
+        JButton btnSearch = new JButton("🔍");
+        btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnSearch.setPreferredSize(new Dimension(40, 36));
+        btnSearch.setBackground(new Color(0, 123, 255));
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setBorderPainted(false);
+        btnSearch.setFocusPainted(false);
+        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSearch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
+
+        searchPanel.add(txtSearchBranch, BorderLayout.CENTER);
+        searchPanel.add(btnSearch, BorderLayout.EAST);
+        rightHeader.add(searchPanel);
+
+        // Button Cập nhật
+        JButton btnRefresh = createGradientButton("↻ Cập nhật");
+        btnRefresh.setPreferredSize(new Dimension(130, 36));
+        btnRefresh.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
+        rightHeader.add(btnRefresh);
+
+        // Button Sửa chi nhánh
+        JButton btnEditBranch = createGradientButton("✏ Sửa chi nhánh");
+        btnEditBranch.setPreferredSize(new Dimension(150, 36));
+        btnEditBranch.addActionListener(e -> showEditBranchDialog());
+        rightHeader.add(btnEditBranch);
+
+        header.add(rightHeader, BorderLayout.EAST);
         panel.add(header, BorderLayout.NORTH);
 
         // Table
@@ -141,6 +212,10 @@ public class WarehousePanel extends javax.swing.JPanel {
                     r.get("TRANG_THAI") != null ? r.get("TRANG_THAI") : "",
                     r.get("TONG_TON")
                 });
+            }
+            if (lblLastUpdate != null) {
+                String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+                lblLastUpdate.setText("Cập nhật lúc: " + time);
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -542,5 +617,190 @@ public class WarehousePanel extends javax.swing.JPanel {
             }
             return lbl;
         }
+    }
+
+    private void showEditBranchDialog() {
+        int selectedRow = branchTable.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một chi nhánh để sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int modelRow = branchTable.convertRowIndexToModel(selectedRow);
+        int maCN = (int) branchModel.getValueAt(modelRow, 0);
+        String tenCN = (String) branchModel.getValueAt(modelRow, 1);
+        String diaChi = (String) branchModel.getValueAt(modelRow, 2);
+        String sdtHotline = (String) branchModel.getValueAt(modelRow, 3);
+        String trangThai = (String) branchModel.getValueAt(modelRow, 4);
+
+        // Create Dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa thông tin chi nhánh", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(450, 380);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Label style
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
+        Font inputFont = new Font("Segoe UI", Font.PLAIN, 13);
+
+        // MA CN
+        gbc.gridx = 0; gbc.gridy = 0;
+        JLabel lblMa = new JLabel("Mã chi nhánh:");
+        lblMa.setFont(labelFont);
+        mainPanel.add(lblMa, gbc);
+
+        gbc.gridx = 1;
+        JLabel lblMaVal = new JLabel(String.valueOf(maCN));
+        lblMaVal.setFont(labelFont);
+        mainPanel.add(lblMaVal, gbc);
+
+        // TEN CN
+        gbc.gridx = 0; gbc.gridy = 1;
+        JLabel lblTen = new JLabel("Tên chi nhánh:");
+        lblTen.setFont(labelFont);
+        mainPanel.add(lblTen, gbc);
+
+        gbc.gridx = 1;
+        JTextField txtTen = new JTextField(tenCN);
+        txtTen.setFont(inputFont);
+        txtTen.setPreferredSize(new Dimension(200, 30));
+        mainPanel.add(txtTen, gbc);
+
+        // DIA CHI
+        gbc.gridx = 0; gbc.gridy = 2;
+        JLabel lblDiaChi = new JLabel("Địa chỉ:");
+        lblDiaChi.setFont(labelFont);
+        mainPanel.add(lblDiaChi, gbc);
+
+        gbc.gridx = 1;
+        JTextField txtDiaChi = new JTextField(diaChi);
+        txtDiaChi.setFont(inputFont);
+        txtDiaChi.setPreferredSize(new Dimension(200, 30));
+        mainPanel.add(txtDiaChi, gbc);
+
+        // SDT HOTLINE
+        gbc.gridx = 0; gbc.gridy = 3;
+        JLabel lblSdt = new JLabel("Hotline:");
+        lblSdt.setFont(labelFont);
+        mainPanel.add(lblSdt, gbc);
+
+        gbc.gridx = 1;
+        JTextField txtSdt = new JTextField(sdtHotline);
+        txtSdt.setFont(inputFont);
+        txtSdt.setPreferredSize(new Dimension(200, 30));
+        mainPanel.add(txtSdt, gbc);
+
+        // TRANG THAI
+        gbc.gridx = 0; gbc.gridy = 4;
+        JLabel lblTrangThai = new JLabel("Trạng thái:");
+        lblTrangThai.setFont(labelFont);
+        mainPanel.add(lblTrangThai, gbc);
+
+        gbc.gridx = 1;
+        String[] statuses = {"Đang hoạt động", "Ngừng hoạt động"};
+        JComboBox<String> cbTrangThai = new JComboBox<>(statuses);
+        cbTrangThai.setFont(inputFont);
+        cbTrangThai.setPreferredSize(new Dimension(200, 30));
+        if (trangThai != null && trangThai.contains("Ngừng")) {
+            cbTrangThai.setSelectedItem("Ngừng hoạt động");
+        } else {
+            cbTrangThai.setSelectedItem("Đang hoạt động");
+        }
+        mainPanel.add(cbTrangThai, gbc);
+
+        dialog.add(mainPanel, BorderLayout.CENTER);
+
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        buttonPanel.setBackground(new Color(248, 250, 252));
+        buttonPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)));
+
+        JButton btnSave = createGradientButton("Lưu");
+        btnSave.setPreferredSize(new Dimension(100, 35));
+        btnSave.addActionListener(e -> {
+            String newTen = txtTen.getText().trim();
+            String newDiaChi = txtDiaChi.getText().trim();
+            String newSdt = txtSdt.getText().trim();
+            String newTrangThai = (String) cbTrangThai.getSelectedItem();
+
+            if (newTen.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Tên chi nhánh không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                boolean success = dao.updateBranch(maCN, newTen, newDiaChi, newSdt, newTrangThai);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Cập nhật chi nhánh thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    loadBranches(getSearchText(txtSearchBranch));
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Cập nhật chi nhánh thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dialog, "Lỗi kết nối database: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JButton btnCancel = createGradientButton("Hủy");
+        btnCancel.setPreferredSize(new Dimension(100, 35));
+        btnCancel.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(btnSave);
+        buttonPanel.add(btnCancel);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    private JButton createGradientButton(String text) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                Color colorTop = new Color(175, 122, 197); 
+                Color colorBottom = new Color(210, 160, 205); 
+                
+                String cleanText = getText().trim().toLowerCase();
+                if (cleanText.contains("thêm") || cleanText.equals("lưu") || cleanText.contains("cập nhật")) {
+                    colorTop = new Color(40, 167, 69);
+                    colorBottom = new Color(40, 167, 69);
+                } else if (cleanText.contains("sửa")) {
+                    colorTop = new Color(0, 123, 255);
+                    colorBottom = new Color(0, 123, 255);
+                } else if (cleanText.contains("xóa")) {
+                    colorTop = new Color(220, 53, 69);
+                    colorBottom = new Color(220, 53, 69);
+                } else if (cleanText.contains("hủy")) {
+                    colorTop = new Color(108, 117, 125);
+                    colorBottom = new Color(108, 117, 125);
+                }
+                
+                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
+                g2d.setPaint(gp);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2d.dispose();
+                super.paintComponent(g);
+            }
+        };
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
     }
 }
