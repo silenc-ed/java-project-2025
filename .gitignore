@@ -1,2 +1,16 @@
-/RS_ProjectVN/nbproject/private/
+
 ConnectDB/
+# Bỏ qua các file biên dịch
+*.class
+target/
+
+# Bỏ qua cấu hình của các IDE
+.idea/
+.vscode/
+*.iml
+nbactions.xml
+nbproject/
+ConnectDB/
+
+*.sql
+*.md

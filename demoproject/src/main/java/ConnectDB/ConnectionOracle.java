@@ -27,7 +27,7 @@ public class ConnectionOracle {
         //SID Oralce
         String sid = "orcl";
         //Username
-        String userName = "AdminTestingVN";
+        String userName = "DoAn_database";
         //Password
         String password = "Admin123";
         
@@ -44,7 +44,6 @@ public class ConnectionOracle {
         //Tạo đối tượng connection
         Connection conn = DriverManager.getConnection(connectionURL, userName,
                 password);
-        
         return conn;
     }
 

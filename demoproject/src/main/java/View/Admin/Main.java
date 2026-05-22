@@ -41,12 +41,13 @@ public class Main extends javax.swing.JFrame {
                 "Tổng quan",
                 "Mua hàng",
                 "Quản lý SP",
-                "Đơn hàng",
+                "Đơn nhập hàng",
                 "Khách hàng",
                 "Nhân viên",
                 "Tồn kho CN",
                 "Khuyến mãi",
-                "Nhập kho"
+                "Đơn bán hàng",
+                "Lịch làm việc"
         });
 
         // --- Thiết lập khu vực nội dung chính ---
@@ -76,7 +77,7 @@ public class Main extends javax.swing.JFrame {
                     case 2: // Quản lý SP
                         showForm(new View.Admin.ProductPanel());
                         break;
-                    case 3: // Đơn hàng
+                    case 3: // Đơn nhập hàng
                         showForm(new View.Admin.BillPanel());
                         break;
                     case 4: // Khách hàng
@@ -91,8 +92,11 @@ public class Main extends javax.swing.JFrame {
                     case 7: // Khuyến mãi
                         showForm(new View.Admin.VoucherPanel());
                         break;
-                    case 8: // Nhập kho
+                    case 8: // Đơn bán hàng
                         showForm(new View.Admin.ProcurementPanel());
+                        break;
+                    case 9: // Lịch làm việc
+                        showForm(new View.Schedule.ScheduleManagementPanel());
                         break;
                 }
             }
@@ -126,6 +130,9 @@ public class Main extends javax.swing.JFrame {
                                 new View.SignIn.SignInView().setVisible(true);
                                 dispose();
                             }
+                        } else if ("Hồ sơ".equals(selected)) {
+                            View.Admin.UserProfileDialog profileDialog = new View.Admin.UserProfileDialog(Main.this);
+                            profileDialog.setVisible(true);
                         } else {
                             javax.swing.JOptionPane.showMessageDialog(Main.this,
                                     "Chức năng " + selected + " đang phát triển.");
