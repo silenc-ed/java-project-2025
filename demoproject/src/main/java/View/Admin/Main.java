@@ -71,7 +71,8 @@ public class Main extends javax.swing.JFrame {
                 "Nhân viên",
                 "Tồn kho CN",
                 "Khuyến mãi",
-                "Nhập kho"
+                "Nhập kho",
+                "Chấm công"
         });
 
         // --- Thiết lập khu vực nội dung chính ---
@@ -127,6 +128,9 @@ public class Main extends javax.swing.JFrame {
                         break;
                     case 8: // Nhập kho
                         showForm(new View.Admin.Bill.BillPanel());
+                        break;
+                    case 9: // Chấm công
+                        showForm(new View.Admin.Attendance.AttendancePanel());
                         break;
                 }
             }

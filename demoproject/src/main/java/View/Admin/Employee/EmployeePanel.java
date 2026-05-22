@@ -228,11 +228,15 @@ public class EmployeePanel extends JPanel {
         }.execute();
     }
 
-    // ─── Add Dialog (giống CustomerPanel + vai trò) ─────────────────
+    // ─── Add Dialog (đầy đủ thông tin nhân viên + tài khoản) ─────────
 
     private void showAddDialog() {
+        // Load dữ liệu cho combo boxes
+        List<Object[]> chiNhanhList = NhanVienDAO.getAllChiNhanh();
+        List<Object[]> roleGroupList = NhanVienDAO.getAllRoleGroups();
+
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Thêm nhân viên", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(460, 520);
+        dialog.setSize(500, 720);
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
 
@@ -246,11 +250,48 @@ public class EmployeePanel extends JPanel {
         dlgTitle.setForeground(new Color(30, 41, 59));
         dlgTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JTextField tfHoTen = makeField("Họ tên *");
-        JTextField tfSdt = makeField("Số điện thoại *");
-        JTextField tfDiaChi = makeField("Địa chỉ");
-        JTextField tfEmail = makeField("Email");
+        // ── Thông tin nhân viên ──
+        JLabel lblSection1 = new JLabel("Thông tin nhân viên");
+        lblSection1.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblSection1.setForeground(new Color(100, 116, 139));
+        lblSection1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblSection1.setBorder(new EmptyBorder(6, 0, 4, 0));
 
+        JLabel lblChiNhanh = new JLabel("Chi nhánh *");
+        lblChiNhanh.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblChiNhanh.setForeground(new Color(71, 85, 105));
+        lblChiNhanh.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JComboBox<String> cbChiNhanh = new JComboBox<>();
+        cbChiNhanh.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cbChiNhanh.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        cbChiNhanh.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (Object[] cn : chiNhanhList) {
+            cbChiNhanh.addItem(cn[1].toString());
+        }
+
+        JTextField tfHoTen = makeField("Họ tên *");
+        JTextField tfCccd = makeField("CCCD");
+        JTextField tfSdt = makeField("Số điện thoại *");
+        JTextField tfEmail = makeField("Email");
+        JTextField tfNgaySinh = makeField("Ngày sinh (dd/MM/yyyy)");
+        JTextField tfLuong = makeField("Lương cơ bản");
+        tfLuong.setText("0");
+        JTextField tfNgayVaoLam = makeField("Ngày vào làm (dd/MM/yyyy)");
+        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        tfNgayVaoLam.setText(today);
+
+        JLabel lblTrangThai = new JLabel("Trạng thái");
+        lblTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblTrangThai.setForeground(new Color(71, 85, 105));
+        lblTrangThai.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đang làm việc", "Đã nghỉ việc"});
+        cbTrangThai.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cbTrangThai.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        cbTrangThai.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // ── Tài khoản đăng nhập ──
         JLabel lblTK = new JLabel("Tài khoản đăng nhập (tùy chọn)");
         lblTK.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblTK.setForeground(new Color(100, 116, 139));
@@ -269,14 +310,22 @@ public class EmployeePanel extends JPanel {
         lblRole.setForeground(new Color(71, 85, 105));
         lblRole.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JComboBox<String> cbRole = new JComboBox<>(new String[]{"Admin", "Nhân viên"});
+        JComboBox<String> cbRole = new JComboBox<>();
         cbRole.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbRole.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         cbRole.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (Object[] rg : roleGroupList) {
+            cbRole.addItem(rg[1].toString());
+        }
+        if (cbRole.getItemCount() == 0) {
+            cbRole.addItem("Admin");
+            cbRole.addItem("Nhân viên");
+        }
 
+        // ── Nút Lưu ──
         JButton btnSave = new JButton("Lưu");
         btnSave.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnSave.setBackground(new Color(37, 99, 235));
+        btnSave.setBackground(new Color(40, 167, 69));
         btnSave.setForeground(Color.WHITE);
         btnSave.setBorder(new EmptyBorder(10, 0, 10, 0));
         btnSave.setFocusPainted(false);
@@ -284,48 +333,119 @@ public class EmployeePanel extends JPanel {
         btnSave.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btnSave.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-//        btnSave.addActionListener(e -> {
-//            String hoTen = tfHoTen.getText().trim();
-//            String sdt = tfSdt.getText().trim();
-//            if (hoTen.isEmpty() || sdt.isEmpty()) {
-//                JOptionPane.showMessageDialog(dialog, "Họ tên và SĐT không được để trống.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//                return;
-//            }
-//            new SwingWorker<Boolean, Void>() {
-//                @Override protected Boolean doInBackground() {
-//                    return NhanVienDAO.themNhanVien(hoTen, sdt, tfDiaChi.getText().trim(),
-//                            tfEmail.getText().trim(), tfUser.getText().trim(),
-//                            new String(tfPass.getPassword()).trim(), (String) cbRole.getSelectedItem());
-//                }
-//                @Override protected void done() {
-//                    try {
-//                        if (get()) {
-//                            dialog.dispose();
-//                            loadData();
-//                            JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(EmployeePanel.this),
-//                                    "Thêm nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-//                        } else {
-//                            JOptionPane.showMessageDialog(dialog, "Lỗi: SĐT hoặc Username đã tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-//                        }
-//                    } catch (Exception ex) { ex.printStackTrace(); }
-//                }
-//            }.execute();
-//        });
+        btnSave.addActionListener(e -> {
+            String hoTen = tfHoTen.getText().trim();
+            String sdt = tfSdt.getText().trim();
+            if (hoTen.isEmpty() || sdt.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Họ tên và SĐT không được để trống.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (chiNhanhList.isEmpty() || cbChiNhanh.getSelectedIndex() < 0) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng chọn chi nhánh.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
+            long maCN = ((Number) chiNhanhList.get(cbChiNhanh.getSelectedIndex())[0]).longValue();
+
+            // Parse ngày sinh
+            java.sql.Date ngaySinh = null;
+            String ngaySinhStr = tfNgaySinh.getText().trim();
+            if (!ngaySinhStr.isEmpty()) {
+                try {
+                    java.time.LocalDate ld = java.time.LocalDate.parse(ngaySinhStr,
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    ngaySinh = java.sql.Date.valueOf(ld);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog, "Ngày sinh không hợp lệ. Định dạng: dd/MM/yyyy", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            // Parse ngày vào làm
+            java.sql.Date ngayVaoLam = null;
+            String ngayVaoLamStr = tfNgayVaoLam.getText().trim();
+            if (!ngayVaoLamStr.isEmpty()) {
+                try {
+                    java.time.LocalDate ld = java.time.LocalDate.parse(ngayVaoLamStr,
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    ngayVaoLam = java.sql.Date.valueOf(ld);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(dialog, "Ngày vào làm không hợp lệ. Định dạng: dd/MM/yyyy", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            // Parse lương
+            long luongCoBan = 0;
+            try {
+                String luongStr = tfLuong.getText().trim();
+                if (!luongStr.isEmpty()) luongCoBan = Long.parseLong(luongStr);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Lương cơ bản phải là số.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String cccd = tfCccd.getText().trim();
+            String email = tfEmail.getText().trim();
+            String trangThai = cbTrangThai.getSelectedItem().toString();
+            String username = tfUser.getText().trim();
+            String pass = new String(tfPass.getPassword()).trim();
+            String tenNhom = cbRole.getSelectedItem() != null ? cbRole.getSelectedItem().toString() : "";
+
+            final java.sql.Date fNgaySinh = ngaySinh;
+            final java.sql.Date fNgayVaoLam = ngayVaoLam;
+            final long fMaCN = maCN;
+            final long fLuong = luongCoBan;
+
+            new SwingWorker<Boolean, Void>() {
+                @Override protected Boolean doInBackground() {
+                    return NhanVienDAO.themNhanVien(fMaCN, hoTen, fNgaySinh,
+                            cccd, sdt, email, fLuong, fNgayVaoLam, trangThai,
+                            username, pass, tenNhom);
+                }
+                @Override protected void done() {
+                    try {
+                        if (get()) {
+                            dialog.dispose();
+                            loadData();
+                            JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(EmployeePanel.this),
+                                    "Thêm nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(dialog, "Lỗi: CCCD, SĐT hoặc Username đã tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+            }.execute();
+        });
+
+        // Layout
         content.add(dlgTitle);
-        content.add(Box.createVerticalStrut(16));
+        content.add(Box.createVerticalStrut(12));
+        content.add(lblSection1);
+        content.add(Box.createVerticalStrut(6));
+        content.add(lblChiNhanh); content.add(Box.createVerticalStrut(2));
+        content.add(cbChiNhanh); content.add(Box.createVerticalStrut(8));
         content.add(tfHoTen); content.add(Box.createVerticalStrut(8));
+        content.add(tfCccd); content.add(Box.createVerticalStrut(8));
         content.add(tfSdt); content.add(Box.createVerticalStrut(8));
-        content.add(tfDiaChi); content.add(Box.createVerticalStrut(8));
         content.add(tfEmail); content.add(Box.createVerticalStrut(8));
+        content.add(tfNgaySinh); content.add(Box.createVerticalStrut(8));
+        content.add(tfLuong); content.add(Box.createVerticalStrut(8));
+        content.add(tfNgayVaoLam); content.add(Box.createVerticalStrut(8));
+        content.add(lblTrangThai); content.add(Box.createVerticalStrut(2));
+        content.add(cbTrangThai); content.add(Box.createVerticalStrut(8));
         content.add(lblTK); content.add(Box.createVerticalStrut(4));
         content.add(tfUser); content.add(Box.createVerticalStrut(8));
         content.add(tfPass); content.add(Box.createVerticalStrut(8));
-        content.add(lblRole); content.add(Box.createVerticalStrut(4));
+        content.add(lblRole); content.add(Box.createVerticalStrut(2));
         content.add(cbRole); content.add(Box.createVerticalStrut(20));
         content.add(btnSave);
 
-        dialog.setContentPane(content);
+        JScrollPane scrollPane = new JScrollPane(content);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        dialog.setContentPane(scrollPane);
         dialog.setVisible(true);
     }
 

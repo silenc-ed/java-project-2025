@@ -41,7 +41,7 @@ public class DonDatHangDAO {
             con.setAutoCommit(false);
 
             // 1. INSERT HOADON
-            String sqlHD = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, TONG_TIEN_HANG, GIAM_GIA, THANH_TIEN, TRANG_THAI) " +
+            String sqlHD = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, TONG_TIEN, GIAM_GIA, THANH_TIEN, TRANG_THAI) " +
                            "VALUES (?, ?, ?, 0, 0, 0, N'Chờ thanh toán')";
             try (PreparedStatement ps = con.prepareStatement(sqlHD, new String[]{"MA_HD"})) {
                 if (maKH != null) {
@@ -161,7 +161,7 @@ public class DonDatHangDAO {
 
             // 5. UPDATE TONG_TIEN cho HOADON
             long tongTien = tongTienSP + tongPhiDV + tongTienLK;
-            String sqlUpdate = "UPDATE HOA_DON SET TONG_TIEN_HANG = ?, THANH_TIEN = ? WHERE MA_HD = ?";
+            String sqlUpdate = "UPDATE HOA_DON SET TONG_TIEN = ?, THANH_TIEN = ? WHERE MA_HD = ?";
             try (PreparedStatement psUpd = con.prepareStatement(sqlUpdate)) {
                 psUpd.setLong(1, tongTien);
                 psUpd.setLong(2, tongTien);
@@ -324,7 +324,7 @@ public class DonDatHangDAO {
                 }
             }
 
-            String sqlUpd = "UPDATE HOA_DON SET MA_KH = ?, TONG_TIEN_HANG = ?, GIAM_GIA = ?, THANH_TIEN = ? WHERE MA_HD = ?";
+            String sqlUpd = "UPDATE HOA_DON SET MA_KH = ?, TONG_TIEN = ?, GIAM_GIA = ?, THANH_TIEN = ? WHERE MA_HD = ?";
             try (PreparedStatement psUpd = con.prepareStatement(sqlUpd)) {
                 if (maKH != null) {
                     psUpd.setInt(1, maKH);
@@ -424,7 +424,7 @@ public class DonDatHangDAO {
         List<Map<String, Object>> results = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT H.MA_HD, K.HO_TEN AS TEN_KH, K.SDT, H.MA_NV, H.THOI_GIAN_LAP, ");
-        sql.append("H.TONG_TIEN_HANG, H.GIAM_GIA, H.THANH_TIEN, H.TRANG_THAI, H.PHUONG_THUC_TT, H.LY_DO_HUY ");
+        sql.append("H.TONG_TIEN, H.GIAM_GIA, H.THANH_TIEN, H.TRANG_THAI, H.PHUONG_THUC_TT, H.LY_DO_HUY ");
         sql.append("FROM HOA_DON H LEFT JOIN KHACH_HANG K ON H.MA_KH = K.MA_KH ");
         sql.append("WHERE 1=1 ");
 
@@ -474,7 +474,7 @@ public class DonDatHangDAO {
                     row.put("SDT", rs.getString("SDT"));
                     row.put("MA_NV", rs.getInt("MA_NV"));
                     row.put("THOI_GIAN_LAP", rs.getTimestamp("THOI_GIAN_LAP"));
-                    row.put("TONG_TIEN_HANG", rs.getLong("TONG_TIEN_HANG"));
+                    row.put("TONG_TIEN", rs.getLong("TONG_TIEN"));
                     row.put("GIAM_GIA", rs.getLong("GIAM_GIA"));
                     row.put("THANH_TIEN", rs.getLong("THANH_TIEN"));
                     row.put("TRANG_THAI", rs.getString("TRANG_THAI"));
@@ -578,10 +578,10 @@ public class DonDatHangDAO {
         try (Connection con = ConnectionUtils.getMyConnection()) {
             // Lấy tổng tiền hàng
             long tongTien = 0;
-            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN_HANG FROM HOA_DON WHERE MA_HD = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN FROM HOA_DON WHERE MA_HD = ?")) {
                 ps.setInt(1, maHD);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) tongTien = rs.getLong("TONG_TIEN_HANG");
+                    if (rs.next()) tongTien = rs.getLong("TONG_TIEN");
                 }
             }
 

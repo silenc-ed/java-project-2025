@@ -276,7 +276,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
             try {
                 java.util.Map<String, Object> data = Controller.Admin.HoaDonDAO.getHoaDonById(maHd);
                 if (data != null) {
-                    dlgTxtTongTien.setText(String.valueOf((long) (double) data.get("TONG_TIEN_HANG")));
+                    dlgTxtTongTien.setText(String.valueOf((long) (double) data.get("TONG_TIEN")));
                     dlgTxtGiamGia.setText(String.valueOf((long) (double) data.get("GIAM_GIA")));
                     dlgTxtThanhTien.setText(String.valueOf((long) (double) data.get("THANH_TIEN")));
                     dlgCbPhuongThuc.setSelectedItem(data.get("PHUONG_THUC_TT"));

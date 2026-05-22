@@ -37,14 +37,14 @@ public class HoaDonDAO {
     }
 
     public static Map<String, Object> getHoaDonById(int maHd) {
-        String sql = "SELECT TONG_TIEN_HANG, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI, MA_KH, MA_NV, MA_CN, MA_KM FROM HOA_DON WHERE MA_HD = ?";
+        String sql = "SELECT TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI, MA_KH, MA_NV, MA_CN, MA_KM FROM HOA_DON WHERE MA_HD = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maHd);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Map<String, Object> row = new HashMap<>();
-                    row.put("TONG_TIEN_HANG", rs.getDouble("TONG_TIEN_HANG"));
+                    row.put("TONG_TIEN", rs.getDouble("TONG_TIEN"));
                     row.put("GIAM_GIA", rs.getDouble("GIAM_GIA"));
                     row.put("THANH_TIEN", rs.getDouble("THANH_TIEN"));
                     row.put("PHUONG_THUC_TT", rs.getString("PHUONG_THUC_TT"));
@@ -67,9 +67,9 @@ public class HoaDonDAO {
                                      String phuongThuc, String trangThai, boolean isEdit) throws Exception {
         String sql;
         if (!isEdit) {
-            sql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN_HANG, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            sql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         } else {
-            sql = "UPDATE HOA_DON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN_HANG=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=?, TRANG_THAI=? WHERE MA_HD=?";
+            sql = "UPDATE HOA_DON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=?, TRANG_THAI=? WHERE MA_HD=?";
         }
 
         try (Connection con = ConnectionUtils.getMyConnection();

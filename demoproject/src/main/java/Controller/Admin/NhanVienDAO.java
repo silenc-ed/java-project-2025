@@ -11,12 +11,26 @@ public class NhanVienDAO {
     // ─── Lấy danh sách chi nhánh cho ComboBox ────────────────────────
     public static List<Object[]> getAllChiNhanh() {
         List<Object[]> list = new ArrayList<>();
-        String sql = "SELECT MA_CN, TEN_CN FROM CHI_NHANH WHERE TRANG_THAI = N'Đang hoạt động' ORDER BY MA_CN";
+        String sql = "SELECT MA_CN, TEN_CN FROM CHI_NHANH ORDER BY MA_CN";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new Object[]{rs.getLong("MA_CN"), rs.getString("TEN_CN")});
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // ─── Lấy danh sách nhóm vai trò cho ComboBox ────────────────────
+    public static List<Object[]> getAllRoleGroups() {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT MA_ROLEGRP, TEN_NHOM FROM ROLE_GROUP ORDER BY MA_ROLEGRP";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(new Object[]{rs.getLong("MA_ROLEGRP"), rs.getString("TEN_NHOM")});
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
@@ -162,7 +176,7 @@ public class NhanVienDAO {
                                         String cccd, String sdt, String email,
                                         long luongCoBan, java.sql.Date ngayVaoLam,
                                         String trangThai,
-                                        String username, String pass) {
+                                        String username, String pass, String tenNhom) {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
@@ -187,17 +201,41 @@ public class NhanVienDAO {
                 }
             }
 
+            long maTK = -1;
             if (maNV != -1 && username != null && !username.trim().isEmpty()
                     && pass != null && !pass.trim().isEmpty()) {
                 String sqlTK = "INSERT INTO TAI_KHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
                                "VALUES (?, ?, ?, N'Hoạt động')";
-                try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
+                try (PreparedStatement ps = con.prepareStatement(sqlTK, new String[]{"MA_TK"})) {
                     ps.setLong(1, maNV);
                     ps.setString(2, username);
                     ps.setString(3, HashUtil.hashPassword(pass));
                     ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) maTK = rs.getLong(1);
+                    }
                 }
             }
+
+            // Gán vai trò nếu có tài khoản và tên nhóm vai trò
+            if (maTK != -1 && tenNhom != null && !tenNhom.trim().isEmpty()) {
+                String sqlRG = "SELECT MA_ROLEGRP FROM ROLE_GROUP WHERE TEN_NHOM = ?";
+                try (PreparedStatement ps = con.prepareStatement(sqlRG)) {
+                    ps.setString(1, tenNhom);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            long maRoleGrp = rs.getLong(1);
+                            try (PreparedStatement ps2 = con.prepareStatement(
+                                    "INSERT INTO ACCOUNT_ASSIGN_ROLEGROUP (MA_TK, MA_ROLEGRP) VALUES (?, ?)")) {
+                                ps2.setLong(1, maTK);
+                                ps2.setLong(2, maRoleGrp);
+                                ps2.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+
             con.commit();
             return true;
         } catch (Exception e) {

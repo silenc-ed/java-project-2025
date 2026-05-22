@@ -184,7 +184,7 @@ public class DashboardDAO {
                      "FROM CHI_TIET_HOA_DON ct " +
                      "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
                      "JOIN SAN_PHAM sp ON ct.MA_SP = sp.MA_SP " +
-                     "JOIN LOAI_SANPHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
+                     "JOIN LOAI_SAN_PHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY sp.MA_SP, sp.TEN_SP, lsp.TEN_LSP " +
                      "ORDER BY TONG_BAN DESC " +
@@ -218,7 +218,7 @@ public class DashboardDAO {
                      "FROM CHI_TIET_HOA_DON ct " +
                      "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
                      "JOIN SAN_PHAM sp ON ct.MA_SP = sp.MA_SP " +
-                     "JOIN LOAI_SANPHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
+                     "JOIN LOAI_SAN_PHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY lsp.MA_LSP, lsp.TEN_LSP " +
                      "ORDER BY TONG_BAN DESC " +
