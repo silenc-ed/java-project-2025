@@ -85,7 +85,8 @@ public class BillPanel extends javax.swing.JPanel {
         JButton btnRefresh = createGradientButton("↻ Cập nhật");
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable(model));
-        rightHeader.add(btnRefresh);
+        
+        // btnAdd, btnEdit, btnDelete will be added below after their logic is initialized
 
         headerPanel.add(leftHeader, BorderLayout.WEST);
         headerPanel.add(rightHeader, BorderLayout.EAST);
@@ -317,11 +318,6 @@ public class BillPanel extends javax.swing.JPanel {
 
         mainContainer.add(centerPanel, BorderLayout.CENTER);
 
-        // ================= BOTTOM =================
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setOpaque(false);
-        bottomPanel.setBorder(new EmptyBorder(15, 0, 0, 0));
-
         JButton btnEdit = createGradientButton("Sửa");
         btnEdit.setPreferredSize(new Dimension(130, 36));
         btnEdit.addActionListener(e -> {
@@ -352,10 +348,7 @@ public class BillPanel extends javax.swing.JPanel {
             addFormPanel.setVisible(true);
             txtSupplier.requestFocus();
         });
-        bottomPanel.add(btnEdit, BorderLayout.WEST);
 
-        JPanel rightButtonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
-        rightButtonsPanel.setOpaque(false);
         JButton btnAdd = createGradientButton("Thêm");
         btnAdd.setPreferredSize(new Dimension(130, 36));
         btnAdd.addActionListener(e -> {
@@ -410,7 +403,6 @@ public class BillPanel extends javax.swing.JPanel {
             try {
                 boolean success = Controller.Admin.PhieuNhap.PhieuNhapDAO.deletePhieuNhaps(toDelete);
                 if (success) {
-                    // Remove rows from table model (from bottom to top to avoid index shifts)
                     java.util.Collections.sort(modelRows, java.util.Collections.reverseOrder());
                     for (int r : modelRows) {
                         model.removeRow(r);
@@ -424,11 +416,11 @@ public class BillPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
-        
-        rightButtonsPanel.add(btnAdd);
-        rightButtonsPanel.add(btnDelete);
-        bottomPanel.add(rightButtonsPanel, BorderLayout.EAST);
-        mainContainer.add(bottomPanel, BorderLayout.SOUTH);
+
+        rightHeader.add(btnAdd);
+        rightHeader.add(btnEdit);
+        rightHeader.add(btnDelete);
+        rightHeader.add(btnRefresh);
         
         this.setLayout(new BorderLayout());
         this.add(mainContainer, BorderLayout.CENTER);
@@ -440,43 +432,8 @@ public class BillPanel extends javax.swing.JPanel {
 
     // === HÀM TẠO NÚT BẤM GRADIENT BỊ THIẾU ===
     private JButton createGradientButton(String text) {
-        JButton button = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                Color colorTop = new Color(175, 122, 197); 
-                Color colorBottom = new Color(210, 160, 205); 
-                
-                String cleanText = getText().trim().toLowerCase();
-                if (cleanText.contains("thêm") || cleanText.equals("lưu") || cleanText.contains("cập nhật")) {
-                    colorTop = new Color(40, 167, 69);
-                    colorBottom = new Color(40, 167, 69);
-                } else if (cleanText.contains("sửa")) {
-                    colorTop = new Color(0, 123, 255);
-                    colorBottom = new Color(0, 123, 255);
-                } else if (cleanText.contains("xóa")) {
-                    colorTop = new Color(220, 53, 69);
-                    colorBottom = new Color(220, 53, 69);
-                } else if (cleanText.contains("hủy")) {
-                    colorTop = new Color(108, 117, 125);
-                    colorBottom = new Color(108, 117, 125);
-                }
-                
-                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
-                g2d.setPaint(gp);
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2d.dispose();
-                super.paintComponent(g);
-            }
-        };
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton button = new JButton(text);
+        View.Admin.UIUtils.styleButton(button);
         return button;
     }
 

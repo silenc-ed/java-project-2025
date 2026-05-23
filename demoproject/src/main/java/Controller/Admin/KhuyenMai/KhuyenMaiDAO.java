@@ -132,4 +132,43 @@ public class KhuyenMaiDAO {
             ps.executeUpdate();
         }
     }
+
+    /**
+     * Thêm loại khuyến mãi
+     */
+    public boolean addPromoType(String tenLoai, String moTa) throws Exception {
+        String sql = "INSERT INTO LOAI_KHUYEN_MAI (TEN_LOAI_KM, MO_TA) VALUES (?, ?)";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenLoai);
+            ps.setString(2, moTa);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Cập nhật loại khuyến mãi
+     */
+    public boolean updatePromoType(int maLoai, String tenLoai, String moTa) throws Exception {
+        String sql = "UPDATE LOAI_KHUYEN_MAI SET TEN_LOAI_KM=?, MO_TA=? WHERE MA_LOAI_KM=?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenLoai);
+            ps.setString(2, moTa);
+            ps.setInt(3, maLoai);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Xóa loại khuyến mãi
+     */
+    public boolean deletePromoType(int maLoai) throws Exception {
+        String sql = "DELETE FROM LOAI_KHUYEN_MAI WHERE MA_LOAI_KM=?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maLoai);
+            return ps.executeUpdate() > 0;
+        }
+    }
 }

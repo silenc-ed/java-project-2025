@@ -2,6 +2,7 @@ package View.Admin.Warehouse;
 
 import Controller.Admin.TonKho.TonKhoDAO;
 
+import View.Admin.UIUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -121,13 +122,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         txtSearchBranch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
 
         JButton btnSearch = new JButton("🔍");
-        btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnSearch.setPreferredSize(new Dimension(40, 36));
-        btnSearch.setBackground(new Color(0, 123, 255));
-        btnSearch.setForeground(Color.WHITE);
-        btnSearch.setBorderPainted(false);
-        btnSearch.setFocusPainted(false);
-        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        UIUtils.styleButton(btnSearch);
         btnSearch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
 
         searchPanel.add(txtSearchBranch, BorderLayout.CENTER);
@@ -135,13 +130,15 @@ public class WarehousePanel extends javax.swing.JPanel {
         rightHeader.add(searchPanel);
 
         // Button Cập nhật
-        JButton btnRefresh = createGradientButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("↻ Cập nhật");
+        UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
         rightHeader.add(btnRefresh);
 
         // Button Sửa chi nhánh
-        JButton btnEditBranch = createGradientButton("✏ Sửa chi nhánh");
+        JButton btnEditBranch = new JButton("✏ Sửa chi nhánh");
+        UIUtils.styleButton(btnEditBranch);
         btnEditBranch.setPreferredSize(new Dimension(150, 36));
         btnEditBranch.addActionListener(e -> showEditBranchDialog());
         rightHeader.add(btnEditBranch);
@@ -454,7 +451,7 @@ public class WarehousePanel extends javax.swing.JPanel {
             List<Map<String, Object>> list = dao.getSerialsByVariantAndBranch(currentMaBienthe, currentMaCN, keyword);
             for (Map<String, Object> r : list) {
                 serialModel.addRow(new Object[]{
-                    r.get("ID_SERIAL"),
+                    r.get("MA_SN"),
                     r.get("SERIAL_NUMBER"),
                     r.get("MA_PN") != null ? "PN#" + r.get("MA_PN") : "",
                     r.get("TRANG_THAI")
@@ -504,13 +501,7 @@ public class WarehousePanel extends javax.swing.JPanel {
 
         if (backText != null && backAction != null) {
             JButton btnBack = new JButton(backText);
-            btnBack.setFont(new Font("Segoe UI", Font.BOLD, 13));
-            btnBack.setForeground(PURPLE);
-            btnBack.setBackground(new Color(245, 235, 250));
-            btnBack.setBorderPainted(false);
-            btnBack.setFocusPainted(false);
-            btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            btnBack.setPreferredSize(new Dimension(110, 32));
+            UIUtils.styleButton(btnBack);
             btnBack.addActionListener(backAction);
             leftPanel.add(btnBack);
         }
@@ -543,13 +534,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         txt.addActionListener(searchAction);
 
         JButton btnSearch = new JButton("🔍");
-        btnSearch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        btnSearch.setPreferredSize(new Dimension(40, 35));
-        btnSearch.setBackground(new Color(0, 123, 255));
-        btnSearch.setForeground(Color.WHITE);
-        btnSearch.setBorderPainted(false);
-        btnSearch.setFocusPainted(false);
-        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        UIUtils.styleButton(btnSearch);
         btnSearch.addActionListener(searchAction);
 
         searchPanel.add(txt, BorderLayout.CENTER);
@@ -724,7 +709,8 @@ public class WarehousePanel extends javax.swing.JPanel {
         buttonPanel.setBackground(new Color(248, 250, 252));
         buttonPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(226, 232, 240)));
 
-        JButton btnSave = createGradientButton("Lưu");
+        JButton btnSave = new JButton("Lưu");
+        UIUtils.styleButton(btnSave);
         btnSave.setPreferredSize(new Dimension(100, 35));
         btnSave.addActionListener(e -> {
             String newTen = txtTen.getText().trim();
@@ -752,7 +738,8 @@ public class WarehousePanel extends javax.swing.JPanel {
             }
         });
 
-        JButton btnCancel = createGradientButton("Hủy");
+        JButton btnCancel = new JButton("Hủy");
+        UIUtils.styleButton(btnCancel);
         btnCancel.setPreferredSize(new Dimension(100, 35));
         btnCancel.addActionListener(e -> dialog.dispose());
 
@@ -761,46 +748,5 @@ public class WarehousePanel extends javax.swing.JPanel {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
 
         dialog.setVisible(true);
-    }
-
-    private JButton createGradientButton(String text) {
-        JButton button = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                Color colorTop = new Color(175, 122, 197); 
-                Color colorBottom = new Color(210, 160, 205); 
-                
-                String cleanText = getText().trim().toLowerCase();
-                if (cleanText.contains("thêm") || cleanText.equals("lưu") || cleanText.contains("cập nhật")) {
-                    colorTop = new Color(40, 167, 69);
-                    colorBottom = new Color(40, 167, 69);
-                } else if (cleanText.contains("sửa")) {
-                    colorTop = new Color(0, 123, 255);
-                    colorBottom = new Color(0, 123, 255);
-                } else if (cleanText.contains("xóa")) {
-                    colorTop = new Color(220, 53, 69);
-                    colorBottom = new Color(220, 53, 69);
-                } else if (cleanText.contains("hủy")) {
-                    colorTop = new Color(108, 117, 125);
-                    colorBottom = new Color(108, 117, 125);
-                }
-                
-                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
-                g2d.setPaint(gp);
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2d.dispose();
-                super.paintComponent(g);
-            }
-        };
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
     }
 }

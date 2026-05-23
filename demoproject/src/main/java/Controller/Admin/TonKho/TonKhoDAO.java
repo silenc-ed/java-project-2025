@@ -100,7 +100,7 @@ public class TonKhoDAO {
     public List<Map<String, Object>> getSerialsByVariantAndBranch(int maBienthe, int maCN, String keyword) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ID_SERIAL, SERIAL_NUMBER, MA_PN, TRANG_THAI ");
+        sql.append("SELECT MA_SN, SERIAL_NUMBER, MA_PN, TRANG_THAI ");
         sql.append("FROM KHO_SERIAL ");
         sql.append("WHERE MA_BIENTHE = ? AND MA_CN = ? ");
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -119,7 +119,7 @@ public class TonKhoDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> row = new HashMap<>();
-                    row.put("ID_SERIAL", rs.getInt("ID_SERIAL"));
+                    row.put("MA_SN", rs.getInt("MA_SN"));
                     row.put("SERIAL_NUMBER", rs.getString("SERIAL_NUMBER"));
                     row.put("MA_PN", rs.getObject("MA_PN"));
                     row.put("TRANG_THAI", rs.getString("TRANG_THAI"));

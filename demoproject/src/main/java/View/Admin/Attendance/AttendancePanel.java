@@ -559,10 +559,13 @@ public class AttendancePanel extends JPanel {
         panel.setBorder(new EmptyBorder(16, 0, 0, 0));
 
         // Filter Panel
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 6));
+        JPanel filterPanel = new JPanel(new BorderLayout());
         filterPanel.setBackground(WHITE);
         filterPanel.setBorder(new CompoundBorder(
             new LineBorder(BORDER_CLR, 1, true), new EmptyBorder(10, 16, 10, 16)));
+
+        JPanel leftFilter = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 6));
+        leftFilter.setOpaque(false);
 
         cbFilterCa = new JComboBox<>();
         cbFilterCa.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -575,14 +578,19 @@ public class AttendancePanel extends JPanel {
 
         lblChuCa = new JLabel("👑 Chủ ca: —");
         lblChuCa.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblChuCa.setForeground(BTN_PURPLE);
+        lblChuCa.setForeground(new Color(124, 58, 237)); // BTN_PURPLE
 
-        filterPanel.add(new JLabel("Lọc theo Ca:"));
-        filterPanel.add(cbFilterCa);
-        filterPanel.add(Box.createHorizontalStrut(15));
-        filterPanel.add(lblGioLamViec);
-        filterPanel.add(Box.createHorizontalStrut(20));
-        filterPanel.add(lblChuCa);
+        leftFilter.add(new JLabel("Lọc theo Ca:"));
+        leftFilter.add(cbFilterCa);
+        leftFilter.add(Box.createHorizontalStrut(15));
+        leftFilter.add(lblGioLamViec);
+        leftFilter.add(Box.createHorizontalStrut(20));
+        leftFilter.add(lblChuCa);
+
+        filterPanel.add(leftFilter, BorderLayout.WEST);
+        
+        JPanel rightFilter = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
+        rightFilter.setOpaque(false);
 
         // Bảng lịch làm việc
         String[] cols = {"Mã LLV", "Họ tên", "Ca làm việc", "Giờ BĐ", "Giờ KT", "Vai trò", "Trạng thái"};
@@ -725,18 +733,16 @@ public class AttendancePanel extends JPanel {
             }.execute();
         });
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        btnRow.setOpaque(false);
-        btnRow.add(btnEdit);
-        btnRow.add(btnSetLeader);
-        btnRow.add(btnDel);
+        rightFilter.add(btnEdit);
+        rightFilter.add(btnSetLeader);
+        rightFilter.add(btnDel);
+        filterPanel.add(rightFilter, BorderLayout.EAST);
 
         panel.add(filterPanel, BorderLayout.NORTH);
         panel.add(scroll1, BorderLayout.CENTER);
         
         JPanel bottom = new JPanel(new BorderLayout(0, 8));
         bottom.setOpaque(false);
-        bottom.add(btnRow, BorderLayout.NORTH);
         bottom.add(addPanel, BorderLayout.CENTER);
         panel.add(bottom, BorderLayout.SOUTH);
 
@@ -1150,9 +1156,10 @@ public class AttendancePanel extends JPanel {
             }.execute();
         });
 
-        JPanel tblBtnRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        tblBtnRow.setOpaque(false);
-        tblBtnRow.add(btnDelCa);
+        JPanel header3 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
+        header3.setOpaque(false);
+        header3.add(btnDelCa);
+        panel.add(header3, BorderLayout.NORTH);
 
         JPanel addCaForm = new JPanel();
         addCaForm.setBackground(WHITE);
@@ -1225,7 +1232,6 @@ public class AttendancePanel extends JPanel {
         JPanel tableArea = new JPanel(new BorderLayout(0, 6));
         tableArea.setOpaque(false);
         tableArea.add(scroll3, BorderLayout.CENTER);
-        tableArea.add(tblBtnRow, BorderLayout.SOUTH);
 
         panel.add(tableArea, BorderLayout.CENTER);
         panel.add(addCaForm, BorderLayout.SOUTH);
@@ -1269,12 +1275,7 @@ public class AttendancePanel extends JPanel {
 
     private JButton makeBtn(String text, Color bg) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setBackground(bg);
-        btn.setForeground(WHITE);
-        btn.setBorder(new EmptyBorder(7, 16, 7, 16));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btn);
         return btn;
     }
 }

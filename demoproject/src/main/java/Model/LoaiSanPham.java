@@ -5,15 +5,17 @@ public class LoaiSanPham {
     private String tenLsp;
     private String hinhAnh;
     private String trangThai;
+    private String moTa;
 
     public LoaiSanPham() {
     }
 
-    public LoaiSanPham(int maLsp, String tenLsp, String hinhAnh, String trangThai) {
+    public LoaiSanPham(int maLsp, String tenLsp, String hinhAnh, String trangThai, String moTa) {
         this.maLsp = maLsp;
         this.tenLsp = tenLsp;
         this.hinhAnh = hinhAnh;
         this.trangThai = trangThai;
+        this.moTa = moTa;
     }
 
     public int getMaLsp() {
@@ -46,5 +48,23 @@ public class LoaiSanPham {
 
     public void setTrangThai(String trangThai) {
         this.trangThai = trangThai;
+    }
+    
+    public String getMoTa() {
+        return moTa;
+    }
+
+    public void setMoTa(String moTa) {
+        this.moTa = moTa;
+    }
+
+    private int tongSoMatHang;
+
+    public int getTongSoMatHang() {
+        return tongSoMatHang;
+    }
+
+    public void setTongSoMatHang(int tongSoMatHang) {
+        this.tongSoMatHang = tongSoMatHang;
     }
 }

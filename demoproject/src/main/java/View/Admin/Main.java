@@ -66,6 +66,7 @@ public class Main extends javax.swing.JFrame {
                 "Tổng quan",
                 "Mua hàng",
                 "Quản lý SP",
+                "Dịch vụ",
                 "Đơn hàng",
                 "Khách hàng",
                 "Nhân viên",
@@ -105,31 +106,34 @@ public class Main extends javax.swing.JFrame {
                     case 2: // Quản lý SP
                         showForm(new View.Admin.Product.ProductPanel());
                         break;
-                    case 3: // Đơn hàng
+                    case 3: // Dịch vụ
+                        showForm(new View.Admin.Service.ServicePanel());
+                        break;
+                    case 4: // Đơn hàng
                         showForm(new View.Admin.Procurement.ProcurementPanel());
                         break;
-                    case 4: // Khách hàng
+                    case 5: // Khách hàng
                         if (cachedCustomerPanel == null) {
                             cachedCustomerPanel = new View.Admin.Customer.CustomerPanel();
                         }
                         showForm(cachedCustomerPanel);
                         break;
-                    case 5: // Nhân viên
+                    case 6: // Nhân viên
                         if (cachedEmployeePanel == null) {
                             cachedEmployeePanel = new View.Admin.Employee.EmployeePanel();
                         }
                         showForm(cachedEmployeePanel);
                         break;
-                    case 6: // Tồn kho CN
+                    case 7: // Tồn kho CN
                         showForm(new View.Admin.Warehouse.WarehousePanel());
                         break;
-                    case 7: // Khuyến mãi
+                    case 8: // Khuyến mãi
                         showForm(new View.Admin.Voucher.VoucherPanel());
                         break;
-                    case 8: // Nhập kho
+                    case 9: // Nhập kho
                         showForm(new View.Admin.Bill.BillPanel());
                         break;
-                    case 9: // Chấm công
+                    case 10: // Chấm công
                         showForm(new View.Admin.Attendance.AttendancePanel());
                         break;
                 }

@@ -77,6 +77,20 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(30, 41, 59));
         headerPanel.add(lblTitle, BorderLayout.WEST);
+        
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightHeader.setOpaque(false);
+        
+        JButton btnSave = createGradientButton("Lưu đơn hàng");
+        JButton btnReset = createFlatButton("Làm mới", new Color(148, 163, 184));
+        
+        btnSave.addActionListener(e -> saveOrder());
+        btnReset.addActionListener(e -> resetForm());
+        
+        rightHeader.add(btnReset);
+        rightHeader.add(btnSave);
+        headerPanel.add(rightHeader, BorderLayout.EAST);
+        
         this.add(headerPanel, BorderLayout.NORTH);
 
         // ===== SCROLLABLE MAIN CONTENT =====
@@ -120,20 +134,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(scrollPane, BorderLayout.CENTER);
 
-        // ===== BOTTOM BUTTONS =====
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 12));
-        bottomPanel.setBackground(Color.WHITE);
-        bottomPanel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, PURPLE_BORDER));
-
-        JButton btnSave = createGradientButton("💾  Lưu đơn hàng");
-        JButton btnReset = createFlatButton("🔄  Làm mới", new Color(148, 163, 184));
-
-        btnSave.addActionListener(e -> saveOrder());
-        btnReset.addActionListener(e -> resetForm());
-
-        bottomPanel.add(btnSave);
-        bottomPanel.add(btnReset);
-        this.add(bottomPanel, BorderLayout.SOUTH);
+        // Removed bottom buttons since they are now in the header
     }
 
     // ================= SECTION: KHÁCH HÀNG =================
@@ -634,33 +635,14 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
 
     private JButton createFlatButton(String text, Color bg) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btn);
         return btn;
     }
 
     private JButton createGradientButton(String text) {
-        JButton btn = new JButton(text) {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, new Color(142, 68, 173), 0, getHeight(), new Color(175, 122, 197)));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        btn.setFocusPainted(false);
+        JButton btn = new JButton(text);
+        View.Admin.UIUtils.styleButton(btn);
         btn.setPreferredSize(new Dimension(200, 45));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
 

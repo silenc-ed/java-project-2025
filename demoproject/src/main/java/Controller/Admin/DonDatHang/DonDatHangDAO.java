@@ -11,8 +11,8 @@ import java.util.HashMap;
 
 /**
  * DAO quản lý đơn đặt hàng — làm việc trực tiếp với các bảng:
- * HOADON, CHITIET_HOADON, PHIEU_DICH_VU, CHITIET_SUDUNG_DICHVU,
- * PHIEU_SUA_CHUA, CHITIET_SUDUNG_LINHKIEN, KHO_SERIAL, KHUYENMAI
+ * HOA_DON, CHI_TIET_HOA_DON, PHIEU_DICH_VU, CHI_TIET_SU_DUNG_DICH_VU,
+ * PHIEU_SUA_CHUA, CHI_TIET_SU_DUNG_LINH_KIEN, KHO_SERIAL, KHUYEN_MAI
  */
 public class DonDatHangDAO {
 
@@ -116,8 +116,8 @@ public class DonDatHangDAO {
 
                 if (maPhieuDV > 0) {
                     // Lấy phí dịch vụ và insert chi tiết
-                    String sqlGetDV = "SELECT MA_DV, GIA_CUOC FROM DICHVU WHERE MA_DV = ?";
-                    String sqlCTDV = "INSERT INTO CHITIET_SUDUNG_DICHVU (MA_PHIEU_DV, MA_DV, PHI_DICH_VU) VALUES (?, ?, ?)";
+                    String sqlGetDV = "SELECT MA_DV, GIA_CUOC FROM DICH_VU WHERE MA_DV = ?";
+                    String sqlCTDV = "INSERT INTO CHI_TIET_SU_DUNG_DICH_VU (MA_PHIEU_DV, MA_DV, PHI_DICH_VU) VALUES (?, ?, ?)";
 
                     try (PreparedStatement psGetDV = con.prepareStatement(sqlGetDV);
                          PreparedStatement psCTDV = con.prepareStatement(sqlCTDV)) {
@@ -146,7 +146,7 @@ public class DonDatHangDAO {
             // 4. Liên kết PHIEU_SUA_CHUA (nếu có) — tính tổng tiền linh kiện
             long tongTienLK = 0;
             if (phieuSCIds != null && !phieuSCIds.isEmpty()) {
-                String sqlLK = "SELECT NVL(SUM(THANH_TIEN), 0) AS TONG FROM CHITIET_SUDUNG_LINHKIEN WHERE MA_PHIEU_SC = ?";
+                String sqlLK = "SELECT NVL(SUM(THANH_TIEN), 0) AS TONG FROM CHI_TIET_SU_DUNG_LINH_KIEN WHERE MA_PHIEU_SC = ?";
                 try (PreparedStatement psLK = con.prepareStatement(sqlLK)) {
                     for (int maPhieuSC : phieuSCIds) {
                         psLK.setInt(1, maPhieuSC);
@@ -229,7 +229,7 @@ public class DonDatHangDAO {
             }
 
             // Xóa dịch vụ cũ
-            String sqlDelDV = "DELETE FROM CHITIET_SUDUNG_DICHVU WHERE MA_PHIEU_DV IN " +
+            String sqlDelDV = "DELETE FROM CHI_TIET_SU_DUNG_DICH_VU WHERE MA_PHIEU_DV IN " +
                               "(SELECT MA_PHIEU_DV FROM PHIEU_DICH_VU WHERE MA_HD = ?)";
             try (PreparedStatement psDelDV = con.prepareStatement(sqlDelDV)) {
                 psDelDV.setInt(1, maHD);
@@ -287,8 +287,8 @@ public class DonDatHangDAO {
                 }
 
                 if (maPhieuDV > 0) {
-                    String sqlGetDV = "SELECT GIA_CUOC FROM DICHVU WHERE MA_DV = ?";
-                    String sqlCTDV = "INSERT INTO CHITIET_SUDUNG_DICHVU (MA_PHIEU_DV, MA_DV, PHI_DICH_VU) VALUES (?, ?, ?)";
+                    String sqlGetDV = "SELECT GIA_CUOC FROM DICH_VU WHERE MA_DV = ?";
+                    String sqlCTDV = "INSERT INTO CHI_TIET_SU_DUNG_DICH_VU (MA_PHIEU_DV, MA_DV, PHI_DICH_VU) VALUES (?, ?, ?)";
                     try (PreparedStatement psGetDV = con.prepareStatement(sqlGetDV);
                          PreparedStatement psCTDV = con.prepareStatement(sqlCTDV)) {
                         for (int maDV : dichVuIds) {
@@ -521,8 +521,8 @@ public class DonDatHangDAO {
         List<Map<String, Object>> results = new ArrayList<>();
         String sql = "SELECT CTDV.MA_CTDV, DV.MA_DV, DV.TEN_DV, CTDV.PHI_DICH_VU " +
                      "FROM PHIEU_DICH_VU PDV " +
-                     "JOIN CHITIET_SUDUNG_DICHVU CTDV ON PDV.MA_PHIEU_DV = CTDV.MA_PHIEU_DV " +
-                     "JOIN DICHVU DV ON CTDV.MA_DV = DV.MA_DV " +
+                     "JOIN CHI_TIET_SU_DUNG_DICH_VU CTDV ON PDV.MA_PHIEU_DV = CTDV.MA_PHIEU_DV " +
+                     "JOIN DICH_VU DV ON CTDV.MA_DV = DV.MA_DV " +
                      "WHERE PDV.MA_HD = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -547,7 +547,7 @@ public class DonDatHangDAO {
     public List<Map<String, Object>> getOrderRepairs(int maHD) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         String sql = "SELECT PSC.MA_PHIEU_SC, PSC.MO_TA, PSC.GIA_CUOC, " +
-                     "NVL((SELECT SUM(THANH_TIEN) FROM CHITIET_SUDUNG_LINHKIEN WHERE MA_PHIEU_SC = PSC.MA_PHIEU_SC), 0) AS TIEN_LK " +
+                     "NVL((SELECT SUM(THANH_TIEN) FROM CHI_TIET_SU_DUNG_LINH_KIEN WHERE MA_PHIEU_SC = PSC.MA_PHIEU_SC), 0) AS TIEN_LK " +
                      "FROM PHIEU_DICH_VU PDV " +
                      "JOIN PHIEU_SUA_CHUA PSC ON PDV.MA_PHIEU_DV = PSC.MA_PHIEU_DV " +
                      "WHERE PDV.MA_HD = ?";
@@ -713,7 +713,7 @@ public class DonDatHangDAO {
      */
     public List<Map<String, Object>> searchAvailableSerials(String keyword) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
-        String sql = "SELECT KS.ID_SERIAL, KS.SERIAL_NUMBER, KS.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN " +
+        String sql = "SELECT KS.MA_SN, KS.SERIAL_NUMBER, KS.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN " +
                      "FROM KHO_SERIAL KS " +
                      "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE " +
                      "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
@@ -728,7 +728,7 @@ public class DonDatHangDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> row = new HashMap<>();
-                    row.put("ID_SERIAL", rs.getInt("ID_SERIAL"));
+                    row.put("MA_SN", rs.getInt("MA_SN"));
                     row.put("SERIAL_NUMBER", rs.getString("SERIAL_NUMBER"));
                     row.put("MA_SP", rs.getInt("MA_SP"));
                     row.put("TEN_SP", rs.getString("TEN_SP"));
@@ -764,43 +764,52 @@ public class DonDatHangDAO {
      */
     public List<Map<String, Object>> getAvailableServices() throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
-        // Try with TRANG_THAI filter first; fall back to no filter if column doesn't exist (ORA-00904)
-        String sqlWithFilter = "SELECT MA_DV, TEN_DV, MO_TA, GIA_CUOC FROM DICHVU WHERE TRANG_THAI = 1";
-        String sqlFallback = "SELECT MA_DV, TEN_DV, MO_TA, GIA_CUOC FROM DICHVU";
-        try (Connection con = ConnectionUtils.getMyConnection()) {
-            String sqlToUse = sqlWithFilter;
-            try (PreparedStatement psTest = con.prepareStatement(sqlWithFilter);
-                 ResultSet rsTest = psTest.executeQuery()) {
-                // If this succeeds, use results directly
-                while (rsTest.next()) {
-                    Map<String, Object> row = new HashMap<>();
-                    row.put("MA_DV", rsTest.getInt("MA_DV"));
-                    row.put("TEN_DV", rsTest.getString("TEN_DV"));
-                    row.put("MO_TA", rsTest.getString("MO_TA"));
-                    row.put("GIA_CUOC", rsTest.getLong("GIA_CUOC"));
-                    results.add(row);
-                }
-                return results;
-            } catch (SQLException e) {
-                // ORA-00904: invalid identifier — column TRANG_THAI doesn't exist yet
-                if (e.getErrorCode() == 904) {
-                    System.out.println("[DonDatHangDAO] DICHVU.TRANG_THAI not found, falling back to unfiltered query.");
-                    try (PreparedStatement ps = con.prepareStatement(sqlFallback);
-                         ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            Map<String, Object> row = new HashMap<>();
-                            row.put("MA_DV", rs.getInt("MA_DV"));
-                            row.put("TEN_DV", rs.getString("TEN_DV"));
-                            row.put("MO_TA", rs.getString("MO_TA"));
-                            row.put("GIA_CUOC", rs.getLong("GIA_CUOC"));
-                            results.add(row);
-                        }
+        // Try DICH_VU first (actual DB name), fall back to DICHVU (legacy schema name)
+        String[] tableNames = {"DICH_VU", "DICHVU"};
+        for (String tblName : tableNames) {
+            try (Connection con = ConnectionUtils.getMyConnection()) {
+                // Try with TRANG_THAI filter
+                String sqlWithFilter = "SELECT MA_DV, TEN_DV, MO_TA, GIA_CUOC FROM " + tblName + " WHERE TRANG_THAI = 1";
+                String sqlFallback   = "SELECT MA_DV, TEN_DV, MO_TA, GIA_CUOC FROM " + tblName;
+                try (PreparedStatement psTest = con.prepareStatement(sqlWithFilter);
+                     ResultSet rsTest = psTest.executeQuery()) {
+                    while (rsTest.next()) {
+                        Map<String, Object> row = new HashMap<>();
+                        row.put("MA_DV", rsTest.getInt("MA_DV"));
+                        row.put("TEN_DV", rsTest.getString("TEN_DV"));
+                        row.put("MO_TA", rsTest.getString("MO_TA"));
+                        row.put("GIA_CUOC", rsTest.getLong("GIA_CUOC"));
+                        results.add(row);
                     }
                     return results;
+                } catch (SQLException e) {
+                    int code = e.getErrorCode();
+                    if (code == 942) {
+                        // ORA-00942: table not found — try next table name
+                        System.out.println("[DonDatHangDAO] Table '" + tblName + "' not found (ORA-00942), trying next...");
+                        results.clear();
+                        continue;
+                    } else if (code == 904) {
+                        // ORA-00904: column TRANG_THAI doesn't exist — query without filter
+                        System.out.println("[DonDatHangDAO] " + tblName + ".TRANG_THAI not found, falling back to unfiltered query.");
+                        try (PreparedStatement ps = con.prepareStatement(sqlFallback);
+                             ResultSet rs = ps.executeQuery()) {
+                            while (rs.next()) {
+                                Map<String, Object> row = new HashMap<>();
+                                row.put("MA_DV", rs.getInt("MA_DV"));
+                                row.put("TEN_DV", rs.getString("TEN_DV"));
+                                row.put("MO_TA", rs.getString("MO_TA"));
+                                row.put("GIA_CUOC", rs.getLong("GIA_CUOC"));
+                                results.add(row);
+                            }
+                        }
+                        return results;
+                    }
+                    throw e;
                 }
-                throw e;
             }
         }
+        return results;
     }
 
     /**
@@ -809,7 +818,7 @@ public class DonDatHangDAO {
     public List<Map<String, Object>> getRepairTickets() throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         String sql = "SELECT PSC.MA_PHIEU_SC, PSC.MO_TA, PSC.GIA_CUOC, " +
-                     "NVL((SELECT SUM(THANH_TIEN) FROM CHITIET_SUDUNG_LINHKIEN WHERE MA_PHIEU_SC = PSC.MA_PHIEU_SC), 0) AS TIEN_LK " +
+                     "NVL((SELECT SUM(THANH_TIEN) FROM CHI_TIET_SU_DUNG_LINH_KIEN WHERE MA_PHIEU_SC = PSC.MA_PHIEU_SC), 0) AS TIEN_LK " +
                      "FROM PHIEU_SUA_CHUA PSC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);

@@ -56,21 +56,11 @@ public class CustomerPanel extends javax.swing.JPanel {
         });
 
         JButton btnAdd = new JButton("+ Thêm khách hàng");
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnAdd.setBackground(new Color(40, 167, 69));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setBorder(new EmptyBorder(8, 18, 8, 18));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btnAdd);
         btnAdd.addActionListener(e -> showAddDialog());
 
         JButton btnRefresh = new JButton("↻ Cập nhật");
-        btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnRefresh.setBackground(new Color(40, 167, 69));
-        btnRefresh.setForeground(Color.WHITE);
-        btnRefresh.setBorder(new EmptyBorder(8, 16, 8, 16));
-        btnRefresh.setFocusPainted(false);
-        btnRefresh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.addActionListener(e -> loadData());
 
         lblLastUpdate = new JLabel("Chưa cập nhật");
@@ -249,12 +239,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         tfPass.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnSave = new JButton("Lưu");
-        btnSave.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnSave.setBackground(new Color(40, 167, 69));
-        btnSave.setForeground(Color.WHITE);
-        btnSave.setBorder(new EmptyBorder(10, 0, 10, 0));
-        btnSave.setFocusPainted(false);
-        btnSave.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btnSave);
         btnSave.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         btnSave.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnSave.addActionListener(e -> {
@@ -363,6 +348,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         btnRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton btnToggle = new JButton();
+        View.Admin.UIUtils.styleButton(btnToggle);
         boolean isActive = "Hoạt động".equals(trangThaiTk);
         if (hasAccount) {
             btnToggle.setText(isActive ? "Khóa TK" : "Mở khóa TK");
@@ -372,23 +358,13 @@ public class CustomerPanel extends javax.swing.JPanel {
             btnToggle.setBackground(new Color(148, 163, 184));
             btnToggle.setEnabled(false);
         }
-        btnToggle.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnToggle.setForeground(Color.WHITE);
-        btnToggle.setBorder(new EmptyBorder(8, 18, 8, 18));
-        btnToggle.setFocusPainted(false);
-        btnToggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnToggle.addActionListener(e -> {
             dialog.dispose();
             toggleTrangThai(maKh, trangThaiTk, null);
         });
 
         JButton btnEdit = new JButton("Chỉnh sửa");
-        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnEdit.setBackground(new Color(0, 123, 255));
-        btnEdit.setForeground(Color.WHITE);
-        btnEdit.setBorder(new EmptyBorder(8, 18, 8, 18));
-        btnEdit.setFocusPainted(false);
-        btnEdit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btnEdit);
         btnEdit.addActionListener(e -> {
             if ("Chỉnh sửa".equals(btnEdit.getText())) {
                 for (JTextField f : khFields) {

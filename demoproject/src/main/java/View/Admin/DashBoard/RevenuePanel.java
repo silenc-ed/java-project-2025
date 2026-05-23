@@ -80,16 +80,8 @@ public class RevenuePanel extends JPanel {
         rbListener.itemStateChanged(null);
 
         btnLoc = new JButton("Lọc");
-        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(148, 163, 184)); // Gray default
-        btnLoc.setForeground(Color.WHITE);
-        btnLoc.setBorder(new EmptyBorder(5, 16, 5, 16));
-        btnLoc.setFocusPainted(false);
-        btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLoc.addActionListener(e -> {
-            btnLoc.setBackground(new Color(148, 163, 184));
-            loadData();
-        });
+        View.Admin.UIUtils.styleButton(btnLoc);
+        btnLoc.addActionListener(e -> loadData());
 
         yearPicker = buildYearPicker();
         monthPicker = buildMonthPicker();
@@ -100,11 +92,9 @@ public class RevenuePanel extends JPanel {
         activePicker = yearPicker;
         pickerPanel.add(activePicker);
 
-        // Set dirty color when changing options
-        ActionListener dirtyListener = e -> btnLoc.setBackground(new Color(37, 99, 235));
-        rbNam.addActionListener(e -> { switchPicker(yearPicker); dirtyListener.actionPerformed(e); });
-        rbThang.addActionListener(e -> { switchPicker(monthPicker); dirtyListener.actionPerformed(e); });
-        rbNgay.addActionListener(e -> { switchPicker(dateRangePicker); dirtyListener.actionPerformed(e); });
+        rbNam.addActionListener(e -> switchPicker(yearPicker));
+        rbThang.addActionListener(e -> switchPicker(monthPicker));
+        rbNgay.addActionListener(e -> switchPicker(dateRangePicker));
 
         panel.add(lbl);
         panel.add(rbNam);
@@ -135,9 +125,6 @@ public class RevenuePanel extends JPanel {
         spinnerYear = new JSpinner(new SpinnerNumberModel(yr, 2000, 2100, 1));
         spinnerYear.setEditor(new JSpinner.NumberEditor(spinnerYear, "####"));
         spinnerYear.setPreferredSize(new Dimension(80, 28));
-        spinnerYear.addChangeListener(e -> {
-            if (btnLoc != null) btnLoc.setBackground(new Color(37, 99, 235));
-        });
         p.add(lbl);
         p.add(spinnerYear);
         return p;
@@ -153,12 +140,6 @@ public class RevenuePanel extends JPanel {
         spinnerMonthYear = new JSpinner(new SpinnerNumberModel(curY, 2000, 2100, 1));
         spinnerMonthYear.setEditor(new JSpinner.NumberEditor(spinnerMonthYear, "####"));
         spinnerMonthYear.setPreferredSize(new Dimension(80, 28));
-        spinnerMonth.addChangeListener(e -> {
-            if (btnLoc != null) btnLoc.setBackground(new Color(37, 99, 235));
-        });
-        spinnerMonthYear.addChangeListener(e -> {
-            if (btnLoc != null) btnLoc.setBackground(new Color(37, 99, 235));
-        });
         p.add(makePickerLabel("Tháng:"));
         p.add(spinnerMonth);
         p.add(makePickerLabel("Năm:"));
@@ -177,12 +158,6 @@ public class RevenuePanel extends JPanel {
         spinnerTo = new JSpinner(new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH));
         spinnerTo.setEditor(new JSpinner.DateEditor(spinnerTo, "dd/MM/yyyy"));
         spinnerTo.setPreferredSize(new Dimension(110, 28));
-        spinnerFrom.addChangeListener(e -> {
-            if (btnLoc != null) btnLoc.setBackground(new Color(37, 99, 235));
-        });
-        spinnerTo.addChangeListener(e -> {
-            if (btnLoc != null) btnLoc.setBackground(new Color(37, 99, 235));
-        });
         p.add(makePickerLabel("Từ:"));
         p.add(spinnerFrom);
         p.add(makePickerLabel("Đến:"));

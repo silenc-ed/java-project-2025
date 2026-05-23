@@ -65,19 +65,8 @@ public class StatisticsPanel extends JPanel {
         spinnerTo.setPreferredSize(new Dimension(110, 28));
 
         JButton btnLoc = new JButton("Lọc");
-        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(148, 163, 184)); // default gray
-        btnLoc.setForeground(Color.WHITE);
-        btnLoc.setBorder(new EmptyBorder(5, 14, 5, 14));
-        btnLoc.setFocusPainted(false);
-        btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLoc.addActionListener(e -> {
-            btnLoc.setBackground(new Color(148, 163, 184)); // reset to gray
-            loadData();
-        });
-
-        spinnerFrom.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235)));
-        spinnerTo.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235)));
+        View.Admin.UIUtils.styleButton(btnLoc);
+        btnLoc.addActionListener(e -> loadData());
 
         panel.add(lbl);
         panel.add(lblFrom);

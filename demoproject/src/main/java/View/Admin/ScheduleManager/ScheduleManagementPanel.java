@@ -1,5 +1,6 @@
 package View.Admin.ScheduleManager;
 
+import View.Admin.UIUtils;
 import javax.swing.*;
 import javax.swing.table.*;
 import javax.swing.text.MaskFormatter;
@@ -114,7 +115,6 @@ public class ScheduleManagementPanel extends JPanel {
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 6));
         actionPanel.setOpaque(false);
         JButton btnSaveSchedule = createStyledButton("Lưu lịch làm việc");
-        btnSaveSchedule.setBackground(GREEN);
         actionPanel.add(btnSaveSchedule);
         toolbar.add(actionPanel, BorderLayout.EAST);
 
@@ -548,9 +548,7 @@ public class ScheduleManagementPanel extends JPanel {
         btnPanel.setBackground(BG_CARD);
         JButton btnSave   = createStyledButton("Thêm / Lưu");
         JButton btnDelete = createStyledButton("Xóa");
-        btnDelete.setBackground(RED);
         JButton btnClear  = createStyledButton("Làm mới");
-        btnClear.setBackground(TEXT_SECONDARY);
         btnPanel.add(btnSave);
         btnPanel.add(btnDelete);
         btnPanel.add(btnClear);
@@ -778,27 +776,7 @@ public class ScheduleManagementPanel extends JPanel {
     /** Tạo button với style chung */
     private JButton createStyledButton(String text) {
         JButton btn = new JButton(text);
-        btn.setFont(FONT_BUTTON);
-        btn.setBackground(PRIMARY);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setOpaque(true);
-
-        // Hover effect
-        btn.addMouseListener(new MouseAdapter() {
-            Color originalBg;
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                originalBg = btn.getBackground();
-                btn.setBackground(originalBg.darker());
-            }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(originalBg);
-            }
-        });
+        UIUtils.styleButton(btn);
         return btn;
     }
 

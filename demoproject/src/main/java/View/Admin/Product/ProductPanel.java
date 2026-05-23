@@ -90,90 +90,39 @@ class StatusBadgeRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         String status = value != null ? value.toString() : "Ngừng kinh doanh";
-        JLabel label = new JLabel(status) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
-                g2.fillRoundRect(getWidth() / 2 - 55, getHeight() / 2 - 12, 110, 24, 12, 12);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
+        JLabel label = new JLabel(status);
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
         label.setOpaque(false);
         
         if ("Đang kinh doanh".equalsIgnoreCase(status) || "Còn bán".equalsIgnoreCase(status) || "Còn hàng".equalsIgnoreCase(status)) {
-            label.setBackground(new Color(220, 252, 231));
             label.setForeground(new Color(21, 128, 61));
         } else {
-            label.setBackground(new Color(254, 226, 226));
             label.setForeground(new Color(185, 28, 28));
         }
         return label;
     }
 }
 
-class EditIcon implements Icon {
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(new Color(59, 130, 246));
-        g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawRoundRect(x + 2, y + 2, 12, 12, 2, 2);
-        g2.drawLine(x + 6, y + 6, x + 10, y + 6);
-        g2.drawLine(x + 6, y + 10, x + 10, y + 10);
-        g2.dispose();
-    }
-    @Override public int getIconWidth() { return 18; }
-    @Override public int getIconHeight() { return 18; }
-}
-
-class DeleteIcon implements Icon {
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(new Color(239, 68, 68));
-        g2.setStroke(new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawRect(x + 3, y + 5, 10, 10);
-        g2.drawLine(x + 1, y + 3, x + 15, y + 3);
-        g2.drawRect(x + 6, y + 1, 4, 2);
-        g2.drawLine(x + 8, y + 7, x + 8, y + 12);
-        g2.dispose();
-    }
-    @Override public int getIconWidth() { return 18; }
-    @Override public int getIconHeight() { return 18; }
-}
 
 class ActionPanel extends JPanel {
     public JButton btnEdit = new JButton();
-    public JButton btnDelete = new JButton();
     
     public ActionPanel() {
-        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        setLayout(new GridBagLayout());
         setOpaque(true);
         setBackground(Color.WHITE);
         
-        btnEdit.setIcon(new EditIcon());
-        btnEdit.setPreferredSize(new Dimension(28, 28));
-        btnEdit.setContentAreaFilled(false);
-        btnEdit.setBorderPainted(false);
-        btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnEdit.setFocusPainted(false);
+        btnEdit.setText("Sửa");
+        View.Admin.UIUtils.styleButton(btnEdit);
         
-        btnDelete.setIcon(new DeleteIcon());
-        btnDelete.setPreferredSize(new Dimension(28, 28));
-        btnDelete.setContentAreaFilled(false);
-        btnDelete.setBorderPainted(false);
-        btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnDelete.setFocusPainted(false);
-        
-        add(btnEdit);
-        add(btnDelete);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        add(btnEdit, gbc);
     }
 }
 
@@ -194,15 +143,11 @@ class ActionCellEditor extends AbstractCellEditor implements TableCellEditor {
     private ActionPanel panel = new ActionPanel();
     private JTable table;
     
-    public ActionCellEditor(JTable table, Runnable onEdit, Runnable onDelete) {
+    public ActionCellEditor(JTable table, Runnable onEdit) {
         this.table = table;
         panel.btnEdit.addActionListener(e -> {
             stopCellEditing();
             onEdit.run();
-        });
-        panel.btnDelete.addActionListener(e -> {
-            stopCellEditing();
-            onDelete.run();
         });
     }
     
@@ -224,6 +169,12 @@ public class ProductPanel extends javax.swing.JPanel {
     private JTable dataTable;
     private List<DBItem> categoryList = new ArrayList<>();
     private JLabel lblLastUpdate;
+    private boolean isProductMode = true;
+    private JButton btnSwitchMode;
+    private JButton btnDeleteSelected;
+    private JButton btnAdd;
+    private JLabel lblTitle;
+    private JTextField txtSearch;
 
     public ProductPanel() {
         initComponents();
@@ -243,7 +194,7 @@ public class ProductPanel extends javax.swing.JPanel {
         JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         leftHeader.setOpaque(false);
         
-        JLabel lblTitle = new JLabel("Quản lý sản phẩm");
+        lblTitle = new JLabel("Quản lý sản phẩm");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(new Color(15, 23, 42));
         
@@ -257,48 +208,41 @@ public class ProductPanel extends javax.swing.JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        JButton btnRefresh = new JButton("↻ Cập nhật") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(40, 167, 69));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        btnRefresh.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnRefresh.setForeground(Color.WHITE);
-        btnRefresh.setFocusPainted(false);
-        btnRefresh.setContentAreaFilled(false);
-        btnRefresh.setBorderPainted(false);
-        btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnSwitchMode = new JButton("🗂️ Loại sản phẩm");
+        View.Admin.UIUtils.styleButton(btnSwitchMode);
+        btnSwitchMode.setPreferredSize(new Dimension(160, 36));
+        btnSwitchMode.addActionListener(e -> toggleMode());
+
+        btnDeleteSelected = new JButton("🗑️ Xóa");
+        View.Admin.UIUtils.styleButton(btnDeleteSelected);
+        btnDeleteSelected.setPreferredSize(new Dimension(140, 36));
+        btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
+
+        JButton btnRefresh = new JButton("↻ Cập nhật");
+        View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> {
-            loadCategories();
-            loadDataToTable();
+            if (isProductMode) {
+                loadCategories();
+                loadDataToTable();
+            } else {
+                loadCategoriesToTable();
+            }
         });
 
-        JButton btnAdd = new JButton("+ Thêm sản phẩm") {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(40, 167, 69));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setFocusPainted(false);
-        btnAdd.setContentAreaFilled(false);
-        btnAdd.setBorderPainted(false);
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAdd = new JButton("+ Thêm sản phẩm");
+        View.Admin.UIUtils.styleButton(btnAdd);
         btnAdd.setPreferredSize(new Dimension(160, 36));
+        btnAdd.addActionListener(e -> {
+            if (isProductMode) {
+                handleAddProduct();
+            } else {
+                handleAddCategory();
+            }
+        });
 
+        rightHeader.add(btnSwitchMode);
+        rightHeader.add(btnDeleteSelected);
         rightHeader.add(btnRefresh);
         rightHeader.add(btnAdd);
 
@@ -319,7 +263,7 @@ public class ProductPanel extends javax.swing.JPanel {
             BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
 
-        JTextField txtSearch = new JTextField("Tìm kiếm sản phẩm...");
+        txtSearch = new JTextField("Tìm kiếm sản phẩm...");
         txtSearch.setBorder(null);
         txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         txtSearch.setForeground(Color.GRAY);
@@ -327,14 +271,14 @@ public class ProductPanel extends javax.swing.JPanel {
         txtSearch.setSelectedTextColor(Color.WHITE);
         txtSearch.addFocusListener(new FocusAdapter() {
             @Override public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Tìm kiếm sản phẩm...")) {
+                if (txtSearch.getText().equals("Tìm kiếm sản phẩm...") || txtSearch.getText().equals("Tìm kiếm loại sản phẩm...")) {
                     txtSearch.setText("");
                     txtSearch.setForeground(new Color(15, 23, 42));
                 }
             }
             @Override public void focusLost(FocusEvent e) {
                 if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Tìm kiếm sản phẩm...");
+                    txtSearch.setText(isProductMode ? "Tìm kiếm sản phẩm..." : "Tìm kiếm loại sản phẩm...");
                     txtSearch.setForeground(Color.GRAY);
                 }
             }
@@ -342,11 +286,18 @@ public class ProductPanel extends javax.swing.JPanel {
         searchPanel.add(txtSearch, BorderLayout.CENTER);
         centerPanel.add(searchPanel, BorderLayout.NORTH);
 
-        // Table: Mã sản phẩm, Tên sản phẩm, Danh mục, Mô tả, Số lượng đã bán, Giá bán, Đơn vị tính, Trạng thái, Thao tác
-        String[] columns = {"Mã sản phẩm", "Tên sản phẩm", "Danh mục", "Mô tả", "Số lượng đã bán", "Giá bán", "Đơn vị tính", "Trạng thái", "Thao tác"};
+        // Table initialization
+        String[] columns = {"", "Mã sản phẩm", "Tên sản phẩm", "Loại sản phẩm", "Mô tả", "Số lượng đã bán", "Giá bán", "Đơn vị tính", "Trạng thái", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 8; }
+            @Override public Class<?> getColumnClass(int c) {
+                if (c == 0) return Boolean.class;
+                return super.getColumnClass(c);
+            }
+            @Override public boolean isCellEditable(int r, int c) {
+                return c == 0 || c == 9;
+            }
         };
+        
         dataTable = new JTable(tableModel);
         dataTable.setRowHeight(60);
         dataTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -357,33 +308,7 @@ public class ProductPanel extends javax.swing.JPanel {
         dataTable.setSelectionBackground(new Color(245, 235, 250));
         dataTable.setSelectionForeground(new Color(142, 68, 173));
         
-        // Table Header styling
-        dataTable.getTableHeader().setPreferredSize(new Dimension(0, 45));
-        dataTable.getTableHeader().setBackground(Color.WHITE);
-        dataTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        dataTable.getTableHeader().setForeground(new Color(100, 116, 139));
-        dataTable.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(226, 232, 240)));
-
-        // Custom Renderers
-        dataTable.getColumnModel().getColumn(1).setCellRenderer(new ProductCellRenderer());
-        dataTable.getColumnModel().getColumn(7).setCellRenderer(new StatusBadgeRenderer());
-        
-        // Column Alignment
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        dataTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
-
-        // Action Renderer & Editor
-        ActionCellEditor actionEditor = new ActionCellEditor(dataTable, 
-            () -> handleEditProduct(), 
-            () -> handleDeleteProduct()
-        );
-        dataTable.getColumnModel().getColumn(8).setCellRenderer(new ActionCellRenderer());
-        dataTable.getColumnModel().getColumn(8).setCellEditor(actionEditor);
+        updateTableStructure();
 
         JScrollPane scrollPane = new JScrollPane(dataTable);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
@@ -401,29 +326,130 @@ public class ProductPanel extends javax.swing.JPanel {
                 String text = txtSearch.getText().trim();
                 TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
                 dataTable.setRowSorter(sorter);
-                if (text.isEmpty() || text.equals("Tìm kiếm sản phẩm...")) {
+                if (text.isEmpty() || text.equals("Tìm kiếm sản phẩm...") || text.equals("Tìm kiếm loại sản phẩm...")) {
                     sorter.setRowFilter(null);
                 } else {
                     final String searchLower = text.toLowerCase();
                     sorter.setRowFilter(new RowFilter<DefaultTableModel, Object>() {
                         @Override
                         public boolean include(javax.swing.RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
-                            String maSp = entry.getStringValue(0).toLowerCase();
-                            String tenSp = stripHtml(entry.getStringValue(1)).toLowerCase();
-                            String danhMuc = entry.getStringValue(2).toLowerCase();
-                            return maSp.contains(searchLower) || tenSp.contains(searchLower) || danhMuc.contains(searchLower);
+                            if (isProductMode) {
+                                String maSp = entry.getStringValue(1).toLowerCase();
+                                String tenSp = stripHtml(entry.getStringValue(2)).toLowerCase();
+                                String danhMuc = entry.getStringValue(3).toLowerCase();
+                                return maSp.contains(searchLower) || tenSp.contains(searchLower) || danhMuc.contains(searchLower);
+                            } else {
+                                String maLsp = entry.getStringValue(1).toLowerCase();
+                                String tenLsp = entry.getStringValue(2).toLowerCase();
+                                return maLsp.contains(searchLower) || tenLsp.contains(searchLower);
+                            }
                         }
                     });
                 }
             }
         });
 
-        // Add Product Event
-        btnAdd.addActionListener(e -> handleAddProduct());
-
         // Load data from DB in background
         loadCategories();
         loadDataToTable();
+    }
+
+    private void updateTableStructure() {
+        if (isProductMode) {
+            String[] columns = {"", "Mã sản phẩm", "Tên sản phẩm", "Loại sản phẩm", "Mô tả", "Số lượng đã bán", "Giá bán", "Đơn vị tính", "Trạng thái", "Thao tác"};
+            
+            tableModel = new DefaultTableModel(columns, 0) {
+                @Override public Class<?> getColumnClass(int c) {
+                    if (c == 0) return Boolean.class;
+                    return super.getColumnClass(c);
+                }
+                @Override public boolean isCellEditable(int r, int c) {
+                    return c == 0 || c == 9;
+                }
+            };
+            dataTable.setModel(tableModel);
+            dataTable.setRowSorter(null);
+            dataTable.setRowHeight(60);
+
+            // Re-adjust column widths/renderers
+            dataTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+            dataTable.getColumnModel().getColumn(0).setMaxWidth(40);
+            dataTable.getColumnModel().getColumn(2).setCellRenderer(new ProductCellRenderer());
+            dataTable.getColumnModel().getColumn(8).setCellRenderer(new StatusBadgeRenderer());
+
+            // Center align column content
+            DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+            centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+            dataTable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
+            dataTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+            dataTable.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
+            dataTable.getColumnModel().getColumn(6).setCellRenderer(centerRenderer);
+            dataTable.getColumnModel().getColumn(7).setCellRenderer(centerRenderer);
+
+            // Action Editor & Renderer
+            ActionCellEditor actionEditor = new ActionCellEditor(dataTable, () -> handleEditProduct());
+            dataTable.getColumnModel().getColumn(9).setCellRenderer(new ActionCellRenderer());
+            dataTable.getColumnModel().getColumn(9).setCellEditor(actionEditor);
+        } else {
+            String[] columns = {"", "Mã loại sản phẩm", "Tên loại sản phẩm", "Mô tả", "Tổng số mặt hàng", "Thao tác"};
+            
+            tableModel = new DefaultTableModel(columns, 0) {
+                @Override public Class<?> getColumnClass(int c) {
+                    if (c == 0) return Boolean.class;
+                    return super.getColumnClass(c);
+                }
+                @Override public boolean isCellEditable(int r, int c) {
+                    return c == 0 || c == 5;
+                }
+            };
+            dataTable.setModel(tableModel);
+            dataTable.setRowSorter(null);
+            dataTable.setRowHeight(60);
+
+            // Widths & Renderers
+            dataTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+            dataTable.getColumnModel().getColumn(0).setMaxWidth(40);
+
+            DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+            centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+            dataTable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
+            dataTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
+
+            // Action Editor & Renderer
+            ActionCellEditor actionEditor = new ActionCellEditor(dataTable, () -> handleEditCategory());
+            dataTable.getColumnModel().getColumn(5).setCellRenderer(new ActionCellRenderer());
+            dataTable.getColumnModel().getColumn(5).setCellEditor(actionEditor);
+        }
+        
+        // General styling for the header
+        dataTable.getTableHeader().setPreferredSize(new Dimension(0, 45));
+        dataTable.getTableHeader().setBackground(Color.WHITE);
+        dataTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        dataTable.getTableHeader().setForeground(new Color(100, 116, 139));
+        dataTable.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(226, 232, 240)));
+    }
+
+    private void toggleMode() {
+        isProductMode = !isProductMode;
+        if (isProductMode) {
+            lblTitle.setText("Quản lý sản phẩm");
+            btnSwitchMode.setText("🗂️ Loại sản phẩm");
+            btnAdd.setText("+ Thêm sản phẩm");
+            txtSearch.setText("Tìm kiếm sản phẩm...");
+            txtSearch.setForeground(Color.GRAY);
+            updateTableStructure();
+            loadDataToTable();
+        } else {
+            lblTitle.setText("Quản lý loại sản phẩm");
+            btnSwitchMode.setText("📦 Sản phẩm");
+            btnAdd.setText("+ Thêm loại sản phẩm");
+            txtSearch.setText("Tìm kiếm loại sản phẩm...");
+            txtSearch.setForeground(Color.GRAY);
+            updateTableStructure();
+            loadCategoriesToTable();
+        }
+        this.revalidate();
+        this.repaint();
     }
 
     private void loadCategories() {
@@ -472,7 +498,8 @@ public class ProductPanel extends javax.swing.JPanel {
                 String status = sp.getTrangThai();
 
                 tableModel.addRow(new Object[]{
-                    "SP" + String.format("%03d", id),
+                    Boolean.FALSE,
+                    String.valueOf(id),
                     formatProductHtml(name),
                     cat,
                     desc != null ? desc : "",
@@ -493,6 +520,54 @@ public class ProductPanel extends javax.swing.JPanel {
         }
     }
 
+    private void loadCategoriesToTable() {
+        tableModel.setRowCount(0);
+        String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+        if (lblLastUpdate != null) {
+            lblLastUpdate.setText("Cập nhật lúc: " + time);
+        }
+        try {
+            List<Model.LoaiSanPham> list = Controller.LoaiSanPhamDAO.getAllLoaiSanPham();
+            boolean hasData = false;
+            for (Model.LoaiSanPham lsp : list) {
+                hasData = true;
+                tableModel.addRow(new Object[]{
+                    Boolean.FALSE,
+                    String.valueOf(lsp.getMaLsp()),
+                    lsp.getTenLsp(),
+                    lsp.getMoTa() != null ? lsp.getMoTa() : "",
+                    lsp.getTongSoMatHang(),
+                    lsp.getMaLsp()
+                });
+            }
+            if (!hasData) {
+                loadSampleCategories();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            loadSampleCategories();
+        }
+    }
+
+    private void loadSampleCategories() {
+        Object[][] samples = {
+            {1, "Laptop", "Các dòng máy tính xách tay cao cấp, văn phòng, gaming", 20},
+            {2, "Điện thoại", "Điện thoại thông minh Android và iOS mới nhất", 15},
+            {3, "Tai nghe", "Tai nghe không dây, tai nghe chụp tai chống ồn tốt", 30},
+            {4, "Máy tính bảng", "Máy tính bảng màn hình lớn cho giải trí và học tập", 10}
+        };
+        for (Object[] row : samples) {
+            tableModel.addRow(new Object[]{
+                Boolean.FALSE,
+                String.valueOf(row[0]),
+                row[1],
+                row[2],
+                row[3],
+                -1
+            });
+        }
+    }
+
     private void loadSampleData() {
         DecimalFormat df = new DecimalFormat("#,###đ");
         Object[][] samples = {
@@ -507,7 +582,8 @@ public class ProductPanel extends javax.swing.JPanel {
         int simId = 101;
         for (Object[] row : samples) {
             tableModel.addRow(new Object[]{
-                "SP" + String.format("%03d", simId),
+                Boolean.FALSE,
+                String.valueOf(simId),
                 formatProductHtml((String) row[0]),
                 row[1],
                 row[2],
@@ -582,7 +658,8 @@ public class ProductPanel extends javax.swing.JPanel {
                 ex.printStackTrace();
                 // Fallback simulation
                 tableModel.insertRow(0, new Object[]{
-                    "SP" + String.format("%03d", (int)(Math.random() * 900) + 100),
+                    Boolean.FALSE,
+                    String.valueOf((int)(Math.random() * 900) + 100),
                     formatProductHtml(name),
                     cat.getName(),
                     desc,
@@ -597,22 +674,65 @@ public class ProductPanel extends javax.swing.JPanel {
         }
     }
 
+    private void handleAddCategory() {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        Frame frame = parent instanceof Frame ? (Frame) parent : null;
+        CategoryDialog dialog = new CategoryDialog(frame, "Thêm loại sản phẩm mới");
+        dialog.setVisible(true);
+
+        if (dialog.isSaveClicked()) {
+            String name = dialog.getTenLsp();
+            String desc = dialog.getMoTa();
+
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng điền tên loại sản phẩm!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                Model.LoaiSanPham lsp = new Model.LoaiSanPham();
+                lsp.setTenLsp(name);
+                lsp.setMoTa(desc);
+
+                boolean success = Controller.LoaiSanPhamDAO.addLoaiSanPham(lsp);
+                if (success) {
+                    loadCategoriesToTable();
+                    JOptionPane.showMessageDialog(this, "Thêm loại sản phẩm thành công!");
+                } else {
+                    throw new Exception("Không thể thêm loại sản phẩm");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // Fallback simulation
+                tableModel.insertRow(0, new Object[]{
+                    Boolean.FALSE,
+                    String.valueOf((int)(Math.random() * 900) + 100),
+                    name,
+                    desc,
+                    0,
+                    -1
+                });
+                JOptionPane.showMessageDialog(this, "Đã lưu mô phỏng loại sản phẩm!");
+            }
+        }
+    }
+
     private void handleEditProduct() {
         int row = dataTable.getSelectedRow();
         if (row == -1) return;
         int modelRow = dataTable.convertRowIndexToModel(row);
         
-        String currentHtml = tableModel.getValueAt(modelRow, 1).toString();
+        String currentHtml = tableModel.getValueAt(modelRow, 2).toString();
         String currentName = stripHtml(currentHtml);
-        String currentCat = tableModel.getValueAt(modelRow, 2).toString();
-        String currentDesc = tableModel.getValueAt(modelRow, 3).toString();
-        int currentQty = (int) tableModel.getValueAt(modelRow, 4);
-        String currentPriceStr = tableModel.getValueAt(modelRow, 5).toString().replace(",", "").replace(".", "").replace("đ", "");
+        String currentCat = tableModel.getValueAt(modelRow, 3).toString();
+        String currentDesc = tableModel.getValueAt(modelRow, 4).toString();
+        int currentQty = (int) tableModel.getValueAt(modelRow, 5);
+        String currentPriceStr = tableModel.getValueAt(modelRow, 6).toString().replace(",", "").replace(".", "").replace("đ", "");
         double currentPrice = 0;
         try { currentPrice = Double.parseDouble(currentPriceStr); } catch (Exception ignored) {}
-        String currentUnit = tableModel.getValueAt(modelRow, 6).toString();
-        String currentStatus = tableModel.getValueAt(modelRow, 7).toString();
-        Object idObj = tableModel.getValueAt(modelRow, 8);
+        String currentUnit = tableModel.getValueAt(modelRow, 7).toString();
+        String currentStatus = tableModel.getValueAt(modelRow, 8).toString();
+        Object idObj = tableModel.getValueAt(modelRow, 9);
         int id = idObj instanceof Integer ? (int) idObj : -1;
 
         Window parent = SwingUtilities.getWindowAncestor(this);
@@ -670,46 +790,210 @@ public class ProductPanel extends javax.swing.JPanel {
                 }
             } else {
                 // Edit simulation row
-                tableModel.setValueAt(formatProductHtml(name), modelRow, 1);
-                tableModel.setValueAt(cat.getName(), modelRow, 2);
-                tableModel.setValueAt(desc, modelRow, 3);
-                tableModel.setValueAt(qty, modelRow, 4);
-                tableModel.setValueAt(new DecimalFormat("#,###đ").format(price), modelRow, 5);
-                tableModel.setValueAt(unit, modelRow, 6);
-                tableModel.setValueAt(status, modelRow, 7);
+                tableModel.setValueAt(formatProductHtml(name), modelRow, 2);
+                tableModel.setValueAt(cat.getName(), modelRow, 3);
+                tableModel.setValueAt(desc, modelRow, 4);
+                tableModel.setValueAt(qty, modelRow, 5);
+                tableModel.setValueAt(new DecimalFormat("#,###đ").format(price), modelRow, 6);
+                tableModel.setValueAt(unit, modelRow, 7);
+                tableModel.setValueAt(status, modelRow, 8);
                 JOptionPane.showMessageDialog(this, "Đã cập nhật mô phỏng sản phẩm!");
             }
         }
     }
 
-    private void handleDeleteProduct() {
+    private void handleEditCategory() {
         int row = dataTable.getSelectedRow();
         if (row == -1) return;
         int modelRow = dataTable.convertRowIndexToModel(row);
-        Object idObj = tableModel.getValueAt(modelRow, 8);
+
+        String currentName = tableModel.getValueAt(modelRow, 2).toString();
+        String currentDesc = tableModel.getValueAt(modelRow, 3).toString();
+        Object idObj = tableModel.getValueAt(modelRow, 5);
         int id = idObj instanceof Integer ? (int) idObj : -1;
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        Window parent = SwingUtilities.getWindowAncestor(this);
+        Frame frame = parent instanceof Frame ? (Frame) parent : null;
+        CategoryDialog dialog = new CategoryDialog(frame, "Cập nhật loại sản phẩm");
+        dialog.setTenLsp(currentName);
+        dialog.setMoTa(currentDesc);
+        dialog.setVisible(true);
+
+        if (dialog.isSaveClicked()) {
+            String name = dialog.getTenLsp();
+            String desc = dialog.getMoTa();
+
+            if (name.isEmpty()) return;
+
             if (id != -1) {
                 try {
-                    boolean success = Controller.SanPhamDAO.deleteSanPham(id);
+                    Model.LoaiSanPham lsp = new Model.LoaiSanPham();
+                    lsp.setMaLsp(id);
+                    lsp.setTenLsp(name);
+                    lsp.setMoTa(desc);
+
+                    boolean success = Controller.LoaiSanPhamDAO.updateLoaiSanPham(lsp);
                     if (success) {
-                        loadDataToTable();
-                        JOptionPane.showMessageDialog(this, "Xóa sản phẩm thành công!");
+                        loadCategoriesToTable();
+                        JOptionPane.showMessageDialog(this, "Cập nhật loại sản phẩm thành công!");
                     } else {
-                        throw new Exception("Không thể xóa sản phẩm");
+                        throw new Exception("Không thể cập nhật loại sản phẩm");
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, "Lỗi khi xóa từ cơ sở dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật cơ sở dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             } else {
-                // Delete simulation row
-                tableModel.removeRow(modelRow);
-                JOptionPane.showMessageDialog(this, "Đã xóa sản phẩm mô phỏng!");
+                // Edit simulation row
+                tableModel.setValueAt(name, modelRow, 2);
+                tableModel.setValueAt(desc, modelRow, 3);
+                JOptionPane.showMessageDialog(this, "Đã cập nhật mô phỏng loại sản phẩm!");
             }
         }
+    }
+
+    private void handleDeleteSelected() {
+        if (dataTable.isEditing()) {
+            dataTable.getCellEditor().stopCellEditing();
+        }
+
+        List<Integer> selectedIds = new ArrayList<>();
+        List<Integer> selectedModelRows = new ArrayList<>();
+
+        int idColumnIndex = isProductMode ? 9 : 5;
+
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
+            if (checked != null && checked) {
+                selectedModelRows.add(i);
+                Object idObj = tableModel.getValueAt(i, idColumnIndex);
+                if (idObj instanceof Integer) {
+                    selectedIds.add((Integer) idObj);
+                }
+            }
+        }
+
+        if (selectedIds.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một mục để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String itemType = isProductMode ? "sản phẩm" : "loại sản phẩm";
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Bạn có chắc chắn muốn xóa " + selectedIds.size() + " " + itemType + " đã chọn không?",
+            "Xác nhận xóa hàng loạt",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            int successCount = 0;
+            int failedCount = 0;
+            String failReason = "";
+
+            for (int id : selectedIds) {
+                if (id != -1) {
+                    try {
+                        boolean success;
+                        if (isProductMode) {
+                            success = Controller.SanPhamDAO.deleteSanPham(id);
+                        } else {
+                            success = Controller.LoaiSanPhamDAO.deleteLoaiSanPham(id);
+                        }
+                        if (success) {
+                            successCount++;
+                        } else {
+                            failedCount++;
+                        }
+                    } catch (Exception ex) {
+                        failedCount++;
+                        failReason = ex.getMessage();
+                    }
+                } else {
+                    // Simulation row
+                    successCount++;
+                }
+            }
+
+            if (isProductMode) {
+                loadDataToTable();
+            } else {
+                loadCategoriesToTable();
+            }
+
+            if (failedCount > 0) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Đã xóa thành công " + successCount + " mục.\nThất bại " + failedCount + " mục (lỗi khóa ngoại hoặc ràng buộc dữ liệu: " + failReason + ").",
+                    "Kết quả xóa",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            } else {
+                JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");
+            }
+        }
+    }
+
+    class CategoryDialog extends JDialog {
+        private JTextField txtTen = new JTextField();
+        private JTextField txtMoTa = new JTextField();
+        private JButton btnSave = new JButton("Lưu loại sản phẩm");
+        private JButton btnCancel = new JButton("Hủy");
+        private boolean isSaveClicked = false;
+
+        public CategoryDialog(Frame owner, String title) {
+            super(owner, title, true);
+            setSize(400, 300);
+            setLocationRelativeTo(owner);
+            setLayout(new BorderLayout());
+            
+            JPanel content = new JPanel(new GridBagLayout());
+            content.setBackground(Color.WHITE);
+            content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(10, 0, 10, 0);
+            gbc.weightx = 1.0;
+            
+            Font labelFont = new Font("Segoe UI", Font.BOLD, 13);
+            Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
+            
+            gbc.gridy = 0;
+            JLabel lblTen = new JLabel("Tên loại sản phẩm"); lblTen.setFont(labelFont); content.add(lblTen, gbc);
+            gbc.gridy = 1;
+            txtTen.setFont(fieldFont); txtTen.setPreferredSize(new Dimension(340, 35)); content.add(txtTen, gbc);
+            
+            gbc.gridy = 2;
+            JLabel lblMoTa = new JLabel("Mô tả"); lblMoTa.setFont(labelFont); content.add(lblMoTa, gbc);
+            gbc.gridy = 3;
+            txtMoTa.setFont(fieldFont); txtMoTa.setPreferredSize(new Dimension(340, 35)); content.add(txtMoTa, gbc);
+            
+            add(content, BorderLayout.CENTER);
+            
+            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
+            footer.setBackground(new Color(248, 250, 252));
+            
+            View.Admin.UIUtils.styleButton(btnSave);
+            View.Admin.UIUtils.styleButton(btnCancel);
+            
+            footer.add(btnCancel);
+            footer.add(btnSave);
+            add(footer, BorderLayout.SOUTH);
+            
+            btnSave.addActionListener(e -> {
+                isSaveClicked = true;
+                setVisible(false);
+            });
+            btnCancel.addActionListener(e -> setVisible(false));
+        }
+        
+        public String getTenLsp() { return txtTen.getText().trim(); }
+        public void setTenLsp(String name) { txtTen.setText(name); }
+        public String getMoTa() { return txtMoTa.getText().trim(); }
+        public void setMoTa(String desc) { txtMoTa.setText(desc); }
+        public boolean isSaveClicked() { return isSaveClicked; }
     }
 
     class ProductDialog extends JDialog {
@@ -752,7 +1036,7 @@ public class ProductPanel extends javax.swing.JPanel {
             txtTen.setFont(fieldFont); txtTen.setPreferredSize(new Dimension(340, 35)); content.add(txtTen, gbc);
             
             gbc.gridy = 2;
-            JLabel lblCat = new JLabel("Danh mục"); lblCat.setFont(labelFont); content.add(lblCat, gbc);
+            JLabel lblCat = new JLabel("Loại sản phẩm"); lblCat.setFont(labelFont); content.add(lblCat, gbc);
             gbc.gridy = 3;
             cbCategory.setFont(fieldFont); cbCategory.setPreferredSize(new Dimension(340, 35)); content.add(cbCategory, gbc);
             
@@ -760,7 +1044,7 @@ public class ProductPanel extends javax.swing.JPanel {
             JLabel lblMoTa = new JLabel("Mô tả"); lblMoTa.setFont(labelFont); content.add(lblMoTa, gbc);
             gbc.gridy = 5;
             txtMoTa.setFont(fieldFont); txtMoTa.setPreferredSize(new Dimension(340, 35)); content.add(txtMoTa, gbc);
-
+ 
             gbc.gridy = 6;
             JLabel lblSold = new JLabel("Số lượng đã bán"); lblSold.setFont(labelFont); content.add(lblSold, gbc);
             gbc.gridy = 7;
@@ -770,7 +1054,7 @@ public class ProductPanel extends javax.swing.JPanel {
             JLabel lblGia = new JLabel("Giá bán (đ)"); lblGia.setFont(labelFont); content.add(lblGia, gbc);
             gbc.gridy = 9;
             txtGia.setFont(fieldFont); txtGia.setPreferredSize(new Dimension(340, 35)); content.add(txtGia, gbc);
-
+ 
             gbc.gridy = 10;
             JLabel lblUnit = new JLabel("Đơn vị tính"); lblUnit.setFont(labelFont); content.add(lblUnit, gbc);
             gbc.gridy = 11;
@@ -788,19 +1072,8 @@ public class ProductPanel extends javax.swing.JPanel {
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
             footer.setBackground(new Color(248, 250, 252));
             
-            btnSave.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            btnSave.setBackground(new Color(40, 167, 69));
-            btnSave.setForeground(Color.WHITE);
-            btnSave.setFocusPainted(false);
-            btnSave.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-            btnSave.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            
-            btnCancel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            btnCancel.setBackground(new Color(220, 53, 69));
-            btnCancel.setForeground(Color.WHITE);
-            btnCancel.setFocusPainted(false);
-            btnCancel.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-            btnCancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            View.Admin.UIUtils.styleButton(btnSave);
+            View.Admin.UIUtils.styleButton(btnCancel);
             
             footer.add(btnCancel);
             footer.add(btnSave);

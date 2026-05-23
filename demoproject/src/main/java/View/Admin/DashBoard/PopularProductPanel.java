@@ -70,19 +70,8 @@ public class PopularProductPanel extends JPanel {
         spinnerTo.setPreferredSize(new Dimension(110, 28));
 
         JButton btnLoc = new JButton("Lọc");
-        btnLoc.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLoc.setBackground(new Color(148, 163, 184)); // default gray
-        btnLoc.setForeground(Color.WHITE);
-        btnLoc.setBorder(new EmptyBorder(5, 14, 5, 14));
-        btnLoc.setFocusPainted(false);
-        btnLoc.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLoc.addActionListener(e -> {
-            btnLoc.setBackground(new Color(148, 163, 184)); // reset to gray
-            loadData();
-        });
-
-        spinnerFrom.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235))); // blue on change
-        spinnerTo.addChangeListener(e -> btnLoc.setBackground(new Color(37, 99, 235))); // blue on change
+        View.Admin.UIUtils.styleButton(btnLoc);
+        btnLoc.addActionListener(e -> loadData());
 
         btnToggleMode = new JButton("Loại sản phẩm");
         styleToggleBtn(btnToggleMode, false);
@@ -99,21 +88,11 @@ public class PopularProductPanel extends JPanel {
     }
 
     private void styleToggleBtn(JButton btn, boolean active) {
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setFocusPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        View.Admin.UIUtils.styleButton(btn);
         if (active) {
-            btn.setBackground(new Color(124, 58, 237));
-            btn.setForeground(Color.WHITE);
-            btn.setBorder(new CompoundBorder(
-                    new LineBorder(new Color(109, 40, 217), 1, true),
-                    new EmptyBorder(5, 14, 5, 14)));
+            btn.setBackground(new Color(111, 66, 193)); // Purple (switch)
         } else {
-            btn.setBackground(Color.WHITE);
-            btn.setForeground(new Color(71, 85, 105));
-            btn.setBorder(new CompoundBorder(
-                    new LineBorder(new Color(203, 213, 225), 1, true),
-                    new EmptyBorder(5, 14, 5, 14)));
+            btn.setBackground(new Color(108, 117, 125)); // Gray (inactive)
         }
     }
 

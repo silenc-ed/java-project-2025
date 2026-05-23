@@ -1,5 +1,6 @@
 package View.Admin.Procurement;
 
+import View.Admin.UIUtils;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -43,10 +44,10 @@ public class ProcurementPanel extends javax.swing.JPanel {
     private void ensureStatusColumnExists() {
         try (Connection con = ConnectionUtils.getMyConnection()) {
             java.sql.DatabaseMetaData md = con.getMetaData();
-            try (ResultSet rs = md.getColumns(null, null, "HOADON", "TRANG_THAI")) {
+            try (ResultSet rs = md.getColumns(null, null, "HOA_DON", "TRANG_THAI")) {
                 if (!rs.next()) {
                     try (java.sql.Statement st = con.createStatement()) {
-                        st.execute("ALTER TABLE HOADON ADD TRANG_THAI NVARCHAR2(50) DEFAULT 'Hoàn thành'");
+                        st.execute("ALTER TABLE HOA_DON ADD TRANG_THAI NVARCHAR2(50) DEFAULT 'Hoàn thành'");
                     }
                 }
             }
@@ -54,6 +55,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
             e.printStackTrace();
         }
     }
+
 
     private void setSelectedComboItem(JComboBox<DBItem> combo, int id) {
         for (int i = 0; i < combo.getItemCount(); i++) {
@@ -254,9 +256,11 @@ public class ProcurementPanel extends javax.swing.JPanel {
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(8, 28, 18, 28));
 
-        JButton btnSave = createGradientButton(isEdit ? "💾 Cập nhật" : "💾 Lưu");
+        JButton btnSave = new JButton(isEdit ? "💾 Cập nhật" : "💾 Lưu");
+        UIUtils.styleButton(btnSave);
         btnSave.setPreferredSize(new Dimension(140, 38));
-        JButton btnCancel = createGradientButton("✖ Hủy");
+        JButton btnCancel = new JButton("✖ Hủy");
+        UIUtils.styleButton(btnCancel);
         btnCancel.setPreferredSize(new Dimension(140, 38));
 
         btnPanel.add(btnSave);
@@ -389,10 +393,23 @@ public class ProcurementPanel extends javax.swing.JPanel {
         cbFilter.setPreferredSize(new Dimension(180, 35));
         cbFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
-        JButton btnRefresh = createGradientButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("↻ Cập nhật");
+        UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable(tableModel));
 
+        JButton btnAdd = new JButton("➕ Thêm mới");
+        UIUtils.styleButton(btnAdd);
+        btnAdd.setPreferredSize(new Dimension(140, 36));
+        btnAdd.addActionListener(e -> showOrderDialog(false, -1));
+
+        JButton btnDelete = new JButton("🗑 Xóa");
+        UIUtils.styleButton(btnDelete);
+        btnDelete.setPreferredSize(new Dimension(140, 36));
+        btnDelete.addActionListener(e -> deleteSelectedRows());
+
+        rightHeader.add(btnAdd);
+        rightHeader.add(btnDelete);
         rightHeader.add(cbFilter);
         rightHeader.add(btnRefresh);
 
@@ -567,21 +584,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         this.add(centerPanel, BorderLayout.CENTER);
 
-        // ================= BOTTOM BUTTONS (Thêm mới / Xóa) =================
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
-        bottomPanel.setOpaque(false);
-
-        JButton btnAdd = createGradientButton("➕ Thêm mới");
-        btnAdd.setPreferredSize(new Dimension(140, 38));
-        btnAdd.addActionListener(e -> showOrderDialog(false, -1));
-
-        JButton btnDelete = createGradientButton("🗑 Xóa");
-        btnDelete.setPreferredSize(new Dimension(140, 38));
-        btnDelete.addActionListener(e -> deleteSelectedRows());
-
-        bottomPanel.add(btnAdd);
-        bottomPanel.add(btnDelete);
-        this.add(bottomPanel, BorderLayout.SOUTH);
+        // Removed bottom buttons since they are now in the header
 
         // Filter action
         cbFilter.addActionListener(e -> {
@@ -632,13 +635,8 @@ public class ProcurementPanel extends javax.swing.JPanel {
             setLayout(new GridBagLayout());
             setOpaque(true);
             btnEdit = new JButton("✏ Sửa");
-            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            btnEdit.setForeground(Color.WHITE);
-            btnEdit.setBackground(new Color(0, 123, 255));
-            btnEdit.setFocusPainted(false);
-            btnEdit.setBorderPainted(false);
+            UIUtils.styleButton(btnEdit);
             btnEdit.setPreferredSize(new Dimension(72, 30));
-            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
             add(btnEdit);
         }
 
@@ -659,13 +657,8 @@ public class ProcurementPanel extends javax.swing.JPanel {
             panel = new JPanel(new GridBagLayout());
             panel.setOpaque(true);
             btnEdit = new JButton("✏ Sửa");
-            btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
-            btnEdit.setForeground(Color.WHITE);
-            btnEdit.setBackground(new Color(0, 123, 255));
-            btnEdit.setFocusPainted(false);
-            btnEdit.setBorderPainted(false);
+            UIUtils.styleButton(btnEdit);
             btnEdit.setPreferredSize(new Dimension(72, 30));
-            btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
             panel.add(btnEdit);
 
             btnEdit.addActionListener(e -> {
@@ -738,7 +731,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
             for (java.util.Map<String, Object> item : items) {
                 int id = (Integer) item.get("ID");
                 String name = (String) item.get("NAME");
-                if ("NHANVIEN".equals(table)) {
+                if ("NHAN_VIEN".equals(table)) {
                     name = "NV" + String.format("%03d", id) + " - " + name;
                 }
                 combo.addItem(new DBItem(id, name));
@@ -749,58 +742,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
     }
 
     // ==================== Styled button helpers ====================
-    private JButton createStyledButton(String text, Color bg, Color fg) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btn.setBackground(bg); btn.setForeground(fg);
-        btn.setFocusPainted(false); btn.setBorder(new EmptyBorder(10, 20, 10, 20));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
 
-    private JButton createGradientButton(String text) {
-        JButton btn = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                Color colorTop = new Color(175, 122, 197);
-                Color colorBottom = new Color(210, 160, 205);
-
-                String cleanText = getText().trim().toLowerCase();
-                if (cleanText.contains("thêm") || cleanText.contains("lưu") || cleanText.contains("cập nhật")) {
-                    colorTop = new Color(40, 167, 69);
-                    colorBottom = new Color(34, 139, 58);
-                } else if (cleanText.contains("sửa")) {
-                    colorTop = new Color(0, 123, 255);
-                    colorBottom = new Color(0, 105, 217);
-                } else if (cleanText.contains("xóa")) {
-                    colorTop = new Color(220, 53, 69);
-                    colorBottom = new Color(185, 43, 57);
-                } else if (cleanText.contains("hủy")) {
-                    colorTop = new Color(108, 117, 125);
-                    colorBottom = new Color(90, 98, 104);
-                }
-
-                GradientPaint gp = new GradientPaint(0, 0, colorTop, 0, getHeight(), colorBottom);
-                g2d.setPaint(gp);
-
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-
-                g2d.dispose();
-                super.paintComponent(g);
-            }
-        };
-        btn.setContentAreaFilled(false);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setPreferredSize(new Dimension(130, 36));
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
