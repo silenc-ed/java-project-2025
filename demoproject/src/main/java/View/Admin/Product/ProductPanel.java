@@ -142,17 +142,23 @@ class ActionCellRenderer extends DefaultTableCellRenderer {
 class ActionCellEditor extends AbstractCellEditor implements TableCellEditor {
     private ActionPanel panel = new ActionPanel();
     private JTable table;
+    private int editingRow = -1;
     
     public ActionCellEditor(JTable table, Runnable onEdit) {
         this.table = table;
         panel.btnEdit.addActionListener(e -> {
+            int row = editingRow;
             stopCellEditing();
+            if (row >= 0) {
+                table.setRowSelectionInterval(row, row);
+            }
             onEdit.run();
         });
     }
     
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        this.editingRow = row;
         panel.setBackground(table.getSelectionBackground());
         return panel;
     }
@@ -306,7 +312,7 @@ public class ProductPanel extends javax.swing.JPanel {
         dataTable.setShowHorizontalLines(true);
         dataTable.setGridColor(new Color(241, 245, 249));
         dataTable.setSelectionBackground(new Color(245, 235, 250));
-        dataTable.setSelectionForeground(new Color(142, 68, 173));
+        dataTable.setSelectionForeground(new Color(15, 23, 42));
         
         updateTableStructure();
 
@@ -598,23 +604,13 @@ public class ProductPanel extends javax.swing.JPanel {
     }
 
     private String formatProductHtml(String rawName) {
-        if (rawName == null) return "";
-        String[] parts = rawName.split(" ", 3);
-        if (parts.length >= 2) {
-            String boldText = parts[0] + " " + parts[1];
-            String restText = parts.length > 2 ? parts[2] : "";
-            return "<html><body style='font-family: Segoe UI; font-size: 11px;'>" +
-                   "<font color='#0F172A'><b>" + boldText + "</b></font><br>" +
-                   "<font color='#64748B'>" + restText + "</font>" +
-                   "</body></html>";
-        }
-        return "<html><body style='font-family: Segoe UI; font-size: 11px;'>" +
-               "<font color='#0F172A'><b>" + rawName + "</b></font>" +
-               "</body></html>";
+        return rawName != null ? rawName : "";
     }
 
     private String stripHtml(String html) {
         if (html == null) return "";
+        // Replace <br> tags with a space to prevent words from sticking together
+        html = html.replaceAll("(?i)<br[^>]*>", " ");
         return html.replaceAll("<[^>]*>", "").trim();
     }
 

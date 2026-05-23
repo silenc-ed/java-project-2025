@@ -499,6 +499,8 @@ public class AttendancePanel extends JPanel {
                 }
             });
             
+            // Ẩn nút Báo nghỉ nếu không có quyền Sửa
+            btnOff.setVisible(Controller.Admin.PermissionService.canEdit("Cham cong"));
             storeOffPanel.add(lblStatus, BorderLayout.CENTER);
             storeOffPanel.add(btnOff, BorderLayout.EAST);
         } else {
@@ -536,6 +538,8 @@ public class AttendancePanel extends JPanel {
                 }
             });
             
+            // Ẩn nút Mở cửa nếu không có quyền Sửa
+            btnOn.setVisible(Controller.Admin.PermissionService.canEdit("Cham cong"));
             storeOffPanel.add(lblStatus, BorderLayout.CENTER);
             storeOffPanel.add(btnOn, BorderLayout.EAST);
         }
@@ -733,6 +737,13 @@ public class AttendancePanel extends JPanel {
             }.execute();
         });
 
+        // Ẩn các nút theo quyền
+        boolean canEditCC = Controller.Admin.PermissionService.canEdit("Cham cong");
+        boolean canDeleteCC = Controller.Admin.PermissionService.canDelete("Cham cong");
+        btnEdit.setVisible(canEditCC);
+        btnSetLeader.setVisible(canEditCC);
+        btnDel.setVisible(canDeleteCC);
+
         rightFilter.add(btnEdit);
         rightFilter.add(btnSetLeader);
         rightFilter.add(btnDel);
@@ -794,11 +805,13 @@ public class AttendancePanel extends JPanel {
             }.execute();
         });
 
+        // Ẩn các thành phần Thêm nếu không có quyền Thêm
+        boolean canAddCC = Controller.Admin.PermissionService.canAdd("Cham cong");
         row.add(new JLabel("Nhân viên:"));
         row.add(cbAddNV);
         row.add(new JLabel("Ca:"));
         row.add(cbAddCa);
-        row.add(btnAdd1);
+        if (canAddCC) row.add(btnAdd1);
 
         form.add(lblTitle);
         form.add(Box.createVerticalStrut(8));

@@ -118,6 +118,9 @@ public class VoucherPanel extends JPanel {
     public VoucherPanel() {
         dao = new KhuyenMaiDAO();
         initUI();
+        // Ẩn các nút theo quyền
+        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Khuyen mai"));
+        btnDeleteSelected.setVisible(Controller.Admin.PermissionService.canDelete("Khuyen mai"));
     }
 
     private void initUI() {

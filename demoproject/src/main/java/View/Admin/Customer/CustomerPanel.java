@@ -58,7 +58,8 @@ public class CustomerPanel extends javax.swing.JPanel {
         JButton btnAdd = new JButton("+ Thêm khách hàng");
         View.Admin.UIUtils.styleButton(btnAdd);
         btnAdd.addActionListener(e -> showAddDialog());
-
+        // Ẩn nếu không có quyền Thêm
+        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Khach hang"));
         JButton btnRefresh = new JButton("↻ Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.addActionListener(e -> loadData());
@@ -410,6 +411,10 @@ public class CustomerPanel extends javax.swing.JPanel {
         });
 
         btnRow.add(btnToggle);
+        // Ẩn nút Chỉnh sửa và Khóa/Mở khóa nếu không có quyền Sửa
+        boolean canEditCustomer = Controller.Admin.PermissionService.canEdit("Khach hang");
+        btnToggle.setVisible(canEditCustomer);
+        btnEdit.setVisible(canEditCustomer);
         btnRow.add(btnEdit);
 
         content.add(dlgTitle);

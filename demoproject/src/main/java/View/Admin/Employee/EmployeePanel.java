@@ -61,7 +61,8 @@ public class EmployeePanel extends JPanel {
         View.Admin.UIUtils.styleButton(btnAdd);
         btnAdd.setPreferredSize(new Dimension(160, 36));
         btnAdd.addActionListener(e -> showAddDialog());
-
+        // Ẩn nút Thêm nếu không có quyền
+        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Nhan vien"));
         JButton btnRefresh = new JButton("↻ Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
@@ -296,21 +297,46 @@ public class EmployeePanel extends JPanel {
         tfPass.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblRole = new JLabel("Vai trò");
-        lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblRole.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblRole.setForeground(new Color(71, 85, 105));
         lblRole.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblRole.setBorder(new EmptyBorder(6, 0, 2, 0));
 
-        JComboBox<String> cbRole = new JComboBox<>();
-        cbRole.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cbRole.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        cbRole.setAlignmentX(Component.LEFT_ALIGNMENT);
-        for (Object[] rg : roleGroupList) {
-            cbRole.addItem(rg[1].toString());
+        // Tạo danh sách checkbox trước
+        java.util.List<JCheckBox> roleCheckBoxes = new java.util.ArrayList<>();
+        java.util.List<String> roleNames = new java.util.ArrayList<>();
+        for (Object[] rg : roleGroupList) roleNames.add(rg[1].toString());
+        if (roleNames.isEmpty()) { roleNames.add("Quản lý"); roleNames.add("Nhân viên"); }
+        for (String rn : roleNames) {
+            JCheckBox cb = new JCheckBox(rn);
+            cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            cb.setBackground(new Color(248, 250, 252));
+            cb.setFocusPainted(false);
+            roleCheckBoxes.add(cb);
         }
-        if (cbRole.getItemCount() == 0) {
-            cbRole.addItem("Admin");
-            cbRole.addItem("Nhân viên");
+
+        // Xếp checkbox thành hàng, mỗi hàng tối đa 2 checkbox, chiều cao cố định
+        JPanel roleRowsPanel = new JPanel();
+        roleRowsPanel.setLayout(new BoxLayout(roleRowsPanel, BoxLayout.Y_AXIS));
+        roleRowsPanel.setBackground(new Color(248, 250, 252));
+        for (int i = 0; i < roleCheckBoxes.size(); i += 2) {
+            JPanel row = new JPanel(new GridLayout(1, 2, 8, 0));
+            row.setBackground(new Color(248, 250, 252));
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+            row.setPreferredSize(new Dimension(0, 28));
+            row.add(roleCheckBoxes.get(i));
+            row.add(i + 1 < roleCheckBoxes.size() ? roleCheckBoxes.get(i + 1) : new JLabel());
+            roleRowsPanel.add(row);
+            if (i + 2 < roleCheckBoxes.size()) roleRowsPanel.add(Box.createVerticalStrut(4));
         }
+
+        JPanel roleOuterPanel = new JPanel(new BorderLayout());
+        roleOuterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        roleOuterPanel.setBackground(Color.WHITE);
+        roleOuterPanel.setBorder(new CompoundBorder(
+            new LineBorder(new Color(226, 232, 240), 1, true),
+            new EmptyBorder(8, 10, 8, 10)));
+        roleOuterPanel.add(roleRowsPanel, BorderLayout.CENTER);
 
         // ── Nút Lưu ──
         JButton btnSave = new JButton("Lưu");
@@ -375,7 +401,18 @@ public class EmployeePanel extends JPanel {
             String trangThai = cbTrangThai.getSelectedItem().toString();
             String username = tfUser.getText().trim();
             String pass = new String(tfPass.getPassword()).trim();
-            String tenNhom = cbRole.getSelectedItem() != null ? cbRole.getSelectedItem().toString() : "";
+
+            java.util.List<String> selectedRoles = new java.util.ArrayList<>();
+            for (JCheckBox cb : roleCheckBoxes) {
+                if (cb.isSelected()) {
+                    selectedRoles.add(cb.getText());
+                }
+            }
+
+            if (!selectedRoles.isEmpty() && (username.isEmpty() || pass.isEmpty())) {
+                JOptionPane.showMessageDialog(dialog, "Vui lòng nhập Username và Mật khẩu để gán vai trò cho nhân viên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             final java.sql.Date fNgaySinh = ngaySinh;
             final java.sql.Date fNgayVaoLam = ngayVaoLam;
@@ -386,7 +423,7 @@ public class EmployeePanel extends JPanel {
                 @Override protected Boolean doInBackground() {
                     return NhanVienDAO.themNhanVien(fMaCN, hoTen, fNgaySinh,
                             cccd, sdt, email, fLuong, fNgayVaoLam, trangThai,
-                            username, pass, tenNhom);
+                            username, pass, selectedRoles);
                 }
                 @Override protected void done() {
                     try {
@@ -422,8 +459,8 @@ public class EmployeePanel extends JPanel {
         content.add(lblTK); content.add(Box.createVerticalStrut(4));
         content.add(tfUser); content.add(Box.createVerticalStrut(8));
         content.add(tfPass); content.add(Box.createVerticalStrut(8));
-        content.add(lblRole); content.add(Box.createVerticalStrut(2));
-        content.add(cbRole); content.add(Box.createVerticalStrut(20));
+        content.add(lblRole); content.add(Box.createVerticalStrut(4));
+        content.add(roleOuterPanel); content.add(Box.createVerticalStrut(20));
         content.add(btnSave);
 
         JScrollPane scrollPane = new JScrollPane(content);
@@ -445,6 +482,7 @@ public class EmployeePanel extends JPanel {
         //         TRANG_THAI_TK[11], USERNAME[12], TEN_NHOM[13]}
         String trangThaiTk = str(data[11]);
         boolean hasAccount = !"Chưa có TK".equals(trangThaiTk);
+        List<Object[]> roleGroupList = NhanVienDAO.getAllRoleGroups();
 
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Chi tiết nhân viên", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(480, 650);
@@ -488,10 +526,53 @@ public class EmployeePanel extends JPanel {
         tfNewPass.setAlignmentX(Component.LEFT_ALIGNMENT);
         tfNewPass.setEditable(false);
 
-        JLabel lblRole = new JLabel("Vai trò: " + str(data[13]));
-        lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblRole.setForeground(new Color(71, 85, 105));
-        lblRole.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel lblRoleTitle = new JLabel("Vai trò");
+        lblRoleTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblRoleTitle.setForeground(new Color(71, 85, 105));
+        lblRoleTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblRoleTitle.setBorder(new EmptyBorder(6, 0, 2, 0));
+
+        String currentRolesStr = str(data[13]);
+        String[] currentRoles = currentRolesStr.split(",\\s*");
+        List<String> currentRolesList = java.util.Arrays.asList(currentRoles);
+
+        // Tạo danh sách checkbox trước
+        java.util.List<JCheckBox> roleCheckBoxes = new java.util.ArrayList<>();
+        java.util.List<String> roleNames = new java.util.ArrayList<>();
+        for (Object[] rg : roleGroupList) roleNames.add(rg[1].toString());
+        if (roleNames.isEmpty()) { roleNames.add("Quản lý"); roleNames.add("Nhân viên"); }
+        for (String rn : roleNames) {
+            JCheckBox cb = new JCheckBox(rn);
+            cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            cb.setBackground(new Color(248, 250, 252));
+            cb.setFocusPainted(false);
+            cb.setEnabled(false);
+            cb.setSelected(currentRolesList.contains(rn));
+            roleCheckBoxes.add(cb);
+        }
+
+        // Xếp checkbox thành hàng, mỗi hàng tối đa 2 checkbox, chiều cao cố định
+        JPanel roleRowsPanel = new JPanel();
+        roleRowsPanel.setLayout(new BoxLayout(roleRowsPanel, BoxLayout.Y_AXIS));
+        roleRowsPanel.setBackground(new Color(248, 250, 252));
+        for (int i = 0; i < roleCheckBoxes.size(); i += 2) {
+            JPanel row = new JPanel(new GridLayout(1, 2, 8, 0));
+            row.setBackground(new Color(248, 250, 252));
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+            row.setPreferredSize(new Dimension(0, 28));
+            row.add(roleCheckBoxes.get(i));
+            row.add(i + 1 < roleCheckBoxes.size() ? roleCheckBoxes.get(i + 1) : new JLabel());
+            roleRowsPanel.add(row);
+            if (i + 2 < roleCheckBoxes.size()) roleRowsPanel.add(Box.createVerticalStrut(4));
+        }
+
+        JPanel roleOuterPanel = new JPanel(new BorderLayout());
+        roleOuterPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        roleOuterPanel.setBackground(Color.WHITE);
+        roleOuterPanel.setBorder(new CompoundBorder(
+            new LineBorder(new Color(226, 232, 240), 1, true),
+            new EmptyBorder(8, 10, 8, 10)));
+        roleOuterPanel.add(roleRowsPanel, BorderLayout.CENTER);
 
         JTextField[] nvFields = {tfHoTen, tfCccd, tfSdt, tfEmail};
 
@@ -534,6 +615,14 @@ public class EmployeePanel extends JPanel {
                 tfUsername.setBackground(new Color(255, 255, 240));
                 tfNewPass.setEditable(true);
                 tfNewPass.setBackground(new Color(255, 255, 240));
+                for (JCheckBox cb : roleCheckBoxes) {
+                    cb.setEnabled(true);
+                    cb.setBackground(new Color(255, 255, 240));
+                    // cập nhật nền của panel chứa checkbox
+                    if (cb.getParent() != null) cb.getParent().setBackground(new Color(255, 255, 240));
+                    if (cb.getParent() != null && cb.getParent().getParent() != null)
+                        cb.getParent().getParent().setBackground(new Color(255, 255, 240));
+                }
                 btnEdit.setText("Hoàn tất");
                 btnEdit.setBackground(new Color(40, 167, 69));
             } else {
@@ -545,12 +634,25 @@ public class EmployeePanel extends JPanel {
                 }
                 String newUser = tfUsername.getText().trim();
                 String newPass = new String(tfNewPass.getPassword());
+
+                java.util.List<String> selectedRoles = new java.util.ArrayList<>();
+                for (JCheckBox cb : roleCheckBoxes) {
+                    if (cb.isSelected()) {
+                        selectedRoles.add(cb.getText());
+                    }
+                }
+
+                if (!hasAccount && !selectedRoles.isEmpty() && (newUser.isEmpty() || newPass.isEmpty())) {
+                    JOptionPane.showMessageDialog(dialog, "Nhân viên chưa có tài khoản. Vui lòng nhập Username và Mật khẩu để gán vai trò.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 new SwingWorker<Boolean, Void>() {
                     @Override protected Boolean doInBackground() {
                         boolean nvOk = NhanVienDAO.capNhatNhanVien(maNv, origMaCN, hoTen,
                                 origNgaySinh, tfCccd.getText().trim(), sdt,
                                 tfEmail.getText().trim(), origLuong, origNgayVaoLam, origTrangThai);
-                        NhanVienDAO.capNhatTaiKhoan(maNv, newUser, newPass);
+                        NhanVienDAO.capNhatTaiKhoan(maNv, newUser, newPass, selectedRoles);
                         return nvOk;
                     }
                     @Override protected void done() {
@@ -568,6 +670,10 @@ public class EmployeePanel extends JPanel {
         });
 
         btnRow.add(btnToggle);
+        // Ẩn nút Chỉnh sửa và Khóa/Mở khóa nếu không có quyền Sửa
+        boolean canEditEmployee = Controller.Admin.PermissionService.canEdit("Nhan vien");
+        btnToggle.setVisible(canEditEmployee);
+        btnEdit.setVisible(canEditEmployee);
         btnRow.add(btnEdit);
 
         content.add(dlgTitle);
@@ -583,11 +689,17 @@ public class EmployeePanel extends JPanel {
         content.add(Box.createVerticalStrut(6));
         content.add(tfUsername); content.add(Box.createVerticalStrut(8));
         content.add(tfNewPass); content.add(Box.createVerticalStrut(8));
-        content.add(lblRole);
+        content.add(lblRoleTitle);
+        content.add(Box.createVerticalStrut(4));
+        content.add(roleOuterPanel);
+
         content.add(Box.createVerticalStrut(20));
         content.add(btnRow);
 
-        dialog.setContentPane(content);
+        JScrollPane detailScrollPane = new JScrollPane(content);
+        detailScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        detailScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        dialog.setContentPane(detailScrollPane);
         dialog.setVisible(true);
     }
 

@@ -408,6 +408,16 @@ public class ProcurementPanel extends javax.swing.JPanel {
         btnDelete.setPreferredSize(new Dimension(140, 36));
         btnDelete.addActionListener(e -> deleteSelectedRows());
 
+        // Ẩn nút theo quyền
+        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Don hang"));
+        btnDelete.setVisible(Controller.Admin.PermissionService.canDelete("Don hang"));
+        // Nếu không có quyền Sửa, ẩn cột Chỉnh sửa
+        if (!Controller.Admin.PermissionService.canEdit("Don hang")) {
+            dataTable.getColumnModel().getColumn(8).setMinWidth(0);
+            dataTable.getColumnModel().getColumn(8).setMaxWidth(0);
+            dataTable.getColumnModel().getColumn(8).setWidth(0);
+        }
+
         rightHeader.add(btnAdd);
         rightHeader.add(btnDelete);
         rightHeader.add(cbFilter);

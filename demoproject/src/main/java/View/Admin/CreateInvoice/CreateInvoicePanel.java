@@ -87,6 +87,9 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         btnSave.addActionListener(e -> saveOrder());
         btnReset.addActionListener(e -> resetForm());
         
+        // Ẩn nút Lưu nếu không có quyền Thêm
+        btnSave.setVisible(Controller.Admin.PermissionService.canAdd("Mua hang"));
+
         rightHeader.add(btnReset);
         rightHeader.add(btnSave);
         headerPanel.add(rightHeader, BorderLayout.EAST);

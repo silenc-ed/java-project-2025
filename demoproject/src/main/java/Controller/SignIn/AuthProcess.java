@@ -90,6 +90,9 @@ public class AuthProcess {
             }
         }
         
+        // Clear permission cache khi đăng xuất
+        Controller.Admin.PermissionService.clearCache();
+
         // Remove locally
         Common.TokenManager.clearLocalToken();
     }

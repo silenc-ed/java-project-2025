@@ -176,7 +176,7 @@ public class NhanVienDAO {
                                         String cccd, String sdt, String email,
                                         long luongCoBan, java.sql.Date ngayVaoLam,
                                         String trangThai,
-                                        String username, String pass, String tenNhom) {
+                                        String username, String pass, List<String> roleNames) {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
@@ -217,19 +217,22 @@ public class NhanVienDAO {
                 }
             }
 
-            // Gán vai trò nếu có tài khoản và tên nhóm vai trò
-            if (maTK != -1 && tenNhom != null && !tenNhom.trim().isEmpty()) {
+            // Gán vai trò nếu có tài khoản và danh sách vai trò
+            if (maTK != -1 && roleNames != null && !roleNames.isEmpty()) {
                 String sqlRG = "SELECT MA_ROLEGRP FROM ROLE_GROUP WHERE TEN_NHOM = ?";
-                try (PreparedStatement ps = con.prepareStatement(sqlRG)) {
-                    ps.setString(1, tenNhom);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            long maRoleGrp = rs.getLong(1);
-                            try (PreparedStatement ps2 = con.prepareStatement(
-                                    "INSERT INTO ACCOUNT_ASSIGN_ROLEGROUP (MA_TK, MA_ROLEGRP) VALUES (?, ?)")) {
-                                ps2.setLong(1, maTK);
-                                ps2.setLong(2, maRoleGrp);
-                                ps2.executeUpdate();
+                for (String rName : roleNames) {
+                    if (rName == null || rName.trim().isEmpty()) continue;
+                    try (PreparedStatement ps = con.prepareStatement(sqlRG)) {
+                        ps.setString(1, rName);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                long maRoleGrp = rs.getLong(1);
+                                try (PreparedStatement ps2 = con.prepareStatement(
+                                        "INSERT INTO ACCOUNT_ASSIGN_ROLEGROUP (MA_TK, MA_ROLEGRP) VALUES (?, ?)")) {
+                                    ps2.setLong(1, maTK);
+                                    ps2.setLong(2, maRoleGrp);
+                                    ps2.executeUpdate();
+                                }
                             }
                         }
                     }
@@ -335,7 +338,7 @@ public class NhanVienDAO {
     }
 
     // ─── Cập nhật tài khoản ──────────────────────────────────────────
-    public static boolean capNhatTaiKhoan(long maNV, String username, String newPass) {
+    public static boolean capNhatTaiKhoan(long maNV, String username, String newPass, List<String> roleNames) {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
@@ -343,9 +346,15 @@ public class NhanVienDAO {
 
             String checkSql = "SELECT MA_TK FROM TAI_KHOAN WHERE MA_NV = ?";
             boolean hasTk = false;
+            long maTK = -1;
             try (PreparedStatement ps = con.prepareStatement(checkSql)) {
                 ps.setLong(1, maNV);
-                try (ResultSet rs = ps.executeQuery()) { if (rs.next()) hasTk = true; }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        hasTk = true;
+                        maTK = rs.getLong("MA_TK");
+                    }
+                }
             }
 
             if (!hasTk) {
@@ -353,11 +362,14 @@ public class NhanVienDAO {
                         && newPass != null && !newPass.trim().isEmpty()) {
                     String sqlTK = "INSERT INTO TAI_KHOAN (MA_NV, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
                                    "VALUES (?, ?, ?, N'Hoạt động')";
-                    try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
+                    try (PreparedStatement ps = con.prepareStatement(sqlTK, new String[]{"MA_TK"})) {
                         ps.setLong(1, maNV);
                         ps.setString(2, username);
                         ps.setString(3, HashUtil.hashPassword(newPass));
                         ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) maTK = rs.getLong(1);
+                        }
                     }
                 }
             } else {
@@ -378,6 +390,36 @@ public class NhanVienDAO {
                     }
                 }
             }
+
+            // Gán/cập nhật vai trò nếu có tài khoản hoạt động
+            if (maTK != -1 && roleNames != null) {
+                // Xóa các vai trò cũ
+                try (PreparedStatement psDel = con.prepareStatement("DELETE FROM ACCOUNT_ASSIGN_ROLEGROUP WHERE MA_TK = ?")) {
+                    psDel.setLong(1, maTK);
+                    psDel.executeUpdate();
+                }
+
+                // Thêm các vai trò mới
+                String sqlRG = "SELECT MA_ROLEGRP FROM ROLE_GROUP WHERE TEN_NHOM = ?";
+                for (String rName : roleNames) {
+                    if (rName == null || rName.trim().isEmpty()) continue;
+                    try (PreparedStatement ps = con.prepareStatement(sqlRG)) {
+                        ps.setString(1, rName);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                long maRoleGrp = rs.getLong(1);
+                                try (PreparedStatement ps2 = con.prepareStatement(
+                                        "INSERT INTO ACCOUNT_ASSIGN_ROLEGROUP (MA_TK, MA_ROLEGRP) VALUES (?, ?)")) {
+                                    ps2.setLong(1, maTK);
+                                    ps2.setLong(2, maRoleGrp);
+                                    ps2.executeUpdate();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             con.commit();
             return true;
         } catch (Exception e) {

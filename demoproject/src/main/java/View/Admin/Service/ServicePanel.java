@@ -84,6 +84,9 @@ public class ServicePanel extends javax.swing.JPanel {
     public ServicePanel() {
         initComponents();
         setupCustomUI();
+        // Ẩn các nút theo quyền
+        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Dich vu"));
+        btnDeleteSelected.setVisible(Controller.Admin.PermissionService.canDelete("Dich vu"));
     }
 
     private void setupCustomUI() {

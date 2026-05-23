@@ -61,20 +61,39 @@ public class Main extends javax.swing.JFrame {
         }
         menu1.setFullName(fullname);
 
-        // --- Cập nhật danh sách mục menu Admin ---
-        menu1.setMenu(new String[] {
-                "Tổng quan",
-                "Mua hàng",
-                "Quản lý SP",
-                "Dịch vụ",
-                "Đơn hàng",
-                "Khách hàng",
-                "Nhân viên",
-                "Tồn kho CN",
-                "Khuyến mãi",
-                "Nhập kho",
-                "Chấm công"
-        });
+        // --- Load quyền từ DB ---
+        Controller.Admin.PermissionService.loadPermissions();
+
+        // --- Mapping: key chức năng (DB) → tên hiển thị menu ---
+        // Thứ tự phải nhất quán với switch-case bên dưới
+        final java.util.LinkedHashMap<String, String> featureToLabel = new java.util.LinkedHashMap<>();
+        featureToLabel.put("DASHBOARD",   "Tổng quan");   // luôn hiển thị
+        featureToLabel.put("Mua hang",    "Mua hàng");
+        featureToLabel.put("Quan ly SP",  "Quản lý SP");
+        featureToLabel.put("Dich vu",     "Dịch vụ");
+        featureToLabel.put("Don hang",    "Đơn hàng");
+        featureToLabel.put("Khach hang",  "Khách hàng");
+        featureToLabel.put("Nhan vien",   "Nhân viên");
+        featureToLabel.put("Ton kho CN",  "Tồn kho CN");
+        featureToLabel.put("Khuyen mai",  "Khuyến mãi");
+        featureToLabel.put("Nhap kho",    "Nhập kho");
+        featureToLabel.put("Cham cong",   "Chấm công");
+
+        // --- Build menu động: chỉ gồm tab user được xem ---
+        final java.util.List<String> menuLabels = new java.util.ArrayList<>();
+        final java.util.List<String> menuKeys   = new java.util.ArrayList<>();
+
+        for (java.util.Map.Entry<String, String> entry : featureToLabel.entrySet()) {
+            String key   = entry.getKey();
+            String label = entry.getValue();
+            // Dashboard luôn hiển thị; các tab khác kiểm tra quyền xem
+            if ("DASHBOARD".equals(key) || Controller.Admin.PermissionService.canView(key)) {
+                menuLabels.add(label);
+                menuKeys.add(key);
+            }
+        }
+
+        menu1.setMenu(menuLabels.toArray(new String[0]));
 
         // --- Thiết lập khu vực nội dung chính ---
         mainBody = new javax.swing.JPanel();
@@ -89,51 +108,54 @@ public class Main extends javax.swing.JFrame {
         getContentPane().removeAll();
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
-        // --- Xử lý sự kiện chọn mục menu Admin ---
+        // --- Xử lý sự kiện chọn mục menu Admin (dùng menuKeys thay vì index cứng) ---
         menu1.addEventMenuSelected(new View.Customers.EventMenuSelected() {
             private View.Admin.Customer.CustomerPanel cachedCustomerPanel;
             private View.Admin.Employee.EmployeePanel cachedEmployeePanel;
 
             @Override
             public void selected(int index) {
-                switch (index) {
-                    case 0: // Tổng quan
+                if (index < 0 || index >= menuKeys.size()) return;
+                String key = menuKeys.get(index);
+
+                switch (key) {
+                    case "DASHBOARD":
                         showForm(new View.Admin.DashBoard.DashboardPanel());
                         break;
-                    case 1: // Mua hàng
+                    case "Mua hang":
                         showForm(new View.Admin.CreateInvoice.CreateInvoicePanel());
                         break;
-                    case 2: // Quản lý SP
-                        showForm(new View.Admin.Product.ProductPanel());
+                    case "Quan ly SP":
+                        showForm(new View.Admin.Product.ProductManagementController());
                         break;
-                    case 3: // Dịch vụ
+                    case "Dich vu":
                         showForm(new View.Admin.Service.ServicePanel());
                         break;
-                    case 4: // Đơn hàng
+                    case "Don hang":
                         showForm(new View.Admin.Procurement.ProcurementPanel());
                         break;
-                    case 5: // Khách hàng
+                    case "Khach hang":
                         if (cachedCustomerPanel == null) {
                             cachedCustomerPanel = new View.Admin.Customer.CustomerPanel();
                         }
                         showForm(cachedCustomerPanel);
                         break;
-                    case 6: // Nhân viên
+                    case "Nhan vien":
                         if (cachedEmployeePanel == null) {
                             cachedEmployeePanel = new View.Admin.Employee.EmployeePanel();
                         }
                         showForm(cachedEmployeePanel);
                         break;
-                    case 7: // Tồn kho CN
+                    case "Ton kho CN":
                         showForm(new View.Admin.Warehouse.WarehousePanel());
                         break;
-                    case 8: // Khuyến mãi
+                    case "Khuyen mai":
                         showForm(new View.Admin.Voucher.VoucherPanel());
                         break;
-                    case 9: // Nhập kho
+                    case "Nhap kho":
                         showForm(new View.Admin.Bill.BillPanel());
                         break;
-                    case 10: // Chấm công
+                    case "Cham cong":
                         showForm(new View.Admin.Attendance.AttendancePanel());
                         break;
                 }
@@ -145,11 +167,10 @@ public class Main extends javax.swing.JFrame {
             @Override
             public void run() {
                 javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
-                popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
+                popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder());
 
                 View.Customers.UserOption.UserOptionPanel optionPanel = new View.Customers.UserOption.UserOptionPanel();
 
-                // Thêm sự kiện cho list các chức năng (Hồ sơ, Cài đặt, ...)
                 optionPanel.getListOptionUser().addListSelectionListener(e -> {
                     if (!e.getValueIsAdjusting()) {
                         String selected = optionPanel.getListOptionUser().getSelectedValue();
@@ -179,8 +200,6 @@ public class Main extends javax.swing.JFrame {
                 });
 
                 popupMenu.add(optionPanel);
-
-                // Hiển thị ở góc trái dưới cùng
                 popupMenu.show(menu1, 60, menu1.getHeight() - optionPanel.getPreferredSize().height - 50);
             }
         });

@@ -141,6 +141,8 @@ public class WarehousePanel extends javax.swing.JPanel {
         UIUtils.styleButton(btnEditBranch);
         btnEditBranch.setPreferredSize(new Dimension(150, 36));
         btnEditBranch.addActionListener(e -> showEditBranchDialog());
+        // Ẩn nếu không có quyền Sửa
+        btnEditBranch.setVisible(Controller.Admin.PermissionService.canEdit("Ton kho CN"));
         rightHeader.add(btnEditBranch);
 
         header.add(rightHeader, BorderLayout.EAST);
