@@ -229,7 +229,7 @@ public class ProductPanel extends javax.swing.JPanel {
         });
         bannerSlideshow.startAutoSlide(5000);
 
-        BannerPanel.setPreferredSize(new java.awt.Dimension(0, 506));
+        BannerPanel.setPreferredSize(new java.awt.Dimension(0, 200));
         BannerPanel.add(bannerSlideshow, java.awt.BorderLayout.CENTER);
         BannerPanel.revalidate();
         BannerPanel.repaint();
