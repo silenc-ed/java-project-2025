@@ -188,59 +188,69 @@ public class PhieuNhapDAO {
     }
 
     public static boolean saveChiTietPhieuNhap(int maPn, int maBienthe, int qty, double price, boolean isEdit) throws Exception {
-        Connection con = null;
-        try {
-            con = ConnectionUtils.getMyConnection();
-            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            con.setAutoCommit(false);
+        int maxRetries = 5;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            Connection con = null;
+            try {
+                con = ConnectionUtils.getMyConnection();
+                con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+                con.setAutoCommit(false);
 
-            if (isEdit) {
-                String sqlUpdate = "UPDATE CHI_TIET_PHIEU_NHAP SET SO_LUONG = ?, DON_GIA_NHAP = ? WHERE MA_PN = ? AND MA_BIENTHE = ?";
-                try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
-                    ps.setInt(1, qty);
-                    ps.setDouble(2, price);
-                    ps.setInt(3, maPn);
-                    ps.setInt(4, maBienthe);
+                if (isEdit) {
+                    String sqlUpdate = "UPDATE CHI_TIET_PHIEU_NHAP SET SO_LUONG = ?, DON_GIA_NHAP = ? WHERE MA_PN = ? AND MA_BIENTHE = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
+                        ps.setInt(1, qty);
+                        ps.setDouble(2, price);
+                        ps.setInt(3, maPn);
+                        ps.setInt(4, maBienthe);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    // MERGE INTO — Oracle xử lý nguyên tử, không cần kiểm tra trước
+                    String sqlMerge = 
+                        "MERGE INTO CHI_TIET_PHIEU_NHAP target " +
+                        "USING (SELECT ? AS MA_PN, ? AS MA_BIENTHE FROM dual) source " +
+                        "ON (target.MA_PN = source.MA_PN AND target.MA_BIENTHE = source.MA_BIENTHE) " +
+                        "WHEN MATCHED THEN " +
+                        "    UPDATE SET target.SO_LUONG = target.SO_LUONG + ?, target.DON_GIA_NHAP = ? " +
+                        "WHEN NOT MATCHED THEN " +
+                        "    INSERT (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) " +
+                        "    VALUES (source.MA_PN, source.MA_BIENTHE, ?, ?)";
+                    try (PreparedStatement psMerge = con.prepareStatement(sqlMerge)) {
+                        psMerge.setInt(1, maPn);
+                        psMerge.setInt(2, maBienthe);
+                        psMerge.setInt(3, qty);       // WHEN MATCHED: cộng dồn qty
+                        psMerge.setDouble(4, price);  // WHEN MATCHED: cập nhật đơn giá
+                        psMerge.setInt(5, qty);       // WHEN NOT MATCHED: insert qty
+                        psMerge.setDouble(6, price);  // WHEN NOT MATCHED: insert đơn giá
+                        psMerge.executeUpdate();
+                    }
+                }
+
+                String sqlUpdateTotal = "UPDATE PHIEU_NHAP SET TONG_TIEN = (SELECT NVL(SUM(SO_LUONG * DON_GIA_NHAP), 0) FROM CHI_TIET_PHIEU_NHAP WHERE MA_PN = ?) WHERE MA_PN = ?";
+                try (PreparedStatement ps = con.prepareStatement(sqlUpdateTotal)) {
+                    ps.setInt(1, maPn);
+                    ps.setInt(2, maPn);
                     ps.executeUpdate();
                 }
-            } else {
-                // MERGE INTO — Oracle xử lý nguyên tử, không cần kiểm tra trước
-                String sqlMerge = 
-                    "MERGE INTO CHI_TIET_PHIEU_NHAP target " +
-                    "USING (SELECT ? AS MA_PN, ? AS MA_BIENTHE FROM dual) source " +
-                    "ON (target.MA_PN = source.MA_PN AND target.MA_BIENTHE = source.MA_BIENTHE) " +
-                    "WHEN MATCHED THEN " +
-                    "    UPDATE SET target.SO_LUONG = target.SO_LUONG + ?, target.DON_GIA_NHAP = ? " +
-                    "WHEN NOT MATCHED THEN " +
-                    "    INSERT (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) " +
-                    "    VALUES (source.MA_PN, source.MA_BIENTHE, ?, ?)";
-                try (PreparedStatement psMerge = con.prepareStatement(sqlMerge)) {
-                    psMerge.setInt(1, maPn);
-                    psMerge.setInt(2, maBienthe);
-                    psMerge.setInt(3, qty);       // WHEN MATCHED: cộng dồn qty
-                    psMerge.setDouble(4, price);  // WHEN MATCHED: cập nhật đơn giá
-                    psMerge.setInt(5, qty);       // WHEN NOT MATCHED: insert qty
-                    psMerge.setDouble(6, price);  // WHEN NOT MATCHED: insert đơn giá
-                    psMerge.executeUpdate();
+
+                con.commit();
+                return true;
+            } catch (java.sql.SQLException e) {
+                if (con != null) try { con.rollback(); } catch (Exception ex) {}
+                if (e.getErrorCode() == 8177 && attempt < maxRetries) {
+                    Thread.sleep(100);
+                    continue;
                 }
+                throw e;
+            } catch (Exception e) {
+                if (con != null) try { con.rollback(); } catch (Exception ex) {}
+                throw e;
+            } finally {
+                if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ex) {}
             }
-
-            String sqlUpdateTotal = "UPDATE PHIEU_NHAP SET TONG_TIEN = (SELECT NVL(SUM(SO_LUONG * DON_GIA_NHAP), 0) FROM CHI_TIET_PHIEU_NHAP WHERE MA_PN = ?) WHERE MA_PN = ?";
-            try (PreparedStatement ps = con.prepareStatement(sqlUpdateTotal)) {
-                ps.setInt(1, maPn);
-                ps.setInt(2, maPn);
-                ps.executeUpdate();
-            }
-
-            con.commit();
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (con != null) try { con.rollback(); } catch (Exception ex) {}
-            return false;
-        } finally {
-            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ex) {}
         }
+        return false;
     }
 
     public static boolean deleteChiTietPhieuNhaps(int maPn, List<Integer> listMaBienthe) {

@@ -82,13 +82,13 @@ public class SerialNumberViewPanel extends JPanel {
         centerPanel.add(txtSearch, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"", "Mã Serial Number", "Trạng thái", "Ngày nhập", "Thao tác"};
+        String[] columns = {"", "Mã Serial Number", "Chi nhánh", "Trạng thái", "Ngày nhập", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public Class<?> getColumnClass(int c) {
                 return c == 0 ? Boolean.class : super.getColumnClass(c);
             }
             @Override public boolean isCellEditable(int r, int c) {
-                return c == 0 || c == 4;
+                return c == 0 || c == 5;
             }
         };
 
@@ -111,8 +111,8 @@ public class SerialNumberViewPanel extends JPanel {
             null,
             false // No "Chi tiết" button at leaf node
         );
-        dataTable.getColumnModel().getColumn(4).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(false));
-        dataTable.getColumnModel().getColumn(4).setCellEditor(actionEditor);
+        dataTable.getColumnModel().getColumn(5).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(false));
+        dataTable.getColumnModel().getColumn(5).setCellEditor(actionEditor);
 
         JScrollPane scrollPane = new JScrollPane(dataTable);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
@@ -128,6 +128,7 @@ public class SerialNumberViewPanel extends JPanel {
                 tableModel.addRow(new Object[]{
                     Boolean.FALSE,
                     sn.getMaSerial(),
+                    sn.getTenCn() != null ? sn.getTenCn() : "Chưa có",
                     sn.getTrangThai(),
                     sn.getNgayNhap() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(sn.getNgayNhap()) : "",
                     sn.getMaSerial()
@@ -145,19 +146,31 @@ public class SerialNumberViewPanel extends JPanel {
             return;
         }
         SerialDialog dialog = new SerialDialog(SwingUtilities.getWindowAncestor(this), "Thêm Serial");
+        
+        try {
+            java.util.List<Model.ChiNhanh> chiNhanhList = Controller.ChiNhanhDAO.getAllChiNhanh();
+            dialog.setChiNhanhList(chiNhanhList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         dialog.setVisible(true);
         if (dialog.isSaveClicked()) {
             try {
                 Model.SerialNumber sn = new Model.SerialNumber();
                 sn.setMaSerial(dialog.getMaSerial());
                 sn.setMaBienThe(currentVariantId);
+                
+                Model.ChiNhanh selectedCn = dialog.getSelectedChiNhanh();
+                if (selectedCn != null) sn.setMaCn(selectedCn.getMaCn());
+                
                 sn.setTrangThai(dialog.getTrangThai());
                 sn.setNgayNhap(new java.sql.Date(System.currentTimeMillis()));
                 Controller.SerialNumberDAO.addSerialNumber(sn);
                 loadSerialsForVariant(currentVariantId);
             } catch (Exception e) {
                 e.printStackTrace();
-                tableModel.addRow(new Object[]{ Boolean.FALSE, dialog.getMaSerial(), dialog.getTrangThai(), "Hôm nay", -1 });
+                tableModel.addRow(new Object[]{ Boolean.FALSE, dialog.getMaSerial(), dialog.getSelectedChiNhanh() != null ? dialog.getSelectedChiNhanh().getTenCn() : "", dialog.getTrangThai(), "Hôm nay", -1 });
             }
         }
     }
@@ -171,10 +184,22 @@ public class SerialNumberViewPanel extends JPanel {
             Object serialObj = tableModel.getValueAt(modelRow, 1);
             String maSerial = serialObj != null ? serialObj.toString() : "";
             
-            Object statusObj = tableModel.getValueAt(modelRow, 2);
+            Object statusObj = tableModel.getValueAt(modelRow, 3);
             String trangThai = statusObj != null ? statusObj.toString() : "";
+            
+            Object branchObj = tableModel.getValueAt(modelRow, 2);
+            String branchName = branchObj != null ? branchObj.toString() : "";
     
             SerialDialog dialog = new SerialDialog(SwingUtilities.getWindowAncestor(this), "Sửa Serial");
+            
+            try {
+                java.util.List<Model.ChiNhanh> chiNhanhList = Controller.ChiNhanhDAO.getAllChiNhanh();
+                dialog.setChiNhanhList(chiNhanhList);
+                dialog.setSelectedChiNhanhByName(branchName);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             dialog.setMaSerial(maSerial);
             dialog.setTrangThai(trangThai);
             dialog.setVisible(true);
@@ -184,13 +209,18 @@ public class SerialNumberViewPanel extends JPanel {
                     Model.SerialNumber sn = new Model.SerialNumber();
                     sn.setMaSerial(dialog.getMaSerial());
                     sn.setMaBienThe(currentVariantId);
+                    
+                    Model.ChiNhanh selectedCn = dialog.getSelectedChiNhanh();
+                    if (selectedCn != null) sn.setMaCn(selectedCn.getMaCn());
+                    
                     sn.setTrangThai(dialog.getTrangThai());
                     Controller.SerialNumberDAO.updateSerialNumber(sn, maSerial);
                     loadSerialsForVariant(currentVariantId);
                 } catch (Exception e) {
                     e.printStackTrace();
                     tableModel.setValueAt(dialog.getMaSerial(), modelRow, 1);
-                    tableModel.setValueAt(dialog.getTrangThai(), modelRow, 2);
+                    tableModel.setValueAt(dialog.getSelectedChiNhanh() != null ? dialog.getSelectedChiNhanh().getTenCn() : "", modelRow, 2);
+                    tableModel.setValueAt(dialog.getTrangThai(), modelRow, 3);
                 }
             }
         } catch (Exception e) {
@@ -269,6 +299,7 @@ public class SerialNumberViewPanel extends JPanel {
     // Dialog class for Serial Number
     class SerialDialog extends JDialog {
         private JTextField txtMaSerial = new JTextField();
+        private JComboBox<Model.ChiNhanh> cbChiNhanh = new JComboBox<>();
         private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Trong kho", "Đã bán", "Lỗi"});
         private JButton btnSave = new JButton("Lưu");
         private JButton btnCancel = new JButton("Hủy");
@@ -276,7 +307,7 @@ public class SerialNumberViewPanel extends JPanel {
 
         public SerialDialog(Window owner, String title) {
             super(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
-            setSize(460, 260);
+            setSize(460, 320);
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout());
             setResizable(false);
@@ -308,13 +339,25 @@ public class SerialNumberViewPanel extends JPanel {
             ));
             content.add(txtMaSerial, gbc);
 
-            // Trạng thái
+            // Chi nhánh
             gbc.gridy = 2; gbc.insets = new Insets(0, 0, 4, 0);
+            JLabel lblChiNhanh = new JLabel("Chi nhánh");
+            lblChiNhanh.setFont(labelFont);
+            content.add(lblChiNhanh, gbc);
+
+            gbc.gridy = 3; gbc.insets = new Insets(0, 0, 14, 0);
+            cbChiNhanh.setFont(fieldFont);
+            cbChiNhanh.setPreferredSize(new Dimension(400, 35));
+            cbChiNhanh.setBackground(Color.WHITE);
+            content.add(cbChiNhanh, gbc);
+
+            // Trạng thái
+            gbc.gridy = 4; gbc.insets = new Insets(0, 0, 4, 0);
             JLabel lblStatus = new JLabel("Trạng thái");
             lblStatus.setFont(labelFont);
             content.add(lblStatus, gbc);
 
-            gbc.gridy = 3; gbc.insets = new Insets(0, 0, 0, 0);
+            gbc.gridy = 5; gbc.insets = new Insets(0, 0, 0, 0);
             cbTrangThai.setFont(fieldFont);
             cbTrangThai.setPreferredSize(new Dimension(400, 35));
             content.add(cbTrangThai, gbc);
@@ -348,6 +391,25 @@ public class SerialNumberViewPanel extends JPanel {
         public void setMaSerial(String n) { txtMaSerial.setText(n); }
         public String getTrangThai() { return cbTrangThai.getSelectedItem().toString(); }
         public void setTrangThai(String t) { cbTrangThai.setSelectedItem(t); }
+        
+        public void setChiNhanhList(java.util.List<Model.ChiNhanh> list) {
+            cbChiNhanh.removeAllItems();
+            for (Model.ChiNhanh cn : list) {
+                cbChiNhanh.addItem(cn);
+            }
+        }
+        public Model.ChiNhanh getSelectedChiNhanh() {
+            return (Model.ChiNhanh) cbChiNhanh.getSelectedItem();
+        }
+        public void setSelectedChiNhanhByName(String name) {
+            for (int i = 0; i < cbChiNhanh.getItemCount(); i++) {
+                if (cbChiNhanh.getItemAt(i).getTenCn().equals(name)) {
+                    cbChiNhanh.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        
         public boolean isSaveClicked() { return isSaveClicked; }
     }
 }

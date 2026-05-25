@@ -40,4 +40,13 @@ public class SerialNumber {
     public void setNgayNhap(java.sql.Date ngayNhap) {
         this.ngayNhap = ngayNhap;
     }
+
+    private int maCn;
+    private String tenCn;
+
+    public int getMaCn() { return maCn; }
+    public void setMaCn(int maCn) { this.maCn = maCn; }
+    
+    public String getTenCn() { return tenCn; }
+    public void setTenCn(String tenCn) { this.tenCn = tenCn; }
 }

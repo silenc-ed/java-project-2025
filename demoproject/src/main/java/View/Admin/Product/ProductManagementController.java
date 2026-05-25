@@ -18,6 +18,7 @@ public class ProductManagementController extends JPanel {
     private ProductViewPanel productPanel;
     private VariantViewPanel variantPanel;
     private SerialNumberViewPanel serialNumberPanel;
+    private InventoryBranchViewPanel inventoryBranchPanel;
 
     private List<BreadcrumbItem> breadcrumbs;
 
@@ -57,11 +58,13 @@ public class ProductManagementController extends JPanel {
         productPanel = new ProductViewPanel(this);
         variantPanel = new VariantViewPanel(this);
         serialNumberPanel = new SerialNumberViewPanel(this);
+        inventoryBranchPanel = new InventoryBranchViewPanel(this);
 
         cardsPanel.add(categoryPanel, "CATEGORY");
         cardsPanel.add(productPanel, "PRODUCT");
         cardsPanel.add(variantPanel, "VARIANT");
         cardsPanel.add(serialNumberPanel, "SERIAL");
+        cardsPanel.add(inventoryBranchPanel, "INVENTORY_BRANCH");
 
         add(cardsPanel, BorderLayout.CENTER);
 
@@ -150,6 +153,13 @@ public class ProductManagementController extends JPanel {
         breadcrumbs.add(new BreadcrumbItem(variantName, "SERIAL", variantId));
         serialNumberPanel.loadSerialsForVariant(variantId);
         cardLayout.show(cardsPanel, "SERIAL");
+        renderBreadcrumbs();
+    }
+    
+    public void showInventoryBranch(int variantId, String variantName) {
+        breadcrumbs.add(new BreadcrumbItem(variantName, "INVENTORY_BRANCH", variantId));
+        inventoryBranchPanel.loadInventoryForVariant(variantId);
+        cardLayout.show(cardsPanel, "INVENTORY_BRANCH");
         renderBreadcrumbs();
     }
 }

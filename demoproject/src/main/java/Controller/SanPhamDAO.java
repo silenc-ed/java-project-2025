@@ -38,6 +38,22 @@ public class SanPhamDAO {
         return list;
     }
 
+    public static int getCoQuanLySerialByMaBienThe(int maBienThe) {
+        String sql = "SELECT SP.CO_QUAN_LY_SERIAL FROM SAN_PHAM SP JOIN BIEN_THE_SAN_PHAM BT ON SP.MA_SP = BT.MA_SP WHERE BT.MA_BIENTHE = ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maBienThe);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("CO_QUAN_LY_SERIAL");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 1; // Default to 1 (Có serial) to be safe
+    }
+
     public static List<SanPham> searchAdvanced(List<Integer> catIds, List<String> catNames, Double minPrice, Double maxPrice) {
         List<SanPham> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) WHERE 1=1 ");
@@ -221,7 +237,7 @@ public class SanPhamDAO {
     }
 
     public static boolean updateSanPham(SanPham sp, double giaBan) throws Exception {
-        String sqlSp = "UPDATE SAN_PHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ?, CO_QUAN_LY_SERIAL = ? WHERE MA_SP = ?";
+        String sqlSp = "UPDATE SAN_PHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
         String sqlBt = "UPDATE BIEN_THE_SAN_PHAM SET GIA_BAN = ?, TRANG_THAI = ? WHERE MA_SP = ?";
         
         Connection con = null;
@@ -236,8 +252,7 @@ public class SanPhamDAO {
                 psSp.setInt(4, sp.getSoLuongDaBan());
                 psSp.setString(5, sp.getDonViTinh());
                 psSp.setString(6, sp.getMoTa());
-                psSp.setInt(7, sp.getCoQuanLySerial());
-                psSp.setInt(8, sp.getMaSp());
+                psSp.setInt(7, sp.getMaSp());
                 psSp.executeUpdate();
             }
             

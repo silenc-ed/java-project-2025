@@ -183,6 +183,7 @@ public class ProductViewPanel extends JPanel {
                 sp.setSoLuongDaBan(dialog.getSoLuongDaBan());
                 sp.setDonViTinh(dialog.getDonViTinh());
                 sp.setMoTa(dialog.getMoTa());
+                sp.setCoQuanLySerial(dialog.isManageSerial() ? 1 : 0);
                 Controller.SanPhamDAO.addSanPham(sp, dialog.getGiaBan());
                 loadProductsForCategory(currentCategoryId);
             } catch (Exception e) {
@@ -242,6 +243,10 @@ public class ProductViewPanel extends JPanel {
             dialog.setSoLuongDaBan(qty);
             dialog.setGiaBan(price);
             dialog.setTrangThai(status);
+            
+            // Khóa tùy chọn Quản lý Serial khi đang Cập nhật Sản phẩm
+            dialog.setManageSerialEnabled(false);
+            
             dialog.setVisible(true);
     
             if (dialog.isSaveClicked()) {
@@ -371,6 +376,7 @@ public class ProductViewPanel extends JPanel {
         private JTextField txtGia = new JTextField("0");
         private JTextField txtDonViTinh = new JTextField("Cái");
         private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đang kinh doanh", "Ngừng kinh doanh"});
+        private JCheckBox cbManageSerial = new JCheckBox("Có quản lý theo mã Serial");
         private JButton btnSave = new JButton("Lưu");
         private JButton btnCancel = new JButton("Hủy");
         private boolean isSaveClicked = false;
@@ -436,6 +442,12 @@ public class ProductViewPanel extends JPanel {
             cbTrangThai.setPreferredSize(new Dimension(400, 35));
             content.add(cbTrangThai, gbc);
 
+            gbc.gridy = fields.length * 2 + 2; gbc.insets = new Insets(10, 0, 0, 0);
+            cbManageSerial.setFont(labelFont);
+            cbManageSerial.setBackground(Color.WHITE);
+            cbManageSerial.setSelected(true);
+            content.add(cbManageSerial, gbc);
+
             add(content, BorderLayout.CENTER);
 
             // ---- Footer ----
@@ -473,6 +485,9 @@ public class ProductViewPanel extends JPanel {
         public void setDonViTinh(String d) { txtDonViTinh.setText(d); }
         public String getTrangThai() { return cbTrangThai.getSelectedItem().toString(); }
         public void setTrangThai(String t) { cbTrangThai.setSelectedItem(t); }
+        public boolean isManageSerial() { return cbManageSerial.isSelected(); }
+        public void setManageSerial(boolean manage) { cbManageSerial.setSelected(manage); }
+        public void setManageSerialEnabled(boolean enabled) { cbManageSerial.setEnabled(enabled); }
         public boolean isSaveClicked() { return isSaveClicked; }
     }
 }

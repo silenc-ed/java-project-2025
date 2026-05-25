@@ -70,39 +70,57 @@ public class HoaDonDAO {
     public static boolean saveHoaDon(int maHd, Integer maKh, int maNv, int maCn, Integer maKm, 
                                      double tongTien, double giamGia, double thanhTien, 
                                      String phuongThuc, String trangThai, boolean isEdit) throws Exception {
-        String sql;
-        if (!isEdit) {
-            sql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        } else {
-            sql = "UPDATE HOA_DON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=?, TRANG_THAI=? WHERE MA_HD=?";
-        }
-
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            if (maKh != null && maKh > 0) {
-                ps.setInt(1, maKh);
-            } else {
-                ps.setNull(1, Types.INTEGER);
-            }
-            ps.setInt(2, maNv);
-            ps.setInt(3, maCn);
-            if (maKm != null && maKm > 0) {
-                ps.setInt(4, maKm);
-            } else {
-                ps.setNull(4, Types.INTEGER);
-            }
-            ps.setDouble(5, tongTien);
-            ps.setDouble(6, giamGia);
-            ps.setDouble(7, thanhTien);
-            ps.setString(8, phuongThuc);
-            ps.setString(9, trangThai);
-            
+        
+        try (Connection con = ConnectionUtils.getMyConnection()) {
             if (isEdit) {
-                ps.setInt(10, maHd);
+                // Chặn chỉnh sửa nếu hóa đơn đang ở trạng thái 'Đã hủy'
+                String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ?";
+                try (PreparedStatement psCheck = con.prepareStatement(checkSql)) {
+                    psCheck.setInt(1, maHd);
+                    try (ResultSet rs = psCheck.executeQuery()) {
+                        if (rs.next()) {
+                            String currentStatus = rs.getString("TRANG_THAI");
+                            if ("Đã hủy".equals(currentStatus)) {
+                                throw new Exception("Không thể chỉnh sửa hóa đơn đã bị hủy!");
+                            }
+                        }
+                    }
+                }
+            }
+            
+            String sql;
+            if (!isEdit) {
+                sql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            } else {
+                sql = "UPDATE HOA_DON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=?, TRANG_THAI=? WHERE MA_HD=?";
             }
 
-            int rows = ps.executeUpdate();
-            return rows > 0;
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                if (maKh != null && maKh > 0) {
+                    ps.setInt(1, maKh);
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setInt(2, maNv);
+                ps.setInt(3, maCn);
+                if (maKm != null && maKm > 0) {
+                    ps.setInt(4, maKm);
+                } else {
+                    ps.setNull(4, Types.INTEGER);
+                }
+                ps.setDouble(5, tongTien);
+                ps.setDouble(6, giamGia);
+                ps.setDouble(7, thanhTien);
+                ps.setString(8, phuongThuc);
+                ps.setString(9, trangThai);
+                
+                if (isEdit) {
+                    ps.setInt(10, maHd);
+                }
+
+                int rows = ps.executeUpdate();
+                return rows > 0;
+            }
         }
     }
 

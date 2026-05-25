@@ -255,7 +255,12 @@ public class VariantViewPanel extends JPanel {
         try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().replace("VAR", "")); } catch (Exception e) {}
         String name = tableModel.getValueAt(modelRow, 2).toString();
         
-        controller.showSerialNumber(id, name);
+        int coQuanLySerial = Controller.SanPhamDAO.getCoQuanLySerialByMaBienThe(id);
+        if (coQuanLySerial == 1) {
+            controller.showSerialNumber(id, name);
+        } else {
+            controller.showInventoryBranch(id, name);
+        }
     }
 
     private void handleDeleteSelected() {

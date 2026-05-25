@@ -25,7 +25,6 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
 
     private JTextField txtSearchSP;
     private JComboBox<ServiceItem> cbServices;
-    private JComboBox<RepairItem> cbRepairs;
 
     private DefaultTableModel cartTableModel;
     private JTable cartTable;
@@ -48,7 +47,6 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         dao = new DonDatHangDAO();
         setupUI();
         loadServiceCombo();
-        loadRepairCombo();
     }
 
     private void setupUI() {
@@ -124,22 +122,18 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         cbServices = new JComboBox<>();
         cbServices.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbServices.setPreferredSize(new Dimension(140, 35));
+        cbServices.addActionListener(e -> {
+            if (cbServices.getSelectedIndex() > 0) {
+                addServiceOrRepair();
+            }
+        });
         centerDV.add(cbServices);
-
-        JLabel lblSC = makeLabel("Sửa chữa:");
-        lblSC.setBorder(new EmptyBorder(0, 10, 0, 5));
-        centerDV.add(lblSC);
-        
-        cbRepairs = new JComboBox<>();
-        cbRepairs.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        cbRepairs.setPreferredSize(new Dimension(140, 35));
-        centerDV.add(cbRepairs);
 
         rowDV.add(centerDV, BorderLayout.CENTER);
 
         JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         pnlBtns.setOpaque(false);
-        JButton btnAddDV = createFlatButton("+ Thêm DV/SC", new Color(59, 130, 246));
+        JButton btnAddDV = createFlatButton("+ Thêm DV", new Color(59, 130, 246));
         btnAddDV.setPreferredSize(new Dimension(120, 35));
         btnAddDV.addActionListener(e -> addServiceOrRepair());
         
@@ -416,20 +410,6 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             }
         }
 
-        RepairItem selSC = (RepairItem) cbRepairs.getSelectedItem();
-        if (selSC != null && selSC.id != -1) {
-            boolean dup = false;
-            for (CartItemMetadata m : cartMetadata) {
-                if ("SC".equals(m.type) && m.maId == selSC.id) { dup = true; break; }
-            }
-            if (!dup) {
-                cartTableModel.addRow(new Object[]{ "Sửa chữa", "SC#" + selSC.id, selSC.moTa, 1, DF.format(selSC.tienLK) + "đ", DF.format(selSC.tienLK) + "đ", "✕" });
-                cartMetadata.add(new CartItemMetadata("SC", "SC#" + selSC.id, selSC.id, selSC.tienLK, 1, null));
-                added = true;
-                cbRepairs.setSelectedIndex(0);
-            }
-        }
-
         if (added) updateTotals();
     }
 
@@ -552,7 +532,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             String kw = txtSearchPart.getText().trim();
             if(kw.isEmpty()) return;
             try {
-                List<Map<String, Object>> res = dao.searchProductsForSale(kw);
+                List<Map<String, Object>> res = dao.searchVariantsForRepair(kw);
                 if(res.isEmpty()) { JOptionPane.showMessageDialog(dialog, "Không tìm thấy linh kiện!", "Thông báo", JOptionPane.WARNING_MESSAGE); return; }
                 
                 String[] opts = new String[res.size()];
@@ -565,19 +545,56 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 int idx = java.util.Arrays.asList(opts).indexOf(ch);
                 Map<String, Object> sel = res.get(idx);
                 
-                String slStr = JOptionPane.showInputDialog(dialog, "Nhập số lượng sử dụng (Tồn kho: " + sel.get("SO_LUONG_TON") + "):", "1");
-                if(slStr == null) return;
-                int sl = Integer.parseInt(slStr.trim());
-                if (sl <= 0 || sl > (int)sel.get("SO_LUONG_TON")) {
-                    JOptionPane.showMessageDialog(dialog, "Số lượng không hợp lệ hoặc vượt tồn kho!", "Lỗi", JOptionPane.ERROR_MESSAGE); return;
-                }
-                
                 int maSP = (int) sel.get("MA_SP");
                 int maBT = (int) sel.get("MA_BIENTHE");
                 String tenSP = (String) sel.get("TEN_SP");
                 long donGia = (long) sel.get("GIA_BAN");
+                int isSerial = (int) sel.get("CO_QUAN_LY_SERIAL");
                 
-                parts.add(new DonDatHangDAO.RepairPartDraft(maSP, maBT, tenSP, sl, donGia));
+                int sl = 0;
+                List<String> selectedSerials = new ArrayList<>();
+                
+                if (isSerial == 1) {
+                    List<String> serials = dao.getAvailableSerialsForVariant(maBT);
+                    if (serials.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Không còn serial khả dụng cho biến thể này!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    JPanel pnlCheckbox = new JPanel();
+                    pnlCheckbox.setLayout(new BoxLayout(pnlCheckbox, BoxLayout.Y_AXIS));
+                    List<JCheckBox> cbList = new ArrayList<>();
+                    for (String s : serials) {
+                        JCheckBox cb = new JCheckBox(s);
+                        cbList.add(cb);
+                        pnlCheckbox.add(cb);
+                    }
+                    JScrollPane scroll = new JScrollPane(pnlCheckbox);
+                    scroll.setPreferredSize(new Dimension(250, 200));
+                    
+                    int resDlg = JOptionPane.showConfirmDialog(dialog, scroll, "Chọn Serial", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    if (resDlg != JOptionPane.OK_OPTION) return;
+                    
+                    for (JCheckBox cb : cbList) {
+                        if (cb.isSelected()) selectedSerials.add(cb.getText());
+                    }
+                    if (selectedSerials.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Bạn chưa chọn serial nào!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    sl = selectedSerials.size();
+                } else {
+                    String slStr = JOptionPane.showInputDialog(dialog, "Nhập số lượng sử dụng (Tồn kho: " + sel.get("SO_LUONG_TON") + "):", "1");
+                    if(slStr == null) return;
+                    sl = Integer.parseInt(slStr.trim());
+                    if (sl <= 0 || sl > (int)sel.get("SO_LUONG_TON")) {
+                        JOptionPane.showMessageDialog(dialog, "Số lượng không hợp lệ hoặc vượt tồn kho!", "Lỗi", JOptionPane.ERROR_MESSAGE); return;
+                    }
+                }
+                
+                DonDatHangDAO.RepairPartDraft partDraft = new DonDatHangDAO.RepairPartDraft(maSP, maBT, tenSP, sl, donGia);
+                partDraft.serials = selectedSerials;
+                parts.add(partDraft);
+                
                 partModel.addRow(new Object[]{"SP#"+maSP, tenSP, sl, DF.format(donGia)+"đ", DF.format(donGia*sl)+"đ", "✕"});
                 txtSearchPart.setText("");
             } catch(Exception ex) { ex.printStackTrace(); }
@@ -625,14 +642,6 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         try {
             List<Map<String, Object>> list = dao.getAvailableServices();
             for (Map<String, Object> s : list) cbServices.addItem(new ServiceItem((int) s.get("MA_DV"), (String) s.get("TEN_DV"), (long) s.get("GIA_CUOC")));
-        } catch (Exception e) { e.printStackTrace(); }
-    }
-
-    private void loadRepairCombo() {
-        cbRepairs.addItem(new RepairItem(-1, "- Không sử dụng -", 0));
-        try {
-            List<Map<String, Object>> list = dao.getRepairTickets();
-            for (Map<String, Object> r : list) cbRepairs.addItem(new RepairItem((int) r.get("MA_PHIEU_SC"), (String) r.get("MO_TA"), (long) r.get("TIEN_LK")));
         } catch (Exception e) { e.printStackTrace(); }
     }
 
@@ -764,7 +773,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         currentMaKH = null; currentMaKM = -1; currentDiscount = 0;
         txtPhone.setText(""); txtCustomerName.setText(""); txtSearchSP.setText("");
         txtPromoCode.setText(""); lblPromoResult.setText(" ");
-        cbServices.setSelectedIndex(0); cbRepairs.setSelectedIndex(0);
+        cbServices.setSelectedIndex(0);
         cartTableModel.setRowCount(0);
         cartMetadata.clear();
         updateTotals();

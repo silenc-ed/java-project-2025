@@ -577,6 +577,7 @@ public class ProductPanel extends javax.swing.JPanel {
                 sp.setSoLuongDaBan(qty);
                 sp.setDonViTinh(unit);
                 sp.setMoTa(desc);
+                sp.setCoQuanLySerial(dialog.isManageSerial() ? 1 : 0);
                 
                 boolean success = Controller.SanPhamDAO.addSanPham(sp, price);
                 if (success) {
@@ -683,6 +684,9 @@ public class ProductPanel extends javax.swing.JPanel {
                 break;
             }
         }
+
+        // Khóa tùy chọn Quản lý Serial khi đang Cập nhật Sản phẩm
+        dialog.setManageSerialEnabled(false);
 
         dialog.setVisible(true);
 
@@ -947,13 +951,14 @@ public class ProductPanel extends javax.swing.JPanel {
         private JTextField txtGia = new JTextField("0");
         private JTextField txtDonViTinh = new JTextField("Cái");
         private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đang kinh doanh", "Ngừng kinh doanh"});
+        private JCheckBox cbManageSerial = new JCheckBox("Có quản lý theo mã Serial");
         private JButton btnSave = new JButton("Lưu sản phẩm");
         private JButton btnCancel = new JButton("Hủy");
         private boolean isSaveClicked = false;
 
         public ProductDialog(Frame owner, String title, List<DBItem> categories) {
             super(owner, title, true);
-            setSize(400, 520);
+            setSize(400, 600);
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout());
             
@@ -1008,6 +1013,10 @@ public class ProductPanel extends javax.swing.JPanel {
             gbc.gridy = 13;
             cbTrangThai.setFont(fieldFont); cbTrangThai.setPreferredSize(new Dimension(340, 35)); content.add(cbTrangThai, gbc);
             
+            gbc.gridy = 14;
+            cbManageSerial.setFont(labelFont); cbManageSerial.setBackground(Color.WHITE); cbManageSerial.setSelected(true);
+            content.add(cbManageSerial, gbc);
+            
             JScrollPane scrollPane = new JScrollPane(content);
             scrollPane.setBorder(null);
             add(scrollPane, BorderLayout.CENTER);
@@ -1054,6 +1063,9 @@ public class ProductPanel extends javax.swing.JPanel {
         public void setDonViTinh(String unit) { txtDonViTinh.setText(unit); }
         public String getTrangThai() { return cbTrangThai.getSelectedItem().toString(); }
         public void setTrangThai(String status) { cbTrangThai.setSelectedItem(status); }
+        public boolean isManageSerial() { return cbManageSerial.isSelected(); }
+        public void setManageSerial(boolean manage) { cbManageSerial.setSelected(manage); }
+        public void setManageSerialEnabled(boolean enabled) { cbManageSerial.setEnabled(enabled); }
         public boolean isSaveClicked() { return isSaveClicked; }
     }
 

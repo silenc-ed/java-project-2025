@@ -69,7 +69,7 @@ public class DonDatHangDAO {
             long tongTienSP = 0;
             if (serials != null && !serials.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) " +
-                               "VALUES (?, ?, ?, 1, ?, ?)";
+                               "VALUES (?, ?, ?, ?, ?, ?)";
                 String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
@@ -79,23 +79,33 @@ public class DonDatHangDAO {
                         String serialNumber = (String) item.get("serialNumber");
                         int maSP = (int) item.get("maSP");
                         long donGia = (long) item.get("donGia");
+                        int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
+                        
+                        boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
 
-                        // Update serial status
-                        psSerial.setString(1, serialNumber);
-                        int updated = psSerial.executeUpdate();
-                        if (updated == 0) {
-                            throw new Exception("Serial " + serialNumber + " không khả dụng hoặc đã được đặt!");
+                        // Update serial status nếu là mặt hàng có serial
+                        if (!isNonSerial) {
+                            psSerial.setString(1, serialNumber);
+                            int updated = psSerial.executeUpdate();
+                            if (updated == 0) {
+                                throw new Exception("Serial " + serialNumber + " không khả dụng hoặc đã được đặt!");
+                            }
                         }
 
                         // Insert chi tiết
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        psCT.setString(3, serialNumber);
-                        psCT.setLong(4, donGia);
-                        psCT.setLong(5, donGia); // thanh_tien = don_gia * 1
+                        if (!isNonSerial) {
+                            psCT.setString(3, serialNumber);
+                        } else {
+                            psCT.setNull(3, Types.VARCHAR);
+                        }
+                        psCT.setInt(4, soLuong);
+                        psCT.setLong(5, donGia);
+                        psCT.setLong(6, donGia * soLuong);
                         psCT.executeUpdate();
 
-                        tongTienSP += donGia;
+                        tongTienSP += (donGia * soLuong);
                     }
                 }
             }
@@ -246,7 +256,7 @@ public class DonDatHangDAO {
             long tongTienSP = 0;
             if (serials != null && !serials.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) " +
-                               "VALUES (?, ?, ?, 1, ?, ?)";
+                               "VALUES (?, ?, ?, ?, ?, ?)";
                 String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
@@ -256,21 +266,31 @@ public class DonDatHangDAO {
                         String serialNumber = (String) item.get("serialNumber");
                         int maSP = (int) item.get("maSP");
                         long donGia = (long) item.get("donGia");
+                        int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
 
-                        psSerial.setString(1, serialNumber);
-                        int updated = psSerial.executeUpdate();
-                        if (updated == 0) {
-                            throw new Exception("Serial " + serialNumber + " không khả dụng!");
+                        boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
+
+                        if (!isNonSerial) {
+                            psSerial.setString(1, serialNumber);
+                            int updated = psSerial.executeUpdate();
+                            if (updated == 0) {
+                                throw new Exception("Serial " + serialNumber + " không khả dụng!");
+                            }
                         }
 
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        psCT.setString(3, serialNumber);
-                        psCT.setLong(4, donGia);
+                        if (!isNonSerial) {
+                            psCT.setString(3, serialNumber);
+                        } else {
+                            psCT.setNull(3, Types.VARCHAR);
+                        }
+                        psCT.setInt(4, soLuong);
                         psCT.setLong(5, donGia);
+                        psCT.setLong(6, donGia * soLuong);
                         psCT.executeUpdate();
 
-                        tongTienSP += donGia;
+                        tongTienSP += (donGia * soLuong);
                     }
                 }
             }
@@ -388,7 +408,21 @@ public class DonDatHangDAO {
                 psRelease.executeUpdate();
             }
 
-            // Cập nhật trạng thái + lý do hủy
+            // Cập nhật trạng thái phiếu sửa chữa thành "Đã hủy"
+            String sqlCancelPSC = "UPDATE PHIEU_SUA_CHUA SET TRANG_THAI = N'Đã hủy' WHERE MA_PHIEU_DV IN (SELECT MA_PHIEU_DV FROM PHIEU_DICH_VU WHERE MA_HD = ?)";
+            try (PreparedStatement psCancelPSC = con.prepareStatement(sqlCancelPSC)) {
+                psCancelPSC.setInt(1, maHD);
+                psCancelPSC.executeUpdate();
+            }
+            
+            // Cập nhật trạng thái phiếu dịch vụ thành "Đã hủy"
+            String sqlCancelPDV = "UPDATE PHIEU_DICH_VU SET TRANG_THAI = N'Đã hủy' WHERE MA_HD = ?";
+            try (PreparedStatement psCancelPDV = con.prepareStatement(sqlCancelPDV)) {
+                psCancelPDV.setInt(1, maHD);
+                psCancelPDV.executeUpdate();
+            }
+
+            // Cập nhật trạng thái + lý do hủy cho hóa đơn
             String sqlCancel = "UPDATE HOA_DON SET TRANG_THAI = N'Đã hủy', LY_DO_HUY = ? WHERE MA_HD = ?";
             try (PreparedStatement psCancel = con.prepareStatement(sqlCancel)) {
                 psCancel.setString(1, lyDoHuy);
@@ -680,7 +714,7 @@ public class DonDatHangDAO {
 
         try (Connection con = ConnectionUtils.getMyConnection()) {
             String sql = "SELECT tk.MA_NV FROM ACCOUNT_TOKEN atok " +
-                         "JOIN TAIKHOAN tk ON atok.MA_TK = tk.MA_TK " +
+                         "JOIN TAI_KHOAN tk ON atok.MA_TK = tk.MA_TK " +
                          "WHERE atok.TOKEN_VALUE = ? AND atok.THOI_GIAN_HET_HAN > CURRENT_TIMESTAMP AND atok.TRANG_THAI = 'Y'";
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, tokenValue);
@@ -878,6 +912,8 @@ public class DonDatHangDAO {
             this.soLuong = soLuong;
             this.donGia = donGia;
         }
+
+        public List<String> serials = new ArrayList<>();
     }
     
     public static class RepairTicketDraft {
@@ -890,6 +926,59 @@ public class DonDatHangDAO {
             this.giaCuoc = giaCuoc;
             this.parts = parts;
         }
+    }
+
+    public List<Map<String, Object>> searchVariantsForRepair(String keyword) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        String kw = "%" + keyword.trim() + "%";
+        
+        String sql = "SELECT BT.MA_BIENTHE, SP.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, " +
+                     "SP.CO_QUAN_LY_SERIAL, " +
+                     "(CASE WHEN SP.CO_QUAN_LY_SERIAL = 1 THEN " +
+                     "   (SELECT COUNT(*) FROM KHO_SERIAL KS WHERE KS.MA_BIENTHE = BT.MA_BIENTHE AND KS.TRANG_THAI = N'KHA_DUNG') " +
+                     " ELSE " +
+                     "   (SELECT SUM(TK.SO_LUONG_TON) FROM TON_KHO TK WHERE TK.MA_BIENTHE = BT.MA_BIENTHE AND TK.SO_LUONG_TON > 0) " +
+                     " END) AS SO_LUONG_TON " +
+                     "FROM BIEN_THE_SAN_PHAM BT " +
+                     "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
+                     "WHERE UPPER(SP.TEN_SP) LIKE UPPER(?) AND ROWNUM <= 30";
+                     
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, kw);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int slTon = rs.getInt("SO_LUONG_TON");
+                    if (slTon > 0) {
+                        Map<String, Object> row = new HashMap<>();
+                        row.put("MA_BIENTHE", rs.getInt("MA_BIENTHE"));
+                        row.put("MA_SP", rs.getInt("MA_SP"));
+                        row.put("TEN_SP", rs.getString("TEN_SP"));
+                        row.put("TEN_BIENTHE", rs.getString("TEN_BIENTHE"));
+                        row.put("GIA_BAN", rs.getLong("GIA_BAN"));
+                        row.put("SO_LUONG_TON", slTon);
+                        row.put("CO_QUAN_LY_SERIAL", rs.getInt("CO_QUAN_LY_SERIAL"));
+                        results.add(row);
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+    public List<String> getAvailableSerialsForVariant(int maBienThe) throws Exception {
+        List<String> results = new ArrayList<>();
+        String sql = "SELECT SERIAL_NUMBER FROM KHO_SERIAL WHERE MA_BIENTHE = ? AND TRANG_THAI = N'KHA_DUNG'";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maBienThe);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(rs.getString("SERIAL_NUMBER"));
+                }
+            }
+        }
+        return results;
     }
 
     public List<Map<String, Object>> searchProductsForSale(String keyword) throws Exception {
@@ -991,16 +1080,14 @@ public class DonDatHangDAO {
                 throw new Exception("Không thể tạo hóa đơn");
             }
 
-            // 2. INSERT CHITIET_HOADON + UPDATE KHO_SERIAL / TON_KHO
+            // 2. INSERT CHITIET_HOADON + UPDATE KHO_SERIAL
             long tongTienSP = 0;
             if (products != null && !products.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?, ?)";
                 String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
-                String sqlTonKho = "UPDATE TON_KHO SET SO_LUONG_TON = SO_LUONG_TON - ? WHERE MA_BIENTHE = ? AND MA_CN = ? AND SO_LUONG_TON >= ?";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
-                     PreparedStatement psSerial = con.prepareStatement(sqlSerial);
-                     PreparedStatement psTonKho = con.prepareStatement(sqlTonKho)) {
+                     PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
 
                     for (Map<String, Object> item : products) {
                         String serialNumber = (String) item.get("serialNumber");
@@ -1009,32 +1096,21 @@ public class DonDatHangDAO {
                         int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
                         Integer maBienThe = (Integer) item.get("maBienThe");
 
-                        if (serialNumber != null && !serialNumber.trim().isEmpty()) {
+                        boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
+
+                        if (!isNonSerial) {
                             // Cập nhật KHO_SERIAL
                             psSerial.setString(1, serialNumber);
                             int updated = psSerial.executeUpdate();
                             if (updated == 0) {
                                 throw new Exception("Serial " + serialNumber + " không khả dụng hoặc đã được đặt!");
                             }
-                        } else {
-                            // Cập nhật TON_KHO
-                            if (maBienThe == null) {
-                                throw new Exception("Sản phẩm không có serial phải có mã biến thể để trừ kho!");
-                            }
-                            psTonKho.setInt(1, soLuong);
-                            psTonKho.setInt(2, maBienThe);
-                            psTonKho.setInt(3, maCN);
-                            psTonKho.setInt(4, soLuong);
-                            int updated = psTonKho.executeUpdate();
-                            if (updated == 0) {
-                                throw new Exception("Sản phẩm mã " + maSP + " không đủ tồn kho ở chi nhánh này!");
-                            }
                         }
 
                         // Insert chi tiết
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        if (serialNumber != null && !serialNumber.trim().isEmpty()) {
+                        if (!isNonSerial) {
                             psCT.setString(3, serialNumber);
                         } else {
                             psCT.setNull(3, Types.VARCHAR);
@@ -1115,8 +1191,19 @@ public class DonDatHangDAO {
                                 
                                 if (maPhieuSC > 0 && draft.parts != null) {
                                     for (RepairPartDraft part : draft.parts) {
-                                        // Update TON_KHO linh kiện
-                                        if (part.maBienThe > 0) {
+                                        // Update TON_KHO linh kiện hoặc KHO_SERIAL
+                                        if (part.serials != null && !part.serials.isEmpty()) {
+                                            String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                                            try (PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
+                                                for (String sn : part.serials) {
+                                                    psSerial.setString(1, sn);
+                                                    int updated = psSerial.executeUpdate();
+                                                    if (updated == 0) {
+                                                        throw new Exception("Serial " + sn + " không khả dụng hoặc đã được đặt!");
+                                                    }
+                                                }
+                                            }
+                                        } else if (part.maBienThe > 0) {
                                             psTonKhoLK.setInt(1, part.soLuong);
                                             psTonKhoLK.setInt(2, part.maBienThe);
                                             psTonKhoLK.setInt(3, maCN);
