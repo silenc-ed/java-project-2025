@@ -644,7 +644,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         public OrderActionCellRenderer() {
             setLayout(new GridBagLayout());
             setOpaque(true);
-            btnEdit = new JButton("✏ Sửa");
+            btnEdit = new JButton("Sửa");
             UIUtils.styleButton(btnEdit);
             btnEdit.setPreferredSize(new Dimension(72, 30));
             add(btnEdit);
@@ -652,6 +652,16 @@ public class ProcurementPanel extends javax.swing.JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            int modelRow = table.convertRowIndexToModel(row);
+            Object statusObj = table.getModel().getValueAt(modelRow, 7);
+            String currentStatus = (statusObj instanceof String) ? (String) statusObj : "";
+            if ("Đã xóa".equals(currentStatus)) {
+                btnEdit.setText("Khôi phục");
+                btnEdit.setForeground(Color.WHITE);
+            } else {
+                btnEdit.setText("Sửa");
+                btnEdit.setForeground(Color.WHITE);
+            }
             setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
             return this;
         }
@@ -662,11 +672,12 @@ public class ProcurementPanel extends javax.swing.JPanel {
         private final JPanel panel;
         private final JButton btnEdit;
         private int currentMaHd = -1;
+        private String currentStatus = "";
 
         public OrderActionCellEditor() {
             panel = new JPanel(new GridBagLayout());
             panel.setOpaque(true);
-            btnEdit = new JButton("✏ Sửa");
+            btnEdit = new JButton("Sửa");
             UIUtils.styleButton(btnEdit);
             btnEdit.setPreferredSize(new Dimension(72, 30));
             panel.add(btnEdit);
@@ -674,7 +685,21 @@ public class ProcurementPanel extends javax.swing.JPanel {
             btnEdit.addActionListener(e -> {
                 fireEditingStopped();
                 if (currentMaHd > 0) {
-                    SwingUtilities.invokeLater(() -> showOrderDialog(true, currentMaHd));
+                    if ("Đã xóa".equals(currentStatus)) {
+                        int confirm = JOptionPane.showConfirmDialog(panel, "Bạn có muốn khôi phục hóa đơn #" + currentMaHd + " không?", "Khôi phục hóa đơn", JOptionPane.YES_NO_OPTION);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            try {
+                                if (Controller.Admin.HoaDonDAO.restoreHoaDon(currentMaHd)) {
+                                    JOptionPane.showMessageDialog(panel, "Khôi phục thành công!");
+                                    loadDataToTable(tableModel);
+                                } else {
+                                    JOptionPane.showMessageDialog(panel, "Lỗi khôi phục!");
+                                }
+                            } catch (Exception ex) { ex.printStackTrace(); }
+                        }
+                    } else {
+                        SwingUtilities.invokeLater(() -> showOrderDialog(true, currentMaHd));
+                    }
                 }
             });
         }
@@ -683,7 +708,18 @@ public class ProcurementPanel extends javax.swing.JPanel {
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             int modelRow = table.convertRowIndexToModel(row);
             Object maHdObj = table.getModel().getValueAt(modelRow, 1);
+            Object statusObj = table.getModel().getValueAt(modelRow, 7);
             currentMaHd = (maHdObj instanceof Integer) ? (int) maHdObj : -1;
+            currentStatus = (statusObj instanceof String) ? (String) statusObj : "";
+            
+            if ("Đã xóa".equals(currentStatus)) {
+                btnEdit.setText("Khôi phục");
+                btnEdit.setForeground(Color.WHITE);
+            } else {
+                btnEdit.setText("Sửa");
+                btnEdit.setForeground(Color.WHITE);
+            }
+
             panel.setBackground(table.getSelectionBackground());
             return panel;
         }
@@ -704,16 +740,22 @@ public class ProcurementPanel extends javax.swing.JPanel {
         DecimalFormat df = new DecimalFormat("#,### đ");
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
         try {
-            java.util.List<java.util.Map<String, Object>> dataList = Controller.Admin.HoaDonDAO.getAllHoaDon();
+            boolean canEdit = Controller.Admin.PermissionService.canEdit("Don hang");
+            java.util.List<java.util.Map<String, Object>> dataList = Controller.Admin.HoaDonDAO.getAllHoaDon(canEdit);
             for (java.util.Map<String, Object> row : dataList) {
                 int maNv = (Integer) row.get("MA_NV");
-                String empCode = maNv > 0 ? "NV" + String.format("%03d", maNv) : "NV001";
+                String empCode = String.valueOf(maNv);
                 String trangThai = (String) row.get("TRANG_THAI");
                 if (trangThai == null || trangThai.trim().isEmpty()) {
                     trangThai = "Hoàn thành";
                 }
                 // Map old status
                 if ("Chờ xử lý".equals(trangThai)) trangThai = "Chờ thanh toán";
+                
+                int isDeleted = ((Number) row.getOrDefault("IS_DELETED", 0)).intValue();
+                if (isDeleted == 1) {
+                    trangThai = "Đã xóa";
+                }
                 
                 java.sql.Timestamp thoiGianLap = (java.sql.Timestamp) row.get("THOI_GIAN_LAP");
                 String formattedTime = thoiGianLap != null ? sdf.format(thoiGianLap) : "";
@@ -742,7 +784,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
                 int id = (Integer) item.get("ID");
                 String name = (String) item.get("NAME");
                 if ("NHAN_VIEN".equals(table)) {
-                    name = "NV" + String.format("%03d", id) + " - " + name;
+                    name = id + " - " + name;
                 }
                 combo.addItem(new DBItem(id, name));
             }

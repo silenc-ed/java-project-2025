@@ -124,32 +124,18 @@ public class SerialNumberViewPanel extends JPanel {
         tableModel.setRowCount(0);
         try {
             java.util.List<Model.SerialNumber> list = Controller.SerialNumberDAO.getSerialNumbersByMaBienThe(variantId);
-            boolean hasData = false;
             for (Model.SerialNumber sn : list) {
-                hasData = true;
                 tableModel.addRow(new Object[]{
                     Boolean.FALSE,
                     sn.getMaSerial(),
                     sn.getTrangThai(),
-                    new java.text.SimpleDateFormat("dd/MM/yyyy").format(sn.getNgayNhap()),
+                    sn.getNgayNhap() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(sn.getNgayNhap()) : "",
                     sn.getMaSerial()
                 });
             }
-            if (!hasData) loadSampleSerials();
         } catch (Exception e) {
             e.printStackTrace();
-            loadSampleSerials();
-        }
-    }
-
-    private void loadSampleSerials() {
-        Object[][] samples = {
-            {"SN-2023-XYZ01", "Trong kho", "15/05/2026"},
-            {"SN-2023-XYZ02", "Đã bán", "10/05/2026"},
-            {"SN-2023-XYZ03", "Lỗi", "01/05/2026"}
-        };
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{ Boolean.FALSE, row[0], row[1], row[2], -1 });
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -214,20 +200,70 @@ public class SerialNumberViewPanel extends JPanel {
     }
 
     private void handleDeleteSelected() {
+        int hasChecked = 0;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
+            if (checked != null && checked) {
+                hasChecked++;
+            }
+        }
+        if (hasChecked == 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một mã Serial Number để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Bạn có chắc chắn muốn xóa các mã Serial Number đã chọn không?",
+            "Xác nhận xóa Serial Number",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int successCount = 0;
+        int failedCount = 0;
+        String failReason = "";
+
         for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
             Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
             if (checked != null && checked) {
                 int modelRow = dataTable.convertRowIndexToModel(i);
                 String maSerial = tableModel.getValueAt(modelRow, 1).toString();
                 try {
-                    Controller.SerialNumberDAO.deleteSerialNumber(maSerial);
+                    boolean success = Controller.SerialNumberDAO.deleteSerialNumber(maSerial);
+                    if (success) {
+                        successCount++;
+                        tableModel.removeRow(i);
+                    } else {
+                        failedCount++;
+                    }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    failedCount++;
+                    String errorMsg = e.getMessage();
+                    if (errorMsg != null && errorMsg.contains("ORA-02292")) {
+                        failReason = "Không thể xóa Serial Number này vì dữ liệu đã nằm trong Hóa đơn hoặc Phiếu nhập.";
+                    } else {
+                        failReason = errorMsg;
+                    }
                 }
-                tableModel.removeRow(i);
             }
         }
         loadSerialsForVariant(currentVariantId);
+
+        if (failedCount > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Lỗi bảo vệ dữ liệu:\n\n- Số lượng xóa thành công: " + successCount + " mục.\n- Số lượng thất bại: " + failedCount + " mục.\n\nNguyên nhân thất bại:\n" + failReason,
+                "Từ chối xóa dữ liệu",
+                JOptionPane.WARNING_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");
+        }
     }
 
     // Dialog class for Serial Number

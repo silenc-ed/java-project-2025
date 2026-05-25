@@ -191,6 +191,7 @@ public class PhieuNhapDAO {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
 
             if (isEdit) {
@@ -203,35 +204,24 @@ public class PhieuNhapDAO {
                     ps.executeUpdate();
                 }
             } else {
-                // Nếu mặt hàng đã tồn tại → cộng dồn số lượng (UPSERT)
-                String sqlCheck = "SELECT SO_LUONG FROM CHI_TIET_PHIEU_NHAP WHERE MA_PN = ? AND MA_BIENTHE = ?";
-                try (PreparedStatement psCheck = con.prepareStatement(sqlCheck)) {
-                    psCheck.setInt(1, maPn);
-                    psCheck.setInt(2, maBienthe);
-                    try (ResultSet rs = psCheck.executeQuery()) {
-                        if (rs.next()) {
-                            // Đã tồn tại → cộng dồn số lượng
-                            int existingQty = rs.getInt("SO_LUONG");
-                            String sqlMerge = "UPDATE CHI_TIET_PHIEU_NHAP SET SO_LUONG = ?, DON_GIA_NHAP = ? WHERE MA_PN = ? AND MA_BIENTHE = ?";
-                            try (PreparedStatement psMerge = con.prepareStatement(sqlMerge)) {
-                                psMerge.setInt(1, existingQty + qty);
-                                psMerge.setDouble(2, price);
-                                psMerge.setInt(3, maPn);
-                                psMerge.setInt(4, maBienthe);
-                                psMerge.executeUpdate();
-                            }
-                        } else {
-                            // Chưa tồn tại → thêm mới
-                            String sqlInsert = "INSERT INTO CHI_TIET_PHIEU_NHAP (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) VALUES (?, ?, ?, ?)";
-                            try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
-                                ps.setInt(1, maPn);
-                                ps.setInt(2, maBienthe);
-                                ps.setInt(3, qty);
-                                ps.setDouble(4, price);
-                                ps.executeUpdate();
-                            }
-                        }
-                    }
+                // MERGE INTO — Oracle xử lý nguyên tử, không cần kiểm tra trước
+                String sqlMerge = 
+                    "MERGE INTO CHI_TIET_PHIEU_NHAP target " +
+                    "USING (SELECT ? AS MA_PN, ? AS MA_BIENTHE FROM dual) source " +
+                    "ON (target.MA_PN = source.MA_PN AND target.MA_BIENTHE = source.MA_BIENTHE) " +
+                    "WHEN MATCHED THEN " +
+                    "    UPDATE SET target.SO_LUONG = target.SO_LUONG + ?, target.DON_GIA_NHAP = ? " +
+                    "WHEN NOT MATCHED THEN " +
+                    "    INSERT (MA_PN, MA_BIENTHE, SO_LUONG, DON_GIA_NHAP) " +
+                    "    VALUES (source.MA_PN, source.MA_BIENTHE, ?, ?)";
+                try (PreparedStatement psMerge = con.prepareStatement(sqlMerge)) {
+                    psMerge.setInt(1, maPn);
+                    psMerge.setInt(2, maBienthe);
+                    psMerge.setInt(3, qty);       // WHEN MATCHED: cộng dồn qty
+                    psMerge.setDouble(4, price);  // WHEN MATCHED: cập nhật đơn giá
+                    psMerge.setInt(5, qty);       // WHEN NOT MATCHED: insert qty
+                    psMerge.setDouble(6, price);  // WHEN NOT MATCHED: insert đơn giá
+                    psMerge.executeUpdate();
                 }
             }
 

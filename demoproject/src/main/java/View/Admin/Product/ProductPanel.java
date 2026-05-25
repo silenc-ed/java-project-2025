@@ -466,11 +466,7 @@ public class ProductPanel extends javax.swing.JPanel {
                 categoryList.add(new DBItem(lsp.getMaLsp(), lsp.getTenLsp()));
             }
         } catch (Exception e) {
-            // Fallback sample categories
-            categoryList.add(new DBItem(1, "Laptop"));
-            categoryList.add(new DBItem(2, "Điện thoại"));
-            categoryList.add(new DBItem(3, "Tai nghe"));
-            categoryList.add(new DBItem(4, "Máy tính bảng"));
+            e.printStackTrace();
         }
     }
 
@@ -483,9 +479,7 @@ public class ProductPanel extends javax.swing.JPanel {
         DecimalFormat df = new DecimalFormat("#,###đ");
         try {
             List<Model.SanPham> list = Controller.SanPhamDAO.getAllSanPham();
-            boolean hasData = false;
             for (Model.SanPham sp : list) {
-                hasData = true;
                 int id = sp.getMaSp();
                 String name = sp.getTenSp();
                 
@@ -516,13 +510,8 @@ public class ProductPanel extends javax.swing.JPanel {
                     id
                 });
             }
-            
-            if (!hasData) {
-                loadSampleData();
-            }
         } catch (Exception e) {
             e.printStackTrace();
-            loadSampleData();
         }
     }
 
@@ -534,9 +523,7 @@ public class ProductPanel extends javax.swing.JPanel {
         }
         try {
             List<Model.LoaiSanPham> list = Controller.LoaiSanPhamDAO.getAllLoaiSanPham();
-            boolean hasData = false;
             for (Model.LoaiSanPham lsp : list) {
-                hasData = true;
                 tableModel.addRow(new Object[]{
                     Boolean.FALSE,
                     String.valueOf(lsp.getMaLsp()),
@@ -546,60 +533,8 @@ public class ProductPanel extends javax.swing.JPanel {
                     lsp.getMaLsp()
                 });
             }
-            if (!hasData) {
-                loadSampleCategories();
-            }
         } catch (Exception e) {
             e.printStackTrace();
-            loadSampleCategories();
-        }
-    }
-
-    private void loadSampleCategories() {
-        Object[][] samples = {
-            {1, "Laptop", "Các dòng máy tính xách tay cao cấp, văn phòng, gaming", 20},
-            {2, "Điện thoại", "Điện thoại thông minh Android và iOS mới nhất", 15},
-            {3, "Tai nghe", "Tai nghe không dây, tai nghe chụp tai chống ồn tốt", 30},
-            {4, "Máy tính bảng", "Máy tính bảng màn hình lớn cho giải trí và học tập", 10}
-        };
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{
-                Boolean.FALSE,
-                String.valueOf(row[0]),
-                row[1],
-                row[2],
-                row[3],
-                -1
-            });
-        }
-    }
-
-    private void loadSampleData() {
-        DecimalFormat df = new DecimalFormat("#,###đ");
-        Object[][] samples = {
-            {"Laptop Dell XPS 13", "Laptop", "Laptop cao cấp siêu mỏng nhẹ", 15, 25000000.0, "Cái", "Đang kinh doanh"},
-            {"iPhone 15 Pro Max", "Điện thoại", "Màn hình OLED, chip A17 Pro", 8, 35000000.0, "Cái", "Đang kinh doanh"},
-            {"Samsung Galaxy S24", "Điện thoại", "Camera AI zoom 100x", 12, 22000000.0, "Cái", "Đang kinh doanh"},
-            {"AirPods Pro 2", "Tai nghe", "Tai nghe chống ồn chủ động", 30, 6500000.0, "Cái", "Đang kinh doanh"},
-            {"MacBook Pro 14\"", "Laptop", "Chip M3 Pro, màn hình Liquid Retina", 6, 45000000.0, "Cái", "Đang kinh doanh"},
-            {"Sony WH-1000XM5", "Tai nghe", "Chống ồn đỉnh cao, pin 30h", 20, 8500000.0, "Cái", "Đang kinh doanh"},
-            {"iPad Air M2", "Máy tính bảng", "Màn hình Liquid Retina 11 inch", 10, 18000000.0, "Cái", "Ngừng kinh doanh"}
-        };
-        int simId = 101;
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{
-                Boolean.FALSE,
-                String.valueOf(simId),
-                formatProductHtml((String) row[0]),
-                row[1],
-                row[2],
-                row[3],
-                df.format((Double) row[4]),
-                row[5],
-                row[6],
-                -1
-            });
-            simId++;
         }
     }
 
@@ -877,8 +812,10 @@ public class ProductPanel extends javax.swing.JPanel {
         String itemType = isProductMode ? "sản phẩm" : "loại sản phẩm";
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "Bạn có chắc chắn muốn xóa " + selectedIds.size() + " " + itemType + " đã chọn không?",
-            "Xác nhận xóa hàng loạt",
+            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến " + itemType + " đó\n" +
+            "(bao gồm tất cả mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
+            "Bạn có chắc chắn muốn xóa không?",
+            "Cảnh báo xóa dữ liệu liên quan",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE
         );
@@ -904,7 +841,17 @@ public class ProductPanel extends javax.swing.JPanel {
                         }
                     } catch (Exception ex) {
                         failedCount++;
-                        failReason = ex.getMessage();
+                        String errorMsg = ex.getMessage();
+                        // Bắt lỗi khóa ngoại ORA-02292 và dịch sang tiếng Việt thân thiện
+                        if (errorMsg != null && errorMsg.contains("ORA-02292")) {
+                            if (!isProductMode) {
+                                failReason = "Không thể xóa Loại sản phẩm này vì vẫn còn Sản phẩm bên trong (Vui lòng xóa sản phẩm trước).";
+                            } else {
+                                failReason = "Không thể xóa Sản phẩm này vì dữ liệu đã nằm trong Hóa đơn hoặc Phiếu nhập.";
+                            }
+                        } else {
+                            failReason = errorMsg;
+                        }
                     }
                 } else {
                     // Simulation row
@@ -921,9 +868,9 @@ public class ProductPanel extends javax.swing.JPanel {
             if (failedCount > 0) {
                 JOptionPane.showMessageDialog(
                     this,
-                    "Đã xóa thành công " + successCount + " mục.\nThất bại " + failedCount + " mục (lỗi khóa ngoại hoặc ràng buộc dữ liệu: " + failReason + ").",
-                    "Kết quả xóa",
-                    JOptionPane.INFORMATION_MESSAGE
+                    "Lỗi bảo vệ dữ liệu:\n\n- Số lượng xóa thành công: " + successCount + " mục.\n- Số lượng thất bại: " + failedCount + " mục.\n\nNguyên nhân thất bại:\n" + failReason,
+                    "Từ chối xóa dữ liệu",
+                    JOptionPane.WARNING_MESSAGE
                 );
             } else {
                 JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");

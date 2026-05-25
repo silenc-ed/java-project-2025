@@ -12,10 +12,14 @@ import java.util.Map;
 
 public class HoaDonDAO {
 
-    public static List<Map<String, Object>> getAllHoaDon() {
+    public static List<Map<String, Object>> getAllHoaDon(boolean canEdit) {
         List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT H.MA_HD, K.HO_TEN as TEN_KH, H.MA_NV, H.THOI_GIAN_LAP, H.THANH_TIEN, H.PHUONG_THUC_TT, H.TRANG_THAI " +
-                     "FROM HOA_DON H LEFT JOIN KHACH_HANG K ON H.MA_KH = K.MA_KH ORDER BY H.MA_HD DESC";
+        String sql = "SELECT H.MA_HD, K.HO_TEN as TEN_KH, H.MA_NV, H.THOI_GIAN_LAP, H.THANH_TIEN, H.PHUONG_THUC_TT, H.TRANG_THAI, H.IS_DELETED " +
+                     "FROM HOA_DON H LEFT JOIN KHACH_HANG K ON H.MA_KH = K.MA_KH ";
+        if (!canEdit) {
+            sql += "WHERE H.IS_DELETED = 0 ";
+        }
+        sql += "ORDER BY H.MA_HD DESC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -28,6 +32,7 @@ public class HoaDonDAO {
                 row.put("THANH_TIEN", rs.getDouble("THANH_TIEN"));
                 row.put("PHUONG_THUC_TT", rs.getString("PHUONG_THUC_TT"));
                 row.put("TRANG_THAI", rs.getString("TRANG_THAI"));
+                row.put("IS_DELETED", rs.getInt("IS_DELETED"));
                 list.add(row);
             }
         } catch (Exception e) {
@@ -109,15 +114,11 @@ public class HoaDonDAO {
             con = ConnectionUtils.getMyConnection();
             con.setAutoCommit(false);
             
-            String sqlDetail = "DELETE FROM CHI_TIET_HOA_DON WHERE MA_HD = ?";
-            String sqlHd = "DELETE FROM HOA_DON WHERE MA_HD = ?";
+            // Xóa mềm hóa đơn (set IS_DELETED = 1) thay vì xóa thật khỏi CSDL
+            String sqlHd = "UPDATE HOA_DON SET IS_DELETED = 1 WHERE MA_HD = ?";
             
-            try (PreparedStatement psDetail = con.prepareStatement(sqlDetail);
-                 PreparedStatement psHd = con.prepareStatement(sqlHd)) {
+            try (PreparedStatement psHd = con.prepareStatement(sqlHd)) {
                 for (int maHd : ids) {
-                    psDetail.setInt(1, maHd);
-                    psDetail.executeUpdate();
-                    
                     psHd.setInt(1, maHd);
                     psHd.executeUpdate();
                 }
@@ -134,6 +135,15 @@ public class HoaDonDAO {
             if (con != null) {
                 try { con.close(); } catch (Exception ignored) {}
             }
+        }
+    }
+
+    public static boolean restoreHoaDon(int maHd) throws Exception {
+        String sql = "UPDATE HOA_DON SET IS_DELETED = 0 WHERE MA_HD = ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maHd);
+            return ps.executeUpdate() > 0;
         }
     }
 

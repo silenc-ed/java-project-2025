@@ -32,11 +32,54 @@ public class BienTheSanPhamDAO {
     }
 
     public static boolean deleteBienTheSanPham(int maBienThe) throws Exception {
-        String sql = "DELETE FROM BIEN_THE_SAN_PHAM WHERE MA_BIENTHE = ?";
+        String sqlKs = "DELETE FROM KHO_SERIAL WHERE MA_BIENTHE = ?";
+        String sqlTk = "DELETE FROM TON_KHO WHERE MA_BIENTHE = ?";
+        String sqlBt = "DELETE FROM BIEN_THE_SAN_PHAM WHERE MA_BIENTHE = ?";
+        
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            try (PreparedStatement psKs = con.prepareStatement(sqlKs)) {
+                psKs.setInt(1, maBienThe);
+                psKs.executeUpdate();
+            }
+            
+            try (PreparedStatement psTk = con.prepareStatement(sqlTk)) {
+                psTk.setInt(1, maBienThe);
+                psTk.executeUpdate();
+            }
+            
+            try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                psBt.setInt(1, maBienThe);
+                int count = psBt.executeUpdate();
+                con.commit();
+                return count > 0;
+            }
+        } catch (Exception ex) {
+            if (con != null) {
+                try { con.rollback(); } catch (Exception ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    public static int getTonKhoByMaBienThe(int maBienThe) throws Exception {
+        String sql = "SELECT SUM(SO_LUONG_TON) AS TONG_TON FROM TON_KHO WHERE MA_BIENTHE = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maBienThe);
-            return ps.executeUpdate() > 0;
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("TONG_TON");
+                }
+            }
         }
+        return 0;
     }
 }

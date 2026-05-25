@@ -98,6 +98,15 @@ public class DashboardDAO {
 
     public static Map<String, Double> getDoanhThuTheoThang(Date from, Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
+        // Pre-populate months
+        Calendar c = Calendar.getInstance();
+        c.setTime(from);
+        while (c.getTime().before(to)) {
+            String label = String.format("T%d/%02d", c.get(Calendar.MONTH) + 1, c.get(Calendar.YEAR) % 100);
+            map.put(label, 0.0);
+            c.add(Calendar.MONTH, 1);
+        }
+
         String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'YYYY-MM') AS YM, " +
                      "TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS M, " +
                      "TO_CHAR(THOI_GIAN_LAP, 'YY') AS Y2, " +
@@ -114,8 +123,10 @@ public class DashboardDAO {
             ps.setTimestamp(2, new Timestamp(to.getTime()));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String label = "T" + rs.getInt("M") + "/" + rs.getString("Y2");
-                    map.put(label, rs.getDouble("DOANH_THU"));
+                    String label = String.format("T%d/%s", rs.getInt("M"), rs.getString("Y2"));
+                    if (map.containsKey(label)) {
+                        map.put(label, rs.getDouble("DOANH_THU"));
+                    }
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -155,6 +166,15 @@ public class DashboardDAO {
 
     public static Map<String, Double> getDoanhThuTheoNgay(Date from, Date to) {
         Map<String, Double> map = new LinkedHashMap<>();
+        // Pre-populate days
+        Calendar c = Calendar.getInstance();
+        c.setTime(from);
+        while (c.getTime().before(to)) {
+            String label = String.format("%02d/%02d", c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1);
+            map.put(label, 0.0);
+            c.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
         String sql = "SELECT TO_CHAR(THOI_GIAN_LAP, 'DD/MM') AS NGAY, " +
                      "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
                      "FROM HOA_DON " +
@@ -167,12 +187,81 @@ public class DashboardDAO {
             ps.setTimestamp(2, new Timestamp(to.getTime()));
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    map.put(rs.getString("NGAY"), rs.getDouble("DOANH_THU"));
+                    String label = rs.getString("NGAY");
+                    if (map.containsKey(label)) {
+                        map.put(label, rs.getDouble("DOANH_THU"));
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return map;
+    }
+
+    /**
+     * Trả về doanh thu + lợi nhuận theo ngày trong khoảng thời gian.
+     * Key = "DD/MM", Value = double[]{doanhThu, loiNhuan}
+     */
+    public static Map<String, double[]> getDoanhThuVaLoiNhuanTheoNgay(Date from, Date to) {
+        Map<String, double[]> map = new LinkedHashMap<>();
+        // Pre-populate days
+        Calendar c = Calendar.getInstance();
+        c.setTime(from);
+        while (c.getTime().before(to)) {
+            String label = String.format("%02d/%02d", c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1);
+            map.put(label, new double[]{0, 0});
+            c.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        // Doanh thu
+        String sqlDT = "SELECT TO_CHAR(THOI_GIAN_LAP, 'DD/MM') AS NGAY, " +
+                       "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
+                       "FROM HOA_DON " +
+                       "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ? " +
+                       "GROUP BY TO_CHAR(THOI_GIAN_LAP, 'DD/MM')";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sqlDT)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String label = rs.getString("NGAY");
+                    double[] vals = map.get(label);
+                    if (vals != null) vals[0] = rs.getDouble("DOANH_THU");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        // Lợi nhuận
+        String sqlLN = "SELECT TO_CHAR(h.THOI_GIAN_LAP, 'DD/MM') AS NGAY, " +
+                       "NVL(SUM(h.THANH_TIEN - NVL(cost.CHI_PHI, 0)), 0) AS LOI_NHUAN " +
+                       "FROM HOA_DON h " +
+                       "LEFT JOIN (" +
+                       "  SELECT ct.MA_HD, SUM(ct.SO_LUONG * cpn.DON_GIA_NHAP) AS CHI_PHI " +
+                       "  FROM CHI_TIET_HOA_DON ct " +
+                       "  JOIN BIEN_THE_SAN_PHAM bt ON ct.MA_SP = bt.MA_SP " +
+                       "  JOIN (SELECT MA_BIENTHE, DON_GIA_NHAP FROM CHI_TIET_PHIEU_NHAP " +
+                       "        WHERE (MA_BIENTHE, MA_PN) IN " +
+                       "        (SELECT MA_BIENTHE, MAX(MA_PN) FROM CHI_TIET_PHIEU_NHAP GROUP BY MA_BIENTHE)) cpn " +
+                       "  ON bt.MA_BIENTHE = cpn.MA_BIENTHE " +
+                       "  GROUP BY ct.MA_HD" +
+                       ") cost ON h.MA_HD = cost.MA_HD " +
+                       "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
+                       "GROUP BY TO_CHAR(h.THOI_GIAN_LAP, 'DD/MM')";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sqlLN)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String label = rs.getString("NGAY");
+                    double[] vals = map.get(label);
+                    if (vals != null) vals[1] = rs.getDouble("LOI_NHUAN");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
         return map;
     }
 
@@ -324,5 +413,134 @@ public class DashboardDAO {
             return String.format("%.0f K", amount / 1_000.0);
         }
         return String.format("%.0f", amount);
+    }
+
+    /**
+     * Trả về doanh thu + lợi nhuận theo tháng trong 1 năm.
+     * Key = "T1".."T12", Value = double[]{doanhThu, loiNhuan}
+     */
+    public static Map<String, double[]> getDoanhThuVaLoiNhuanTheoThang(int year) {
+        Map<String, double[]> map = new LinkedHashMap<>();
+        for (int m = 1; m <= 12; m++) map.put("T" + m, new double[]{0, 0});
+
+        // Doanh thu theo tháng
+        String sqlDT = "SELECT TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM')) AS THANG, " +
+                        "NVL(SUM(THANH_TIEN), 0) AS DOANH_THU " +
+                        "FROM HOA_DON " +
+                        "WHERE EXTRACT(YEAR FROM THOI_GIAN_LAP) = ? " +
+                        "GROUP BY TO_NUMBER(TO_CHAR(THOI_GIAN_LAP, 'MM'))";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sqlDT)) {
+            ps.setInt(1, year);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String key = "T" + rs.getInt("THANG");
+                    double[] vals = map.get(key);
+                    if (vals != null) vals[0] = rs.getDouble("DOANH_THU");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        // Lợi nhuận theo tháng
+        String sqlLN = "SELECT TO_NUMBER(TO_CHAR(h.THOI_GIAN_LAP, 'MM')) AS THANG, " +
+                        "NVL(SUM(h.THANH_TIEN - NVL(cost.CHI_PHI, 0)), 0) AS LOI_NHUAN " +
+                        "FROM HOA_DON h " +
+                        "LEFT JOIN (" +
+                        "  SELECT ct.MA_HD, SUM(ct.SO_LUONG * cpn.DON_GIA_NHAP) AS CHI_PHI " +
+                        "  FROM CHI_TIET_HOA_DON ct " +
+                        "  JOIN BIEN_THE_SAN_PHAM bt ON ct.MA_SP = bt.MA_SP " +
+                        "  JOIN (SELECT MA_BIENTHE, DON_GIA_NHAP FROM CHI_TIET_PHIEU_NHAP " +
+                        "        WHERE (MA_BIENTHE, MA_PN) IN " +
+                        "        (SELECT MA_BIENTHE, MAX(MA_PN) FROM CHI_TIET_PHIEU_NHAP GROUP BY MA_BIENTHE)) cpn " +
+                        "  ON bt.MA_BIENTHE = cpn.MA_BIENTHE " +
+                        "  GROUP BY ct.MA_HD" +
+                        ") cost ON h.MA_HD = cost.MA_HD " +
+                        "WHERE EXTRACT(YEAR FROM h.THOI_GIAN_LAP) = ? " +
+                        "GROUP BY TO_NUMBER(TO_CHAR(h.THOI_GIAN_LAP, 'MM'))";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sqlLN)) {
+            ps.setInt(1, year);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String key = "T" + rs.getInt("THANG");
+                    double[] vals = map.get(key);
+                    if (vals != null) vals[1] = rs.getDouble("LOI_NHUAN");
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        return map;
+    }
+
+    /**
+     * Doanh thu theo chi nhánh trong khoảng thời gian.
+     */
+    public static Map<String, Double> getDoanhThuTheoChiNhanh(Date from, Date to) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        String sql = "SELECT cn.TEN_CN, NVL(SUM(h.THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM HOA_DON h " +
+                     "JOIN CHI_NHANH cn ON h.MA_CN = cn.MA_CN " +
+                     "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
+                     "GROUP BY cn.TEN_CN " +
+                     "ORDER BY DOANH_THU DESC";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) map.put(rs.getString("TEN_CN"), rs.getDouble("DOANH_THU"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return map;
+    }
+
+    /**
+     * Doanh thu theo loại sản phẩm trong khoảng thời gian.
+     */
+    public static Map<String, Double> getDoanhThuTheoLoaiSP(Date from, Date to) {
+        Map<String, Double> map = new LinkedHashMap<>();
+        String sql = "SELECT lsp.TEN_LSP, NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
+                     "FROM CHI_TIET_HOA_DON ct " +
+                     "JOIN HOA_DON h ON ct.MA_HD = h.MA_HD " +
+                     "JOIN SAN_PHAM sp ON ct.MA_SP = sp.MA_SP " +
+                     "JOIN LOAI_SAN_PHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
+                     "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
+                     "GROUP BY lsp.TEN_LSP " +
+                     "ORDER BY DOANH_THU DESC";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) map.put(rs.getString("TEN_LSP"), rs.getDouble("DOANH_THU"));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return map;
+    }
+
+    /**
+     * Tổng khách hàng unique trong khoảng thời gian.
+     */
+    public static long getTongKhachHang(Date from, Date to) {
+        String sql = "SELECT COUNT(DISTINCT MA_KH) AS TONG FROM HOA_DON " +
+                     "WHERE MA_KH IS NOT NULL AND THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ?";
+        return countQuery(sql, from, to);
+    }
+
+    /**
+     * Trung bình giá trị đơn hàng.
+     */
+    public static double getTrungBinhGiaTriDonHang(Date from, Date to) {
+        String sql = "SELECT NVL(AVG(THANH_TIEN), 0) AS TB FROM HOA_DON " +
+                     "WHERE THOI_GIAN_LAP >= ? AND THOI_GIAN_LAP < ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setTimestamp(1, new Timestamp(from.getTime()));
+            ps.setTimestamp(2, new Timestamp(to.getTime()));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble("TB");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
     }
 }

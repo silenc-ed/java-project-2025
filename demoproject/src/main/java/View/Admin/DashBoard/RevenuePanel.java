@@ -1,49 +1,88 @@
 package View.Admin.DashBoard;
 
 import Controller.Admin.DashboardDAO;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+/**
+ * Professional BI-style Revenue Dashboard panel.
+ * Replaces the old single-bar-chart with:
+ *  - 4 KPI Cards (Doanh thu, Lợi nhuận, Tổng đơn, TB đơn hàng)
+ *  - Combo chart: Bar (revenue) + Line (profit)
+ *  - Pie chart: breakdown by product category / branch
+ *  - Trend line/area chart (detail view)
+ */
 public class RevenuePanel extends JPanel {
 
+    // --- Filter controls ---
     private JRadioButton rbNam, rbThang, rbNgay;
     private ButtonGroup bgFilter;
-
     private JSpinner spinnerYear;
     private JSpinner spinnerMonth, spinnerMonthYear;
     private JSpinner spinnerFrom, spinnerTo;
-
     private JPanel pickerPanel;
     private JPanel yearPicker, monthPicker, dateRangePicker;
     private JPanel activePicker;
 
-    private JLabel lblTongDoanhThuValue;
-    private JLabel lblLoiNhuanValue;
-    private JLabel lblChartTitle;
-    private BarChartPanel barChart;
-    private JButton btnLoc;
+    // --- KPI Cards ---
+    private KPICard cardDoanhThu;
+    private KPICard cardLoiNhuan;
+    private KPICard cardTongDon;
+    private KPICard cardTrungBinh;
+
+    // --- Chart containers (swapped in/out) ---
+    private JPanel comboChartContainer;
+    private JPanel pieChartContainer;
+    private JPanel trendChartContainer;
+
+    // --- Section labels ---
+    private JLabel lblComboTitle;
+    private JLabel lblPieTitle;
+    private JLabel lblTrendTitle;
 
     public RevenuePanel() {
         setLayout(new BorderLayout());
         setBackground(new Color(245, 246, 250));
+
         JPanel wrapper = new JPanel();
         wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.Y_AXIS));
         wrapper.setBackground(new Color(245, 246, 250));
-        wrapper.setBorder(new EmptyBorder(20, 24, 20, 24));
+        wrapper.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+        // 1. Filter bar
         wrapper.add(buildFilterBar());
-        wrapper.add(Box.createVerticalStrut(16));
-        wrapper.add(buildBody());
-        add(wrapper, BorderLayout.CENTER);
+        wrapper.add(Box.createVerticalStrut(14));
+
+        // 2. KPI Cards row
+        wrapper.add(buildKPIRow());
+        wrapper.add(Box.createVerticalStrut(14));
+
+        // 3. Main charts row (combo + pie side by side)
+        wrapper.add(buildMainChartsRow());
+        wrapper.add(Box.createVerticalStrut(14));
+
+        // 4. Trend chart (full width)
+        wrapper.add(buildTrendSection());
+
+        JScrollPane scroll = new JScrollPane(wrapper);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(new Color(245, 246, 250));
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUnitIncrement(12);
+        add(scroll, BorderLayout.CENTER);
+
         loadData();
     }
 
+    // =========================================================
+    // FILTER BAR
+    // =========================================================
     private JPanel buildFilterBar() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         panel.setOpaque(false);
@@ -54,10 +93,11 @@ public class RevenuePanel extends JPanel {
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lbl.setForeground(new Color(51, 65, 85));
 
-        rbNam = makeRb("Năm");
+        rbNam   = makeRb("Năm");
         rbThang = makeRb("Tháng");
-        rbNgay = makeRb("Tùy chọn");
+        rbNgay  = makeRb("Tùy chọn");
         rbNam.setSelected(true);
+
         bgFilter = new ButtonGroup();
         bgFilter.add(rbNam);
         bgFilter.add(rbThang);
@@ -79,12 +119,12 @@ public class RevenuePanel extends JPanel {
         rbNgay.addItemListener(rbListener);
         rbListener.itemStateChanged(null);
 
-        btnLoc = new JButton("Lọc");
+        JButton btnLoc = new JButton("Lọc");
         View.Admin.UIUtils.styleButton(btnLoc);
         btnLoc.addActionListener(e -> loadData());
 
-        yearPicker = buildYearPicker();
-        monthPicker = buildMonthPicker();
+        yearPicker      = buildYearPicker();
+        monthPicker     = buildMonthPicker();
         dateRangePicker = buildDateRangePicker();
 
         pickerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -92,9 +132,9 @@ public class RevenuePanel extends JPanel {
         activePicker = yearPicker;
         pickerPanel.add(activePicker);
 
-        rbNam.addActionListener(e -> switchPicker(yearPicker));
+        rbNam.addActionListener(e   -> switchPicker(yearPicker));
         rbThang.addActionListener(e -> switchPicker(monthPicker));
-        rbNgay.addActionListener(e -> switchPicker(dateRangePicker));
+        rbNgay.addActionListener(e  -> switchPicker(dateRangePicker));
 
         panel.add(lbl);
         panel.add(rbNam);
@@ -112,7 +152,6 @@ public class RevenuePanel extends JPanel {
         pickerPanel.add(activePicker);
         pickerPanel.revalidate();
         pickerPanel.repaint();
-        // Force the parent filter bar to re-layout too
         pickerPanel.getParent().revalidate();
         pickerPanel.getParent().repaint();
     }
@@ -120,12 +159,11 @@ public class RevenuePanel extends JPanel {
     private JPanel buildYearPicker() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         p.setOpaque(false);
-        JLabel lbl = makePickerLabel("Năm:");
         int yr = Calendar.getInstance().get(Calendar.YEAR);
         spinnerYear = new JSpinner(new SpinnerNumberModel(yr, 2000, 2100, 1));
         spinnerYear.setEditor(new JSpinner.NumberEditor(spinnerYear, "####"));
         spinnerYear.setPreferredSize(new Dimension(80, 28));
-        p.add(lbl);
+        p.add(makePickerLabel("Năm:"));
         p.add(spinnerYear);
         return p;
     }
@@ -165,111 +203,106 @@ public class RevenuePanel extends JPanel {
         return p;
     }
 
-    private JLabel makePickerLabel(String text) {
-        JLabel l = new JLabel(text);
-        l.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        l.setForeground(new Color(71, 85, 105));
-        return l;
+    // =========================================================
+    // KPI CARDS ROW
+    // =========================================================
+    private JPanel buildKPIRow() {
+        JPanel row = new JPanel(new GridLayout(1, 4, 12, 0));
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        cardDoanhThu = new KPICard("Tổng doanh thu", "💰",
+                DashboardChartFactory.PRIMARY, new Color(219, 234, 254));
+        cardLoiNhuan = new KPICard("Tổng lợi nhuận", "📈",
+                DashboardChartFactory.SUCCESS, new Color(209, 250, 229));
+        cardTongDon = new KPICard("Tổng đơn hàng", "🛒",
+                DashboardChartFactory.PURPLE, new Color(237, 233, 254));
+        cardTrungBinh = new KPICard("TB giá trị đơn", "💳",
+                DashboardChartFactory.WARNING, new Color(254, 243, 199));
+
+        row.add(cardDoanhThu);
+        row.add(cardLoiNhuan);
+        row.add(cardTongDon);
+        row.add(cardTrungBinh);
+        return row;
     }
 
-    private JLabel makeSep() {
-        JLabel sep = new JLabel("|");
-        sep.setForeground(new Color(203, 213, 225));
-        sep.setBorder(new EmptyBorder(0, 4, 0, 4));
-        return sep;
-    }
+    // =========================================================
+    // MAIN CHARTS ROW: Combo (65%) + Pie (35%)
+    // =========================================================
+    private JPanel buildMainChartsRow() {
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        row.setOpaque(false);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    private JRadioButton makeRb(String text) {
-        JRadioButton rb = new JRadioButton(text);
-        rb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        rb.setForeground(new Color(51, 65, 85));
-        rb.setOpaque(false);
-        rb.setFocusPainted(false);
-        rb.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return rb;
-    }
-
-    private JPanel buildBody() {
-        JPanel body = new JPanel(new BorderLayout(16, 0));
-        body.setOpaque(false);
-        body.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel chartCard = new JPanel(new BorderLayout());
-        chartCard.setBackground(Color.WHITE);
-        chartCard.setBorder(new CompoundBorder(
+        // --- Combo chart card ---
+        JPanel comboCard = new JPanel(new BorderLayout(0, 8));
+        comboCard.setBackground(Color.WHITE);
+        comboCard.setBorder(new CompoundBorder(
                 new LineBorder(new Color(226, 232, 240), 1, true),
-                new EmptyBorder(16, 16, 16, 16)));
+                new EmptyBorder(14, 14, 14, 14)));
 
-        lblChartTitle = new JLabel("Biểu đồ doanh thu theo tháng");
-        lblChartTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblChartTitle.setForeground(new Color(30, 41, 59));
-        lblChartTitle.setBorder(new EmptyBorder(0, 0, 10, 0));
+        lblComboTitle = sectionTitle("Doanh thu & Lợi nhuận");
+        comboChartContainer = new JPanel(new BorderLayout());
+        comboChartContainer.setBackground(Color.WHITE);
+        comboChartContainer.setPreferredSize(new Dimension(0, 360));
+        comboChartContainer.add(makePlaceholder("Đang tải dữ liệu..."), BorderLayout.CENTER);
 
-        barChart = new BarChartPanel(new String[0], new double[0]);
-        chartCard.add(lblChartTitle, BorderLayout.NORTH);
-        chartCard.add(barChart, BorderLayout.CENTER);
+        comboCard.add(lblComboTitle, BorderLayout.NORTH);
+        comboCard.add(comboChartContainer, BorderLayout.CENTER);
 
-        JPanel cardsCol = new JPanel();
-        cardsCol.setLayout(new BoxLayout(cardsCol, BoxLayout.Y_AXIS));
-        cardsCol.setOpaque(false);
-        cardsCol.setPreferredSize(new Dimension(258, 0));
+        // --- Pie chart card ---
+        JPanel pieCard = new JPanel(new BorderLayout(0, 8));
+        pieCard.setBackground(Color.WHITE);
+        pieCard.setBorder(new CompoundBorder(
+                new LineBorder(new Color(226, 232, 240), 1, true),
+                new EmptyBorder(14, 14, 14, 14)));
+        pieCard.setPreferredSize(new Dimension(300, 0));
 
-        JPanel card1 = buildSummaryCard("Tổng doanh thu (VND)", "—",
-                new Color(37, 99, 235), new Color(219, 234, 254));
-        JPanel card2 = buildSummaryCard("Tổng lợi nhuận (VND)", "—",
-                new Color(5, 150, 105), new Color(209, 250, 229));
+        lblPieTitle = sectionTitle("Phân bổ theo loại sản phẩm");
+        pieChartContainer = new JPanel(new BorderLayout());
+        pieChartContainer.setBackground(Color.WHITE);
+        pieChartContainer.setPreferredSize(new Dimension(0, 360));
+        pieChartContainer.add(makePlaceholder("Đang tải dữ liệu..."), BorderLayout.CENTER);
 
-        lblTongDoanhThuValue = extractLabel(card1);
-        lblLoiNhuanValue = extractLabel(card2);
+        pieCard.add(lblPieTitle, BorderLayout.NORTH);
+        pieCard.add(pieChartContainer, BorderLayout.CENTER);
 
-        cardsCol.add(card1);
-        cardsCol.add(Box.createVerticalStrut(14));
-        cardsCol.add(card2);
-        cardsCol.add(Box.createVerticalGlue());
-
-        body.add(chartCard, BorderLayout.CENTER);
-        body.add(cardsCol, BorderLayout.EAST);
-        return body;
+        row.add(comboCard, BorderLayout.CENTER);
+        row.add(pieCard, BorderLayout.EAST);
+        return row;
     }
 
-    private JPanel buildSummaryCard(String title, String val, Color accent, Color tint) {
+    // =========================================================
+    // TREND CHART (Full width, line/area)
+    // =========================================================
+    private JPanel buildTrendSection() {
         JPanel card = new JPanel(new BorderLayout(0, 8));
         card.setBackground(Color.WHITE);
         card.setBorder(new CompoundBorder(
                 new LineBorder(new Color(226, 232, 240), 1, true),
-                new EmptyBorder(18, 16, 18, 16)));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-        JPanel stripe = new JPanel();
-        stripe.setBackground(tint);
-        stripe.setPreferredSize(new Dimension(5, 0));
-        JLabel lblTitle = new JLabel("<html><body style='width:170px'>" + title + "</body></html>");
-        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblTitle.setForeground(new Color(100, 116, 139));
-        JLabel lblVal = new JLabel(val);
-        lblVal.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        lblVal.setForeground(accent);
-        lblVal.putClientProperty("v", Boolean.TRUE);
-        card.add(stripe, BorderLayout.WEST);
-        card.add(lblTitle, BorderLayout.NORTH);
-        card.add(lblVal, BorderLayout.CENTER);
+                new EmptyBorder(14, 14, 14, 14)));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        lblTrendTitle = sectionTitle("Biểu đồ xu hướng doanh thu");
+        trendChartContainer = new JPanel(new BorderLayout());
+        trendChartContainer.setBackground(Color.WHITE);
+        trendChartContainer.setPreferredSize(new Dimension(0, 260));
+        trendChartContainer.add(makePlaceholder("Đang tải dữ liệu..."), BorderLayout.CENTER);
+
+        card.add(lblTrendTitle, BorderLayout.NORTH);
+        card.add(trendChartContainer, BorderLayout.CENTER);
         return card;
     }
 
-    private JLabel extractLabel(JPanel card) {
-        for (Component c : card.getComponents())
-            if (c instanceof JLabel && Boolean.TRUE.equals(((JLabel) c).getClientProperty("v")))
-                return (JLabel) c;
-        return null;
-    }
-
+    // =========================================================
+    // DATA LOADING
+    // =========================================================
     public void loadData() {
-        if (rbNam.isSelected()) {
-            loadNam();
-        } else if (rbThang.isSelected()) {
-            loadThang();
-        } else {
-            loadTuyChon();
-        }
+        if (rbNam.isSelected()) loadNam();
+        else if (rbThang.isSelected()) loadThang();
+        else loadTuyChon();
     }
 
     private void loadNam() {
@@ -280,41 +313,113 @@ public class RevenuePanel extends JPanel {
         e.set(year + 1, 0, 1, 0, 0, 0); e.set(Calendar.MILLISECOND, 0);
         Date from = s.getTime(), to = e.getTime();
 
+        // Previous year for trend
+        Calendar ps = Calendar.getInstance();
+        ps.set(year - 1, 0, 1, 0, 0, 0); ps.set(Calendar.MILLISECOND, 0);
+        Calendar pe = Calendar.getInstance();
+        pe.set(year, 0, 1, 0, 0, 0); pe.set(Calendar.MILLISECOND, 0);
+        Date prevFrom = ps.getTime(), prevTo = pe.getTime();
+
         new SwingWorker<Void, Void>() {
-            double dt, ln; Map<String, Double> cd;
-            @Override protected Void doInBackground() {
-                dt = DashboardDAO.getTongDoanhThu(from, to);
-                ln = DashboardDAO.getTongLoiNhuan(from, to);
-                cd = DashboardDAO.getDoanhThuTheoThangTrongNam(year);
+            double dt, ln, prevDt, prevLn, tbDon;
+            long tongDon;
+            Map<String, double[]> comboData;
+            Map<String, Double> pieData;
+            Map<String, Double> trendData;
+
+            @Override
+            protected Void doInBackground() {
+                dt       = DashboardDAO.getTongDoanhThu(from, to);
+                ln       = DashboardDAO.getTongLoiNhuan(from, to);
+                prevDt   = DashboardDAO.getTongDoanhThu(prevFrom, prevTo);
+                prevLn   = DashboardDAO.getTongLoiNhuan(prevFrom, prevTo);
+                tongDon  = DashboardDAO.getTongDonHang(from, to);
+                tbDon    = DashboardDAO.getTrungBinhGiaTriDonHang(from, to);
+                comboData = DashboardDAO.getDoanhThuVaLoiNhuanTheoThang(year);
+                pieData   = DashboardDAO.getDoanhThuTheoLoaiSP(from, to);
+                trendData = DashboardDAO.getDoanhThuTheoThangTrongNam(year);
                 return null;
             }
-            @Override protected void done() {
-                updateCards(dt, ln);
-                updateChart("Biểu đồ doanh thu năm " + year + " theo tháng", cd);
+
+            @Override
+            protected void done() {
+                // KPI cards
+                cardDoanhThu.setValue(DashboardDAO.formatVND(dt));
+                cardDoanhThu.setTrend(calcGrowth(dt, prevDt), "so với năm trước");
+                cardLoiNhuan.setValue(DashboardDAO.formatVND(ln));
+                cardLoiNhuan.setTrend(calcGrowth(ln, prevLn), "so với năm trước");
+                cardTongDon.setValue(String.format("%,d", tongDon));
+                cardTongDon.clearTrend();
+                cardTrungBinh.setValue(DashboardDAO.formatVND(tbDon));
+                cardTrungBinh.clearTrend();
+
+                // Charts
+                lblComboTitle.setText("Doanh thu & Lợi nhuận năm " + year + " theo tháng");
+                lblPieTitle.setText("Phân bổ doanh thu theo loại sản phẩm");
+                lblTrendTitle.setText("Xu hướng doanh thu năm " + year);
+
+                updateComboChart(comboData);
+                updatePieChart(pieData, "Phân bổ theo loại sản phẩm");
+                updateTrendChart(trendData, "Doanh thu theo tháng " + year);
             }
         }.execute();
     }
 
     private void loadThang() {
         int month = (int) spinnerMonth.getValue();
-        int year = (int) spinnerMonthYear.getValue();
+        int year  = (int) spinnerMonthYear.getValue();
         Calendar s = Calendar.getInstance();
         s.set(year, month - 1, 1, 0, 0, 0); s.set(Calendar.MILLISECOND, 0);
         Calendar e = (Calendar) s.clone();
         e.add(Calendar.MONTH, 1);
         Date from = s.getTime(), to = e.getTime();
 
+        // Previous month
+        Calendar ps = (Calendar) s.clone();
+        ps.add(Calendar.MONTH, -1);
+        Date prevFrom = ps.getTime(), prevTo = s.getTime();
+
         new SwingWorker<Void, Void>() {
-            double dt, ln; Map<String, Double> cd;
-            @Override protected Void doInBackground() {
-                dt = DashboardDAO.getTongDoanhThu(from, to);
-                ln = DashboardDAO.getTongLoiNhuan(from, to);
-                cd = DashboardDAO.getDoanhThuTheoNgay(from, to);
+            double dt, ln, prevDt, prevLn, tbDon;
+            long tongDon;
+            Map<String, double[]> comboDual;
+            Map<String, Double> pieData, trendData;
+
+            @Override
+            protected Void doInBackground() {
+                dt      = DashboardDAO.getTongDoanhThu(from, to);
+                ln      = DashboardDAO.getTongLoiNhuan(from, to);
+                prevDt  = DashboardDAO.getTongDoanhThu(prevFrom, prevTo);
+                prevLn  = DashboardDAO.getTongLoiNhuan(prevFrom, prevTo);
+                tongDon = DashboardDAO.getTongDonHang(from, to);
+                tbDon   = DashboardDAO.getTrungBinhGiaTriDonHang(from, to);
+                comboDual   = DashboardDAO.getDoanhThuVaLoiNhuanTheoNgay(from, to);
+                pieData     = DashboardDAO.getDoanhThuTheoLoaiSP(from, to);
+                trendData   = DashboardDAO.getDoanhThuTheoNgay(from, to);
                 return null;
             }
-            @Override protected void done() {
-                updateCards(dt, ln);
-                updateChart(String.format("Biểu đồ doanh thu tháng %d/%d theo ngày", month, year), cd);
+
+            @Override
+            protected void done() {
+                cardDoanhThu.setValue(DashboardDAO.formatVND(dt));
+                cardDoanhThu.setTrend(calcGrowth(dt, prevDt), "so với tháng trước");
+                cardLoiNhuan.setValue(DashboardDAO.formatVND(ln));
+                cardLoiNhuan.setTrend(calcGrowth(ln, prevLn), "so với tháng trước");
+                cardTongDon.setValue(String.format("%,d", tongDon));
+                cardTongDon.clearTrend();
+                cardTrungBinh.setValue(DashboardDAO.formatVND(tbDon));
+                cardTrungBinh.clearTrend();
+
+                String monthLabel = String.format("Tháng %d/%d", month, year);
+                lblComboTitle.setText("Doanh thu & Lợi nhuận — " + monthLabel);
+                lblPieTitle.setText("Phân bổ loại sản phẩm — " + monthLabel);
+                lblTrendTitle.setText("Xu hướng doanh thu — " + monthLabel);
+
+                JFreeChart dualLineChart = DashboardChartFactory.createDualLineChart(
+                        comboDual, "Doanh thu & Lợi nhuận");
+                replaceChart(comboChartContainer, dualLineChart);
+                updatePieChart(pieData, "Phân bổ theo loại sản phẩm");
+                updateTrendChart(trendData, "Xu hướng " + monthLabel);
             }
         }.execute();
     }
@@ -328,110 +433,153 @@ public class RevenuePanel extends JPanel {
         long diffDays = (to.getTime() - from.getTime()) / 86400000L;
 
         new SwingWorker<Void, Void>() {
-            double dt, ln; Map<String, Double> cd; String title;
-            @Override protected Void doInBackground() {
-                dt = DashboardDAO.getTongDoanhThu(from, to);
-                ln = DashboardDAO.getTongLoiNhuan(from, to);
+            double dt, ln, tbDon;
+            long tongDon;
+            Map<String, Double> mainData, pieData, trendData;
+            String comboTitle, trendTitle;
+
+            @Override
+            protected Void doInBackground() {
+                dt      = DashboardDAO.getTongDoanhThu(from, to);
+                ln      = DashboardDAO.getTongLoiNhuan(from, to);
+                tongDon = DashboardDAO.getTongDonHang(from, to);
+                tbDon   = DashboardDAO.getTrungBinhGiaTriDonHang(from, to);
+                pieData = DashboardDAO.getDoanhThuTheoLoaiSP(from, to);
+
                 if (diffDays > 730) {
-                    cd = DashboardDAO.getDoanhThuTheoNam(from, to);
-                    title = "Biểu đồ doanh thu theo năm";
+                    mainData    = DashboardDAO.getDoanhThuTheoNam(from, to);
+                    trendData   = mainData;
+                    comboTitle  = "Doanh thu theo năm";
+                    trendTitle  = "Xu hướng theo năm";
                 } else if (diffDays > 60) {
-                    cd = DashboardDAO.getDoanhThuTheoThang(from, to);
-                    title = "Biểu đồ doanh thu theo tháng";
+                    mainData    = DashboardDAO.getDoanhThuTheoThang(from, to);
+                    trendData   = mainData;
+                    comboTitle  = "Doanh thu theo tháng";
+                    trendTitle  = "Xu hướng theo tháng";
                 } else if (diffDays > 1) {
-                    cd = DashboardDAO.getDoanhThuTheoNgay(from, to);
-                    title = "Biểu đồ doanh thu theo ngày";
+                    mainData    = DashboardDAO.getDoanhThuTheoNgay(from, to);
+                    trendData   = mainData;
+                    comboTitle  = "Doanh thu theo ngày";
+                    trendTitle  = "Xu hướng theo ngày";
                 } else {
-                    cd = DashboardDAO.getDoanhThuTheoGio(from);
-                    title = "Biểu đồ doanh thu theo giờ";
+                    mainData    = DashboardDAO.getDoanhThuTheoGio(from);
+                    trendData   = mainData;
+                    comboTitle  = "Doanh thu theo giờ";
+                    trendTitle  = "Xu hướng theo giờ";
                 }
                 return null;
             }
-            @Override protected void done() {
-                updateCards(dt, ln);
-                updateChart(title, cd);
+
+            @Override
+            protected void done() {
+                cardDoanhThu.setValue(DashboardDAO.formatVND(dt));
+                cardDoanhThu.clearTrend();
+                cardLoiNhuan.setValue(DashboardDAO.formatVND(ln));
+                cardLoiNhuan.clearTrend();
+                cardTongDon.setValue(String.format("%,d", tongDon));
+                cardTongDon.clearTrend();
+                cardTrungBinh.setValue(DashboardDAO.formatVND(tbDon));
+                cardTrungBinh.clearTrend();
+
+                lblComboTitle.setText(comboTitle);
+                lblPieTitle.setText("Phân bổ theo loại sản phẩm");
+                lblTrendTitle.setText(trendTitle);
+
+                JFreeChart barChart = DashboardChartFactory.createBarChart(mainData, comboTitle);
+                replaceChart(comboChartContainer, barChart);
+                updatePieChart(pieData, "Phân bổ theo loại sản phẩm");
+                updateTrendChart(trendData, trendTitle);
             }
         }.execute();
     }
 
-    private void updateCards(double doanhThu, double loiNhuan) {
-        if (lblTongDoanhThuValue != null) lblTongDoanhThuValue.setText(DashboardDAO.formatVND(doanhThu));
-        if (lblLoiNhuanValue != null) lblLoiNhuanValue.setText(DashboardDAO.formatVND(loiNhuan));
+    // =========================================================
+    // CHART UPDATE HELPERS
+    // =========================================================
+    private void updateComboChart(Map<String, double[]> data) {
+        JFreeChart chart = DashboardChartFactory.createDualLineChart(data, lblComboTitle.getText());
+        replaceChart(comboChartContainer, chart);
     }
 
-    private void updateChart(String title, Map<String, Double> data) {
-        if (lblChartTitle != null) lblChartTitle.setText(title);
-        String[] labels = data.keySet().toArray(new String[0]);
-        double[] values = data.values().stream().mapToDouble(Double::doubleValue).toArray();
-        barChart.setData(labels, values);
-        barChart.repaint();
+    private void updatePieChart(Map<String, Double> data, String title) {
+        if (data == null || data.isEmpty()) {
+            replacePlaceholder(pieChartContainer, "Không có dữ liệu");
+            return;
+        }
+        JFreeChart chart = DashboardChartFactory.createPieChart(data, title);
+        replaceChart(pieChartContainer, chart);
     }
 
-    static class BarChartPanel extends JPanel {
-        private String[] labels;
-        private double[] data;
-
-        BarChartPanel(String[] labels, double[] data) {
-            this.labels = labels;
-            this.data = data;
-            setBackground(Color.WHITE);
-            setPreferredSize(new Dimension(0, 260));
+    private void updateTrendChart(Map<String, Double> data, String title) {
+        if (data == null || data.isEmpty()) {
+            replacePlaceholder(trendChartContainer, "Không có dữ liệu");
+            return;
         }
+        JFreeChart chart = DashboardChartFactory.createTrendChart(data, title);
+        replaceChart(trendChartContainer, chart);
+    }
 
-        void setData(String[] labels, double[] data) {
-            this.labels = labels;
-            this.data = data;
-        }
+    private void replaceChart(JPanel container, JFreeChart chart) {
+        ChartPanel cp = DashboardChartFactory.wrapChart(chart);
+        container.removeAll();
+        container.add(cp, BorderLayout.CENTER);
+        container.revalidate();
+        container.repaint();
+    }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (labels == null || labels.length == 0) return;
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    private void replacePlaceholder(JPanel container, String msg) {
+        container.removeAll();
+        container.add(makePlaceholder(msg), BorderLayout.CENTER);
+        container.revalidate();
+        container.repaint();
+    }
 
-            int w = getWidth(), h = getHeight();
-            int pL = 60, pR = 16, pT = 16, pB = 36;
-            int cW = w - pL - pR, cH = h - pT - pB;
+    // =========================================================
+    // UTILITY
+    // =========================================================
 
-            double maxVal = 0;
-            for (double v : data) if (v > maxVal) maxVal = v;
-            if (maxVal == 0) maxVal = 1;
-            double scale = Math.pow(10, Math.floor(Math.log10(maxVal)));
-            maxVal = Math.ceil(maxVal / scale) * scale;
+    /** Calculate growth % relative to previous period. */
+    private double calcGrowth(double current, double previous) {
+        if (previous == 0) return 0;
+        return (current - previous) / previous * 100.0;
+    }
 
-            g2.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-            FontMetrics fm = g2.getFontMetrics();
+    private JLabel makePlaceholder(String msg) {
+        JLabel lbl = new JLabel(msg, SwingConstants.CENTER);
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lbl.setForeground(new Color(148, 163, 184));
+        return lbl;
+    }
 
-            for (int i = 0; i <= 5; i++) {
-                int y = pT + cH - (int)((double) cH * i / 5);
-                g2.setColor(new Color(241, 245, 249));
-                g2.drawLine(pL, y, pL + cW, y);
-                g2.setColor(new Color(148, 163, 184));
-                String yLbl = DashboardDAO.formatVND(maxVal * i / 5);
-                g2.drawString(yLbl, pL - fm.stringWidth(yLbl) - 4, y + 4);
-            }
+    private JLabel sectionTitle(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setForeground(new Color(30, 41, 59));
+        lbl.setBorder(new EmptyBorder(0, 0, 6, 0));
+        return lbl;
+    }
 
-            int grpW = cW / data.length;
-            int bW = Math.max(4, (int)(grpW * 0.6));
-            int bOff = (grpW - bW) / 2;
+    private JRadioButton makeRb(String text) {
+        JRadioButton rb = new JRadioButton(text);
+        rb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        rb.setForeground(new Color(51, 65, 85));
+        rb.setOpaque(false);
+        rb.setFocusPainted(false);
+        rb.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return rb;
+    }
 
-            for (int i = 0; i < data.length; i++) {
-                int bH = (int)(cH * data[i] / maxVal);
-                int x = pL + i * grpW + bOff;
-                int y = pT + cH - bH;
-                GradientPaint gp = new GradientPaint(x, y, new Color(99, 149, 255), x, y + bH, new Color(37, 99, 235));
-                g2.setPaint(gp);
-                g2.fillRoundRect(x, y, bW, bH, 6, 6);
-                g2.setColor(new Color(100, 116, 139));
-                int lx = x + (bW - fm.stringWidth(labels[i])) / 2;
-                g2.drawString(labels[i], lx, pT + cH + 16);
-            }
+    private JLabel makePickerLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        l.setForeground(new Color(71, 85, 105));
+        return l;
+    }
 
-            g2.setColor(new Color(203, 213, 225));
-            g2.drawLine(pL, pT, pL, pT + cH);
-            g2.drawLine(pL, pT + cH, pL + cW, pT + cH);
-            g2.dispose();
-        }
+    private JLabel makeSep() {
+        JLabel sep = new JLabel("|");
+        sep.setForeground(new Color(203, 213, 225));
+        sep.setBorder(new EmptyBorder(0, 4, 0, 4));
+        return sep;
     }
 }

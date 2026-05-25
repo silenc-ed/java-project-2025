@@ -38,6 +38,7 @@ public class DonDatHangDAO {
 
         try {
             con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
 
             // 1. INSERT HOADON
@@ -196,10 +197,11 @@ public class DonDatHangDAO {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
 
             // Kiểm tra trạng thái
-            String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ?";
+            String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ? FOR UPDATE";
             try (PreparedStatement psCheck = con.prepareStatement(checkSql)) {
                 psCheck.setInt(1, maHD);
                 try (ResultSet rs = psCheck.executeQuery()) {
@@ -361,10 +363,11 @@ public class DonDatHangDAO {
         Connection con = null;
         try {
             con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
 
             // Kiểm tra trạng thái
-            String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ?";
+            String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ? FOR UPDATE";
             try (PreparedStatement psCheck = con.prepareStatement(checkSql)) {
                 psCheck.setInt(1, maHD);
                 try (ResultSet rs = psCheck.executeQuery()) {
@@ -575,10 +578,14 @@ public class DonDatHangDAO {
      * @return giá trị giảm (số tiền)
      */
     public long applyPromotion(int maHD, int maKM) throws Exception {
-        try (Connection con = ConnectionUtils.getMyConnection()) {
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            con.setAutoCommit(false);
             // Lấy tổng tiền hàng
             long tongTien = 0;
-            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN FROM HOA_DON WHERE MA_HD = ?")) {
+            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN FROM HOA_DON WHERE MA_HD = ? FOR UPDATE")) {
                 ps.setInt(1, maHD);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) tongTien = rs.getLong("TONG_TIEN");
@@ -598,7 +605,13 @@ public class DonDatHangDAO {
                 ps.executeUpdate();
             }
 
+            con.commit();
             return giamGia;
+        } catch (Exception e) {
+            if (con != null) try { con.rollback(); } catch (SQLException ex) {}
+            throw e;
+        } finally {
+            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (SQLException ex) {}
         }
     }
 
@@ -847,5 +860,312 @@ public class DonDatHangDAO {
             }
         }
         return null;
+    }
+
+    // ===================== NEW FEATURE: HỖ TRỢ SẢN PHẨM KHÔNG SERIAL VÀ PHIẾU SC TẠO MỚI =====================
+
+    public static class RepairPartDraft {
+        public int maSP;
+        public int maBienThe;
+        public String tenSP;
+        public int soLuong;
+        public long donGia;
+        
+        public RepairPartDraft(int maSP, int maBienThe, String tenSP, int soLuong, long donGia) {
+            this.maSP = maSP;
+            this.maBienThe = maBienThe;
+            this.tenSP = tenSP;
+            this.soLuong = soLuong;
+            this.donGia = donGia;
+        }
+    }
+    
+    public static class RepairTicketDraft {
+        public String moTa;
+        public long giaCuoc;
+        public List<RepairPartDraft> parts;
+        
+        public RepairTicketDraft(String moTa, long giaCuoc, List<RepairPartDraft> parts) {
+            this.moTa = moTa;
+            this.giaCuoc = giaCuoc;
+            this.parts = parts;
+        }
+    }
+
+    public List<Map<String, Object>> searchProductsForSale(String keyword) throws Exception {
+        List<Map<String, Object>> results = new ArrayList<>();
+        String kw = "%" + keyword.trim() + "%";
+        
+        try (Connection con = ConnectionUtils.getMyConnection()) {
+            // 1. Co Serial
+            String sqlSerial = "SELECT KS.MA_SN, KS.SERIAL_NUMBER, KS.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, 1 AS SO_LUONG_TON, 1 AS CO_QUAN_LY_SERIAL " +
+                         "FROM KHO_SERIAL KS " +
+                         "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE " +
+                         "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
+                         "WHERE KS.TRANG_THAI = N'KHA_DUNG' " +
+                         "AND (UPPER(KS.SERIAL_NUMBER) LIKE UPPER(?) OR UPPER(SP.TEN_SP) LIKE UPPER(?)) " +
+                         "AND ROWNUM <= 30";
+            try (PreparedStatement ps = con.prepareStatement(sqlSerial)) {
+                ps.setString(1, kw);
+                ps.setString(2, kw);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> row = new HashMap<>();
+                        row.put("MA_SN", rs.getInt("MA_SN"));
+                        row.put("SERIAL_NUMBER", rs.getString("SERIAL_NUMBER"));
+                        row.put("MA_BIENTHE", rs.getInt("MA_BIENTHE"));
+                        row.put("MA_SP", rs.getInt("MA_SP"));
+                        row.put("TEN_SP", rs.getString("TEN_SP"));
+                        row.put("TEN_BIENTHE", rs.getString("TEN_BIENTHE"));
+                        row.put("GIA_BAN", rs.getLong("GIA_BAN"));
+                        row.put("SO_LUONG_TON", rs.getInt("SO_LUONG_TON"));
+                        row.put("CO_QUAN_LY_SERIAL", rs.getInt("CO_QUAN_LY_SERIAL"));
+                        results.add(row);
+                    }
+                }
+            }
+            
+            // 2. Khong Serial
+            String sqlNonSerial = "SELECT NULL AS MA_SN, NULL AS SERIAL_NUMBER, TK.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, TK.SO_LUONG_TON, 0 AS CO_QUAN_LY_SERIAL " +
+                         "FROM TON_KHO TK " +
+                         "JOIN BIEN_THE_SAN_PHAM BT ON TK.MA_BIENTHE = BT.MA_BIENTHE " +
+                         "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
+                         "WHERE SP.CO_QUAN_LY_SERIAL = 0 " +
+                         "AND TK.SO_LUONG_TON > 0 " +
+                         "AND UPPER(SP.TEN_SP) LIKE UPPER(?) " +
+                         "AND ROWNUM <= 30";
+            try (PreparedStatement ps = con.prepareStatement(sqlNonSerial)) {
+                ps.setString(1, kw);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> row = new HashMap<>();
+                        row.put("MA_SN", null);
+                        row.put("SERIAL_NUMBER", null);
+                        row.put("MA_BIENTHE", rs.getInt("MA_BIENTHE"));
+                        row.put("MA_SP", rs.getInt("MA_SP"));
+                        row.put("TEN_SP", rs.getString("TEN_SP"));
+                        row.put("TEN_BIENTHE", rs.getString("TEN_BIENTHE"));
+                        row.put("GIA_BAN", rs.getLong("GIA_BAN"));
+                        row.put("SO_LUONG_TON", rs.getInt("SO_LUONG_TON"));
+                        row.put("CO_QUAN_LY_SERIAL", rs.getInt("CO_QUAN_LY_SERIAL"));
+                        results.add(row);
+                    }
+                }
+            }
+        }
+        return results;
+    }
+
+    public int createOrderWithDrafts(Integer maKH, int maNV, int maCN,
+                           List<Map<String, Object>> products,
+                           List<Integer> dichVuIds,
+                           List<RepairTicketDraft> newRepairs) throws Exception {
+
+        Connection con = null;
+        int maHD = -1;
+
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            con.setAutoCommit(false);
+
+            // 1. INSERT HOADON
+            String sqlHD = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, TONG_TIEN, GIAM_GIA, THANH_TIEN, TRANG_THAI) " +
+                           "VALUES (?, ?, ?, 0, 0, 0, N'Chờ thanh toán')";
+            try (PreparedStatement ps = con.prepareStatement(sqlHD, new String[]{"MA_HD"})) {
+                if (maKH != null) {
+                    ps.setInt(1, maKH);
+                } else {
+                    ps.setNull(1, Types.INTEGER);
+                }
+                ps.setInt(2, maNV);
+                ps.setInt(3, maCN);
+                ps.executeUpdate();
+
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) maHD = rs.getInt(1);
+                }
+            }
+
+            if (maHD == -1) {
+                throw new Exception("Không thể tạo hóa đơn");
+            }
+
+            // 2. INSERT CHITIET_HOADON + UPDATE KHO_SERIAL / TON_KHO
+            long tongTienSP = 0;
+            if (products != null && !products.isEmpty()) {
+                String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?, ?)";
+                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                String sqlTonKho = "UPDATE TON_KHO SET SO_LUONG_TON = SO_LUONG_TON - ? WHERE MA_BIENTHE = ? AND MA_CN = ? AND SO_LUONG_TON >= ?";
+
+                try (PreparedStatement psCT = con.prepareStatement(sqlCT);
+                     PreparedStatement psSerial = con.prepareStatement(sqlSerial);
+                     PreparedStatement psTonKho = con.prepareStatement(sqlTonKho)) {
+
+                    for (Map<String, Object> item : products) {
+                        String serialNumber = (String) item.get("serialNumber");
+                        int maSP = (int) item.get("maSP");
+                        long donGia = (long) item.get("donGia");
+                        int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
+                        Integer maBienThe = (Integer) item.get("maBienThe");
+
+                        if (serialNumber != null && !serialNumber.trim().isEmpty()) {
+                            // Cập nhật KHO_SERIAL
+                            psSerial.setString(1, serialNumber);
+                            int updated = psSerial.executeUpdate();
+                            if (updated == 0) {
+                                throw new Exception("Serial " + serialNumber + " không khả dụng hoặc đã được đặt!");
+                            }
+                        } else {
+                            // Cập nhật TON_KHO
+                            if (maBienThe == null) {
+                                throw new Exception("Sản phẩm không có serial phải có mã biến thể để trừ kho!");
+                            }
+                            psTonKho.setInt(1, soLuong);
+                            psTonKho.setInt(2, maBienThe);
+                            psTonKho.setInt(3, maCN);
+                            psTonKho.setInt(4, soLuong);
+                            int updated = psTonKho.executeUpdate();
+                            if (updated == 0) {
+                                throw new Exception("Sản phẩm mã " + maSP + " không đủ tồn kho ở chi nhánh này!");
+                            }
+                        }
+
+                        // Insert chi tiết
+                        psCT.setInt(1, maHD);
+                        psCT.setInt(2, maSP);
+                        if (serialNumber != null && !serialNumber.trim().isEmpty()) {
+                            psCT.setString(3, serialNumber);
+                        } else {
+                            psCT.setNull(3, Types.VARCHAR);
+                        }
+                        psCT.setInt(4, soLuong);
+                        psCT.setLong(5, donGia);
+                        psCT.setLong(6, donGia * soLuong);
+                        psCT.executeUpdate();
+
+                        tongTienSP += donGia * soLuong;
+                    }
+                }
+            }
+
+            // 3. INSERT PHIEU_DICH_VU + DỊCH VỤ + SỬA CHỮA
+            long tongPhiDV = 0;
+            long tongTienLK = 0;
+            
+            boolean hasDV = dichVuIds != null && !dichVuIds.isEmpty();
+            boolean hasSC = newRepairs != null && !newRepairs.isEmpty();
+            
+            if (hasDV || hasSC) {
+                int maPhieuDV = -1;
+                String sqlPDV = "INSERT INTO PHIEU_DICH_VU (MA_HD, MA_NV_KYTHUAT) VALUES (?, ?)";
+                try (PreparedStatement psPDV = con.prepareStatement(sqlPDV, new String[]{"MA_PHIEU_DV"})) {
+                    psPDV.setInt(1, maHD);
+                    psPDV.setInt(2, maNV); // Use maNV as technical staff for now
+                    psPDV.executeUpdate();
+                    try (ResultSet rs = psPDV.getGeneratedKeys()) {
+                        if (rs.next()) maPhieuDV = rs.getInt(1);
+                    }
+                }
+
+                if (maPhieuDV > 0) {
+                    // 3.a Dịch vụ
+                    if (hasDV) {
+                        String sqlGetDV = "SELECT GIA_CUOC FROM DICH_VU WHERE MA_DV = ?";
+                        String sqlCTDV = "INSERT INTO CHI_TIET_SU_DUNG_DICH_VU (MA_PHIEU_DV, MA_DV, PHI_DICH_VU) VALUES (?, ?, ?)";
+                        try (PreparedStatement psGetDV = con.prepareStatement(sqlGetDV);
+                             PreparedStatement psCTDV = con.prepareStatement(sqlCTDV)) {
+                            for (int maDV : dichVuIds) {
+                                long giaCuoc = 0;
+                                psGetDV.setInt(1, maDV);
+                                try (ResultSet rs = psGetDV.executeQuery()) {
+                                    if (rs.next()) giaCuoc = rs.getLong("GIA_CUOC");
+                                }
+                                psCTDV.setInt(1, maPhieuDV);
+                                psCTDV.setInt(2, maDV);
+                                psCTDV.setLong(3, giaCuoc);
+                                psCTDV.executeUpdate();
+                                tongPhiDV += giaCuoc;
+                            }
+                        }
+                    }
+                    
+                    // 3.b Sửa chữa
+                    if (hasSC) {
+                        String sqlPSC = "INSERT INTO PHIEU_SUA_CHUA (MA_PHIEU_DV, MO_TA, GIA_CUOC) VALUES (?, ?, ?)";
+                        String sqlLK = "INSERT INTO CHI_TIET_SU_DUNG_LINH_KIEN (MA_PHIEU_SC, MA_SP, MO_TA, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, NULL, ?, ?, ?)";
+                        String sqlTonKhoLK = "UPDATE TON_KHO SET SO_LUONG_TON = SO_LUONG_TON - ? WHERE MA_BIENTHE = ? AND MA_CN = ? AND SO_LUONG_TON >= ?";
+                        
+                        try (PreparedStatement psPSC = con.prepareStatement(sqlPSC, new String[]{"MA_PHIEU_SC"});
+                             PreparedStatement psLK = con.prepareStatement(sqlLK);
+                             PreparedStatement psTonKhoLK = con.prepareStatement(sqlTonKhoLK)) {
+                             
+                            for (RepairTicketDraft draft : newRepairs) {
+                                psPSC.setInt(1, maPhieuDV);
+                                psPSC.setString(2, draft.moTa);
+                                psPSC.setLong(3, draft.giaCuoc);
+                                psPSC.executeUpdate();
+                                
+                                int maPhieuSC = -1;
+                                try (ResultSet rs = psPSC.getGeneratedKeys()) {
+                                    if (rs.next()) maPhieuSC = rs.getInt(1);
+                                }
+                                
+                                tongTienLK += draft.giaCuoc;
+                                
+                                if (maPhieuSC > 0 && draft.parts != null) {
+                                    for (RepairPartDraft part : draft.parts) {
+                                        // Update TON_KHO linh kiện
+                                        if (part.maBienThe > 0) {
+                                            psTonKhoLK.setInt(1, part.soLuong);
+                                            psTonKhoLK.setInt(2, part.maBienThe);
+                                            psTonKhoLK.setInt(3, maCN);
+                                            psTonKhoLK.setInt(4, part.soLuong);
+                                            int updated = psTonKhoLK.executeUpdate();
+                                            if (updated == 0) {
+                                                throw new Exception("Linh kiện " + part.tenSP + " không đủ tồn kho!");
+                                            }
+                                        }
+                                        
+                                        psLK.setInt(1, maPhieuSC);
+                                        psLK.setInt(2, part.maSP);
+                                        psLK.setInt(3, part.soLuong);
+                                        psLK.setLong(4, part.donGia);
+                                        long thanhTienLK = part.donGia * part.soLuong;
+                                        psLK.setLong(5, thanhTienLK);
+                                        psLK.executeUpdate();
+                                        
+                                        tongTienLK += thanhTienLK;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5. UPDATE TONG_TIEN cho HOADON
+            long tongTien = tongTienSP + tongPhiDV + tongTienLK;
+            String sqlUpdate = "UPDATE HOA_DON SET TONG_TIEN = ?, THANH_TIEN = ? WHERE MA_HD = ?";
+            try (PreparedStatement psUpd = con.prepareStatement(sqlUpdate)) {
+                psUpd.setLong(1, tongTien);
+                psUpd.setLong(2, tongTien);
+                psUpd.setInt(3, maHD);
+                psUpd.executeUpdate();
+            }
+
+            con.commit();
+            return maHD;
+
+        } catch (Exception e) {
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            throw e;
+        } finally {
+            if (con != null) {
+                try { con.setAutoCommit(true); con.close(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+        }
     }
 }

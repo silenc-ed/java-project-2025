@@ -85,7 +85,7 @@ public class VariantViewPanel extends JPanel {
         centerPanel.add(txtSearch, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"", "Mã biến thể", "Tên biến thể (Màu/RAM/ROM)", "Giá cộng thêm", "Số lượng tồn", "Thao tác"};
+        String[] columns = {"", "Mã biến thể", "Tên biến thể (Màu/RAM/ROM)", "Giá bán", "Số lượng tồn", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public Class<?> getColumnClass(int c) {
                 return c == 0 ? Boolean.class : super.getColumnClass(c);
@@ -141,32 +141,20 @@ public class VariantViewPanel extends JPanel {
         tableModel.setRowCount(0);
         try {
             java.util.List<Model.BienTheSanPham> list = Controller.SanPhamDAO.getBienTheByMaSp(productId);
-            boolean hasData = false;
             for (Model.BienTheSanPham bt : list) {
-                hasData = true;
+                int tonKho = Controller.BienTheSanPhamDAO.getTonKhoByMaBienThe(bt.getMaBienThe());
                 tableModel.addRow(new Object[]{
                     Boolean.FALSE,
                     String.valueOf(bt.getMaBienThe()),
                     bt.getTenBienThe(),
                     new java.text.DecimalFormat("#,###đ").format(bt.getGiaBan()),
-                    0, // Số lượng tồn (mock or load from somewhere else)
+                    tonKho,
                     bt.getMaBienThe()
                 });
             }
-            if (!hasData) loadSampleVariants();
         } catch (Exception e) {
             e.printStackTrace();
-            loadSampleVariants();
-        }
-    }
-
-    private void loadSampleVariants() {
-        Object[][] samples = {
-            {"VAR01", "Màu Bạc - 16GB RAM - 512GB SSD", "0đ", 50},
-            {"VAR02", "Màu Đen - 32GB RAM - 1TB SSD", "+5,000,000đ", 20}
-        };
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{ Boolean.FALSE, row[0], row[1], row[2], row[3], -1 });
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -271,24 +259,79 @@ public class VariantViewPanel extends JPanel {
     }
 
     private void handleDeleteSelected() {
+        int hasChecked = 0;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
+            if (checked != null && checked) {
+                hasChecked++;
+            }
+        }
+        if (hasChecked == 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một biến thể để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến biến thể đó\n" +
+            "(bao gồm tất cả các mã serial và số lượng tồn kho liên quan)!\n\n" +
+            "Bạn có chắc chắn muốn xóa không?",
+            "Cảnh báo xóa dữ liệu liên quan",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int successCount = 0;
+        int failedCount = 0;
+        String failReason = "";
+
         for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
             Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
             if (checked != null && checked) {
                 int modelRow = dataTable.convertRowIndexToModel(i);
                 int id = -1;
-                try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().replace("VAR", "")); } catch (Exception e) {}
+                try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().replace("VAR", "").trim()); } catch (Exception e) {}
                 
                 if (id != -1) {
                     try {
-                        Controller.BienTheSanPhamDAO.deleteBienTheSanPham(id);
+                        boolean success = Controller.BienTheSanPhamDAO.deleteBienTheSanPham(id);
+                        if (success) {
+                            successCount++;
+                            tableModel.removeRow(i);
+                        } else {
+                            failedCount++;
+                        }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        failedCount++;
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null && errorMsg.contains("ORA-02292")) {
+                            failReason = "Không thể xóa Biến thể này vì dữ liệu đã nằm trong Hóa đơn hoặc Phiếu nhập.";
+                        } else {
+                            failReason = errorMsg;
+                        }
                     }
+                } else {
+                    successCount++;
+                    tableModel.removeRow(i);
                 }
-                tableModel.removeRow(i);
             }
         }
         loadVariantsForProduct(currentProductId);
+
+        if (failedCount > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Lỗi bảo vệ dữ liệu:\n\n- Số lượng xóa thành công: " + successCount + " mục.\n- Số lượng thất bại: " + failedCount + " mục.\n\nNguyên nhân thất bại:\n" + failReason,
+                "Từ chối xóa dữ liệu",
+                JOptionPane.WARNING_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");
+        }
     }
 
     // Dialog class for Variant
@@ -334,9 +377,9 @@ public class VariantViewPanel extends JPanel {
             ));
             content.add(txtTen, gbc);
 
-            // Giá cộng thêm
+            // Giá bán
             gbc.gridy = 2; gbc.insets = new Insets(0, 0, 4, 0);
-            JLabel lblGia = new JLabel("Giá cộng thêm (đ)");
+            JLabel lblGia = new JLabel("Giá bán (đ)");
             lblGia.setFont(labelFont);
             content.add(lblGia, gbc);
 

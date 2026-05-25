@@ -69,11 +69,52 @@ public class LoaiSanPhamDAO {
     }
 
     public static boolean deleteLoaiSanPham(int maLsp) throws Exception {
-        String sql = "DELETE FROM LOAI_SAN_PHAM WHERE MA_LSP = ?";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, maLsp);
-            return ps.executeUpdate() > 0;
+        String sqlKs = "DELETE FROM KHO_SERIAL WHERE MA_BIENTHE IN (SELECT BT.MA_BIENTHE FROM BIEN_THE_SAN_PHAM BT JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP WHERE SP.MA_LSP = ?)";
+        String sqlTk = "DELETE FROM TON_KHO WHERE MA_BIENTHE IN (SELECT BT.MA_BIENTHE FROM BIEN_THE_SAN_PHAM BT JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP WHERE SP.MA_LSP = ?)";
+        String sqlBt = "DELETE FROM BIEN_THE_SAN_PHAM WHERE MA_SP IN (SELECT MA_SP FROM SAN_PHAM WHERE MA_LSP = ?)";
+        String sqlSp = "DELETE FROM SAN_PHAM WHERE MA_LSP = ?";
+        String sqlLsp = "DELETE FROM LOAI_SAN_PHAM WHERE MA_LSP = ?";
+        
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            try (PreparedStatement psKs = con.prepareStatement(sqlKs)) {
+                psKs.setInt(1, maLsp);
+                psKs.executeUpdate();
+            }
+            
+            try (PreparedStatement psTk = con.prepareStatement(sqlTk)) {
+                psTk.setInt(1, maLsp);
+                psTk.executeUpdate();
+            }
+            
+            try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
+                psBt.setInt(1, maLsp);
+                psBt.executeUpdate();
+            }
+            
+            try (PreparedStatement psSp = con.prepareStatement(sqlSp)) {
+                psSp.setInt(1, maLsp);
+                psSp.executeUpdate();
+            }
+            
+            try (PreparedStatement psLsp = con.prepareStatement(sqlLsp)) {
+                psLsp.setInt(1, maLsp);
+                int count = psLsp.executeUpdate();
+                con.commit();
+                return count > 0;
+            }
+        } catch (Exception ex) {
+            if (con != null) {
+                try { con.rollback(); } catch (Exception ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (Exception ignored) {}
+            }
         }
     }
 }

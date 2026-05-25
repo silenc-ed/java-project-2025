@@ -335,64 +335,60 @@ public class ChamCongDAO {
     public static boolean chamCong(long maLLV, Timestamp gioVao, Timestamp gioRa,
                                     String trangThai, String ghiChu) {
         try (Connection con = ConnectionUtils.getMyConnection()) {
-            // Kiểm tra đã tồn tại chưa
-            long maCC = -1;
-            try (PreparedStatement ps = con.prepareStatement(
-                    "SELECT MA_CC FROM CHAM_CONG WHERE MA_LLV = ?")) {
-                ps.setLong(1, maLLV);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) maCC = rs.getLong(1);
+            boolean hasMaNV = false;
+            try (ResultSet rsCols = con.getMetaData().getColumns(null, null, "CHAM_CONG", "MA_NV")) {
+                if (rsCols.next()) {
+                    hasMaNV = true;
                 }
+            } catch (Exception colEx) {
+                // ignore
             }
 
-            if (maCC != -1) {
-                // UPDATE
-                String sql = "UPDATE CHAM_CONG SET GIO_VAO_THUC_TE = ?, GIO_RA_THUC_TE = ?, " +
-                             "TRANG_THAI = ?, GHI_CHU = ? WHERE MA_CC = ?";
-                try (PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setTimestamp(1, gioVao);
-                    ps.setTimestamp(2, gioRa);
-                    ps.setString(3, trangThai);
-                    ps.setString(4, ghiChu);
-                    ps.setLong(5, maCC);
+            if (hasMaNV) {
+                String sqlMerge = 
+                    "MERGE INTO CHAM_CONG target " +
+                    "USING (SELECT ? AS MA_LLV FROM dual) source " +
+                    "ON (target.MA_LLV = source.MA_LLV) " +
+                    "WHEN MATCHED THEN " +
+                    "    UPDATE SET GIO_VAO_THUC_TE = ?, GIO_RA_THUC_TE = ?, TRANG_THAI = ?, GHI_CHU = ? " +
+                    "WHEN NOT MATCHED THEN " +
+                    "    INSERT (MA_LLV, MA_NV, GIO_VAO_THUC_TE, GIO_RA_THUC_TE, TRANG_THAI, GHI_CHU) " +
+                    "    VALUES (source.MA_LLV, " +
+                    "        (SELECT MA_NV FROM LICH_LAM_VIEC WHERE MA_LLV = source.MA_LLV), " +
+                    "        ?, ?, ?, ?)";
+                try (PreparedStatement ps = con.prepareStatement(sqlMerge)) {
+                    ps.setLong(1, maLLV);
+                    ps.setTimestamp(2, gioVao);
+                    ps.setTimestamp(3, gioRa);
+                    ps.setString(4, trangThai);
+                    ps.setString(5, ghiChu);
+                    ps.setTimestamp(6, gioVao);
+                    ps.setTimestamp(7, gioRa);
+                    ps.setString(8, trangThai);
+                    ps.setString(9, ghiChu);
                     return ps.executeUpdate() > 0;
                 }
             } else {
-                // INSERT
-                boolean hasMaNV = false;
-                try (ResultSet rsCols = con.getMetaData().getColumns(null, null, "CHAM_CONG", "MA_NV")) {
-                    if (rsCols.next()) {
-                        hasMaNV = true;
-                    }
-                } catch (Exception colEx) {
-                    // ignore
-                }
-
-                if (hasMaNV) {
-                    // Schema has MA_NV in CHAM_CONG
-                    String sql = "INSERT INTO CHAM_CONG (MA_LLV, MA_NV, GIO_VAO_THUC_TE, GIO_RA_THUC_TE, " +
-                                 "TRANG_THAI, GHI_CHU) VALUES (?, (SELECT MA_NV FROM LICH_LAM_VIEC WHERE MA_LLV = ?), ?, ?, ?, ?)";
-                    try (PreparedStatement ps = con.prepareStatement(sql)) {
-                        ps.setLong(1, maLLV);
-                        ps.setLong(2, maLLV);
-                        ps.setTimestamp(3, gioVao);
-                        ps.setTimestamp(4, gioRa);
-                        ps.setString(5, trangThai);
-                        ps.setString(6, ghiChu);
-                        return ps.executeUpdate() > 0;
-                    }
-                } else {
-                    // Original schema (no MA_NV in CHAM_CONG)
-                    String sql = "INSERT INTO CHAM_CONG (MA_LLV, GIO_VAO_THUC_TE, GIO_RA_THUC_TE, " +
-                                 "TRANG_THAI, GHI_CHU) VALUES (?, ?, ?, ?, ?)";
-                    try (PreparedStatement ps = con.prepareStatement(sql)) {
-                        ps.setLong(1, maLLV);
-                        ps.setTimestamp(2, gioVao);
-                        ps.setTimestamp(3, gioRa);
-                        ps.setString(4, trangThai);
-                        ps.setString(5, ghiChu);
-                        return ps.executeUpdate() > 0;
-                    }
+                String sqlMerge = 
+                    "MERGE INTO CHAM_CONG target " +
+                    "USING (SELECT ? AS MA_LLV FROM dual) source " +
+                    "ON (target.MA_LLV = source.MA_LLV) " +
+                    "WHEN MATCHED THEN " +
+                    "    UPDATE SET GIO_VAO_THUC_TE = ?, GIO_RA_THUC_TE = ?, TRANG_THAI = ?, GHI_CHU = ? " +
+                    "WHEN NOT MATCHED THEN " +
+                    "    INSERT (MA_LLV, GIO_VAO_THUC_TE, GIO_RA_THUC_TE, TRANG_THAI, GHI_CHU) " +
+                    "    VALUES (source.MA_LLV, ?, ?, ?, ?)";
+                try (PreparedStatement ps = con.prepareStatement(sqlMerge)) {
+                    ps.setLong(1, maLLV);
+                    ps.setTimestamp(2, gioVao);
+                    ps.setTimestamp(3, gioRa);
+                    ps.setString(4, trangThai);
+                    ps.setString(5, ghiChu);
+                    ps.setTimestamp(6, gioVao);
+                    ps.setTimestamp(7, gioRa);
+                    ps.setString(8, trangThai);
+                    ps.setString(9, ghiChu);
+                    return ps.executeUpdate() > 0;
                 }
             }
         } catch (Exception e) { e.printStackTrace(); return false; }

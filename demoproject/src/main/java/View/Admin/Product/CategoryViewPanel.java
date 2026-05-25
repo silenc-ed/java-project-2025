@@ -189,12 +189,9 @@ public class CategoryViewPanel extends JPanel {
         tableModel.setRowCount(0);
         String time = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
         lblLastUpdate.setText("Cập nhật lúc: " + time);
-
         try {
             List<Model.LoaiSanPham> list = Controller.LoaiSanPhamDAO.getAllLoaiSanPham();
-            boolean hasData = false;
             for (Model.LoaiSanPham lsp : list) {
-                hasData = true;
                 tableModel.addRow(new Object[]{
                     Boolean.FALSE,
                     String.valueOf(lsp.getMaLsp()),
@@ -204,20 +201,9 @@ public class CategoryViewPanel extends JPanel {
                     lsp.getMaLsp()
                 });
             }
-            if (!hasData) loadSampleCategories();
         } catch (Exception e) {
-            loadSampleCategories();
-        }
-    }
-
-    private void loadSampleCategories() {
-        Object[][] samples = {
-            {1, "Laptop", "Các dòng máy tính xách tay cao cấp", 20},
-            {2, "Điện thoại", "Điện thoại thông minh Android/iOS", 15},
-            {3, "Tai nghe", "Tai nghe không dây", 30}
-        };
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{ Boolean.FALSE, String.valueOf(row[0]), row[1], row[2], row[3], -1 });
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -276,11 +262,78 @@ public class CategoryViewPanel extends JPanel {
     }
 
     private void handleDeleteSelected() {
+        int hasChecked = 0;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
+            if (checked != null && checked) {
+                hasChecked++;
+            }
+        }
+        if (hasChecked == 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một loại sản phẩm để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến loại sản phẩm đó\n" +
+            "(bao gồm tất cả sản phẩm, mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
+            "Bạn có chắc chắn muốn xóa không?",
+            "Cảnh báo xóa dữ liệu liên quan",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int successCount = 0;
+        int failedCount = 0;
+        String failReason = "";
+
         for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
             Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
             if (checked != null && checked) {
-                tableModel.removeRow(i);
+                int modelRow = dataTable.convertRowIndexToModel(i);
+                int id = -1;
+                try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().trim()); } catch (Exception e) {}
+                
+                if (id != -1) {
+                    try {
+                        boolean success = Controller.LoaiSanPhamDAO.deleteLoaiSanPham(id);
+                        if (success) {
+                            successCount++;
+                            tableModel.removeRow(i);
+                        } else {
+                            failedCount++;
+                        }
+                    } catch (Exception e) {
+                        failedCount++;
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null && errorMsg.contains("ORA-02292")) {
+                            failReason = "Không thể xóa Loại sản phẩm này vì vẫn còn Sản phẩm bên trong (Vui lòng xóa sản phẩm trước).";
+                        } else {
+                            failReason = errorMsg;
+                        }
+                    }
+                } else {
+                    successCount++;
+                    tableModel.removeRow(i);
+                }
             }
+        }
+        refreshData();
+
+        if (failedCount > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Lỗi bảo vệ dữ liệu:\n\n- Số lượng xóa thành công: " + successCount + " mục.\n- Số lượng thất bại: " + failedCount + " mục.\n\nNguyên nhân thất bại:\n" + failReason,
+                "Từ chối xóa dữ liệu",
+                JOptionPane.WARNING_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");
         }
     }
 

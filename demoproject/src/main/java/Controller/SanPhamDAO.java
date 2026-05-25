@@ -167,7 +167,7 @@ public class SanPhamDAO {
     }
 
     public static boolean addSanPham(SanPham sp, double giaBan) throws Exception {
-        String sqlSp = "INSERT INTO SAN_PHAM (MA_LSP, TEN_SP, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlSp = "INSERT INTO SAN_PHAM (MA_LSP, TEN_SP, TRANG_THAI, SO_LUONG_DA_BAN, DON_VI_TINH, MO_TA, CO_QUAN_LY_SERIAL) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlBt = "INSERT INTO BIEN_THE_SAN_PHAM (MA_SP, TEN_BIENTHE, GIA_BAN, TRANG_THAI) VALUES (?, ?, ?, ?)";
         
         Connection con = null;
@@ -183,6 +183,7 @@ public class SanPhamDAO {
                 psSp.setInt(4, sp.getSoLuongDaBan());
                 psSp.setString(5, sp.getDonViTinh());
                 psSp.setString(6, sp.getMoTa());
+                psSp.setInt(7, sp.getCoQuanLySerial());
                 psSp.executeUpdate();
                 
                 try (ResultSet rs = psSp.getGeneratedKeys()) {
@@ -199,7 +200,7 @@ public class SanPhamDAO {
             
             try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
                 psBt.setInt(1, maSp);
-                psBt.setString(2, sp.getTenSp());
+                psBt.setString(2, sp.getTenSp() + " default");
                 psBt.setDouble(3, giaBan);
                 psBt.setString(4, sp.getTrangThai());
                 psBt.executeUpdate();
@@ -220,7 +221,7 @@ public class SanPhamDAO {
     }
 
     public static boolean updateSanPham(SanPham sp, double giaBan) throws Exception {
-        String sqlSp = "UPDATE SAN_PHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ? WHERE MA_SP = ?";
+        String sqlSp = "UPDATE SAN_PHAM SET MA_LSP = ?, TEN_SP = ?, TRANG_THAI = ?, SO_LUONG_DA_BAN = ?, DON_VI_TINH = ?, MO_TA = ?, CO_QUAN_LY_SERIAL = ? WHERE MA_SP = ?";
         String sqlBt = "UPDATE BIEN_THE_SAN_PHAM SET GIA_BAN = ?, TRANG_THAI = ? WHERE MA_SP = ?";
         
         Connection con = null;
@@ -235,7 +236,8 @@ public class SanPhamDAO {
                 psSp.setInt(4, sp.getSoLuongDaBan());
                 psSp.setString(5, sp.getDonViTinh());
                 psSp.setString(6, sp.getMoTa());
-                psSp.setInt(7, sp.getMaSp());
+                psSp.setInt(7, sp.getCoQuanLySerial());
+                psSp.setInt(8, sp.getMaSp());
                 psSp.executeUpdate();
             }
             
@@ -261,6 +263,8 @@ public class SanPhamDAO {
     }
 
     public static boolean deleteSanPham(int maSp) throws Exception {
+        String sqlKs = "DELETE FROM KHO_SERIAL WHERE MA_BIENTHE IN (SELECT MA_BIENTHE FROM BIEN_THE_SAN_PHAM WHERE MA_SP = ?)";
+        String sqlTk = "DELETE FROM TON_KHO WHERE MA_BIENTHE IN (SELECT MA_BIENTHE FROM BIEN_THE_SAN_PHAM WHERE MA_SP = ?)";
         String sqlBt = "DELETE FROM BIEN_THE_SAN_PHAM WHERE MA_SP = ?";
         String sqlSp = "DELETE FROM SAN_PHAM WHERE MA_SP = ?";
         
@@ -269,6 +273,16 @@ public class SanPhamDAO {
             con = ConnectionUtils.getMyConnection();
             con.setAutoCommit(false);
             
+            try (PreparedStatement psKs = con.prepareStatement(sqlKs)) {
+                psKs.setInt(1, maSp);
+                psKs.executeUpdate();
+            }
+            
+            try (PreparedStatement psTk = con.prepareStatement(sqlTk)) {
+                psTk.setInt(1, maSp);
+                psTk.executeUpdate();
+            }
+            
             try (PreparedStatement psBt = con.prepareStatement(sqlBt)) {
                 psBt.setInt(1, maSp);
                 psBt.executeUpdate();
@@ -276,11 +290,10 @@ public class SanPhamDAO {
             
             try (PreparedStatement psSp = con.prepareStatement(sqlSp)) {
                 psSp.setInt(1, maSp);
-                psSp.executeUpdate();
+                int count = psSp.executeUpdate();
+                con.commit();
+                return count > 0;
             }
-            
-            con.commit();
-            return true;
         } catch (Exception ex) {
             if (con != null) {
                 try { con.rollback(); } catch (Exception ignored) {}

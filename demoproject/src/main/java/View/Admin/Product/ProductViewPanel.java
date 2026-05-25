@@ -147,10 +147,8 @@ public class ProductViewPanel extends JPanel {
 
         try {
             List<Model.SanPham> list = Controller.SanPhamDAO.getAllSanPham();
-            boolean hasData = false;
             for (Model.SanPham sp : list) {
                 if (sp.getMaLsp() == categoryId) {
-                    hasData = true;
                     tableModel.addRow(new Object[]{
                         Boolean.FALSE,
                         String.valueOf(sp.getMaSp()),
@@ -163,20 +161,9 @@ public class ProductViewPanel extends JPanel {
                     });
                 }
             }
-            if (!hasData) loadSampleProducts();
         } catch (Exception e) {
-            loadSampleProducts();
-        }
-    }
-
-    private void loadSampleProducts() {
-        DecimalFormat df = new DecimalFormat("#,###đ");
-        Object[][] samples = {
-            {"SP01", "Laptop Dell XPS 13", "Laptop cao cấp", 15, 25000000.0, "Đang kinh doanh"},
-            {"SP02", "Laptop ThinkPad", "Laptop văn phòng", 8, 20000000.0, "Đang kinh doanh"}
-        };
-        for (Object[] row : samples) {
-            tableModel.addRow(new Object[]{ Boolean.FALSE, row[0], row[1], row[2], row[3], df.format(row[4]), row[5], -1 });
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối cơ sở dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -301,24 +288,79 @@ public class ProductViewPanel extends JPanel {
     }
 
     private void handleDeleteSelected() {
+        int hasChecked = 0;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
+            if (checked != null && checked) {
+                hasChecked++;
+            }
+        }
+        if (hasChecked == 0) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất một sản phẩm để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến sản phẩm đó\n" +
+            "(bao gồm tất cả mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
+            "Bạn có chắc chắn muốn xóa không?",
+            "Cảnh báo xóa dữ liệu liên quan",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int successCount = 0;
+        int failedCount = 0;
+        String failReason = "";
+
         for (int i = tableModel.getRowCount() - 1; i >= 0; i--) {
             Boolean checked = (Boolean) tableModel.getValueAt(i, 0);
             if (checked != null && checked) {
                 int modelRow = dataTable.convertRowIndexToModel(i);
                 int id = -1;
-                try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().replace("SP", "")); } catch (Exception e) {}
+                try { id = Integer.parseInt(tableModel.getValueAt(modelRow, 1).toString().replace("SP", "").trim()); } catch (Exception e) {}
                 
                 if (id != -1) {
                     try {
-                        Controller.SanPhamDAO.deleteSanPham(id);
+                        boolean success = Controller.SanPhamDAO.deleteSanPham(id);
+                        if (success) {
+                            successCount++;
+                            tableModel.removeRow(i);
+                        } else {
+                            failedCount++;
+                        }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        failedCount++;
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null && errorMsg.contains("ORA-02292")) {
+                            failReason = "Không thể xóa Sản phẩm này vì dữ liệu đã nằm trong Hóa đơn hoặc Phiếu nhập.";
+                        } else {
+                            failReason = errorMsg;
+                        }
                     }
+                } else {
+                    successCount++;
+                    tableModel.removeRow(i);
                 }
-                tableModel.removeRow(i);
             }
         }
         loadProductsForCategory(currentCategoryId);
+
+        if (failedCount > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Lỗi bảo vệ dữ liệu:\n\n- Số lượng xóa thành công: " + successCount + " mục.\n- Số lượng thất bại: " + failedCount + " mục.\n\nNguyên nhân thất bại:\n" + failReason,
+                "Từ chối xóa dữ liệu",
+                JOptionPane.WARNING_MESSAGE
+            );
+        } else {
+            JOptionPane.showMessageDialog(this, "Đã xóa thành công tất cả các mục đã chọn!");
+        }
     }
 
     // Dialog class for Product
@@ -335,7 +377,7 @@ public class ProductViewPanel extends JPanel {
 
         public ProductDialog(Window owner, String title) {
             super(owner, title, Dialog.ModalityType.APPLICATION_MODAL);
-            setSize(460, 490);
+            setSize(480, 580);
             setLocationRelativeTo(owner);
             setLayout(new BorderLayout());
             setResizable(false);
@@ -377,6 +419,12 @@ public class ProductViewPanel extends JPanel {
                 content.add(inputs[i], gbc);
             }
 
+            // Vô hiệu hóa nhập thủ công số lượng đã bán (chỉ đọc)
+            txtSoLuongDaBan.setEditable(false);
+            txtSoLuongDaBan.setFocusable(false);
+            txtSoLuongDaBan.setBackground(new Color(241, 245, 249));
+            txtSoLuongDaBan.setForeground(new Color(100, 116, 139));
+
             // Trạng thái
             gbc.gridy = fields.length * 2; gbc.insets = new Insets(6, 0, 4, 0);
             JLabel lblStatus = new JLabel("Trạng thái");
@@ -388,10 +436,7 @@ public class ProductViewPanel extends JPanel {
             cbTrangThai.setPreferredSize(new Dimension(400, 35));
             content.add(cbTrangThai, gbc);
 
-            JScrollPane scrollPane = new JScrollPane(content);
-            scrollPane.setBorder(null);
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            add(scrollPane, BorderLayout.CENTER);
+            add(content, BorderLayout.CENTER);
 
             // ---- Footer ----
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));

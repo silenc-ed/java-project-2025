@@ -131,24 +131,35 @@ public class KhachHangDAO {
     }
 
     public static String toggleTrangThaiTK(long maKh) {
-        String sqlGet = "SELECT TRANG_THAI FROM TAI_KHOAN WHERE MA_KH = ?";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sqlGet)) {
-            ps.setLong(1, maKh);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
-                String current = rs.getString("TRANG_THAI");
-                String next = "Hoạt động".equals(current) ? "Bị khóa" : "Hoạt động";
-                String sqlUpd = "UPDATE TAI_KHOAN SET TRANG_THAI = ? WHERE MA_KH = ?";
-                try (PreparedStatement ps2 = con.prepareStatement(sqlUpd)) {
-                    ps2.setString(1, next);
-                    ps2.setLong(2, maKh);
-                    ps2.executeUpdate();
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            String sqlGet = "SELECT TRANG_THAI FROM TAI_KHOAN WHERE MA_KH = ? FOR UPDATE";
+            try (PreparedStatement ps = con.prepareStatement(sqlGet)) {
+                ps.setLong(1, maKh);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        return null;
+                    }
+                    String current = rs.getString("TRANG_THAI");
+                    String next = "Hoạt động".equals(current) ? "Bị khóa" : "Hoạt động";
+                    String sqlUpd = "UPDATE TAI_KHOAN SET TRANG_THAI = ? WHERE MA_KH = ?";
+                    try (PreparedStatement ps2 = con.prepareStatement(sqlUpd)) {
+                        ps2.setString(1, next);
+                        ps2.setLong(2, maKh);
+                        ps2.executeUpdate();
+                    }
+                    con.commit();
+                    return next;
                 }
-                return next;
             }
         } catch (Exception e) {
             e.printStackTrace();
+            if (con != null) try { con.rollback(); } catch (Exception ex) {}
+        } finally {
+            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ex) {}
         }
         return null;
     }
