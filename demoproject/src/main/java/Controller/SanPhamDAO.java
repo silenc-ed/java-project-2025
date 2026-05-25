@@ -144,6 +144,57 @@ public class SanPhamDAO {
         return list;
     }
 
+    public static List<SanPham> getRandomSanPham(int limit) {
+        List<SanPham> list = new ArrayList<>();
+        String sql = "SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) ORDER BY DBMS_RANDOM.VALUE FETCH FIRST ? ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSanPham(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public static List<SanPham> getTopSellingSanPham(int limit) {
+        List<SanPham> list = new ArrayList<>();
+        String sql = "SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) ORDER BY SO_LUONG_DA_BAN DESC FETCH FIRST ? ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSanPham(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public static List<SanPham> getCheapestSanPham(int limit) {
+        List<SanPham> list = new ArrayList<>();
+        String sql = "SELECT * FROM (SELECT SP.*, (SELECT NVL(MIN(GIA_BAN), 0) FROM BIEN_THE_SAN_PHAM BT WHERE BT.MA_SP = SP.MA_SP AND BT.TRANG_THAI != 'Ngừng kinh doanh') AS GIA_BAN FROM SAN_PHAM SP) WHERE GIA_BAN > 0 ORDER BY GIA_BAN ASC FETCH FIRST ? ROWS ONLY";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSanPham(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     private static SanPham mapResultSetToSanPham(ResultSet rs) throws Exception {
         SanPham sp = new SanPham();
         sp.setMaSp(rs.getInt("MA_SP"));

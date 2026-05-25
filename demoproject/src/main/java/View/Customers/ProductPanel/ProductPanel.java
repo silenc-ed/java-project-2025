@@ -144,7 +144,7 @@ public class ProductPanel extends javax.swing.JPanel {
                 if (text.isEmpty()) {
                     javax.swing.SwingUtilities.invokeLater(() -> {
                         suggestionPopup.setVisible(false);
-                        updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+                        setupProductGrid();
                     });
                     return;
                 }
@@ -236,38 +236,106 @@ public class ProductPanel extends javax.swing.JPanel {
     }
 
     private void setupProductGrid() {
-        java.util.List<Model.SanPham> products = Controller.SanPhamDAO.getAllSanPham();
-        updateProductGrid(products, "  GỢI Ý HÔM NAY");
+        // We will build a multi-section view
+        java.util.List<Model.SanPham> randomProducts = Controller.SanPhamDAO.getRandomSanPham(5);
+        java.util.List<Model.SanPham> topSellingProducts = Controller.SanPhamDAO.getTopSellingSanPham(5);
+        java.util.List<Model.SanPham> cheapestProducts = Controller.SanPhamDAO.getCheapestSanPham(5);
+        
+        // Build sections
+        java.util.Map<String, java.util.List<Model.SanPham>> sections = new java.util.LinkedHashMap<>();
+        sections.put("  GỢI Ý DÀNH CHO BẠN", randomProducts);
+        sections.put("  TOP SẢN PHẨM BÁN CHẠY", topSellingProducts);
+        sections.put("  SĂN HÀNG SIÊU RẺ", cheapestProducts);
+        
+        updateProductGridMultiSection(sections);
     }
 
     private void updateProductGrid(java.util.List<Model.SanPham> products, String title) {
-        // Create grid panel with WrapLayout
-        javax.swing.JPanel gridPanel = new javax.swing.JPanel(
-            new View.Customers.ProductPanel.WrapLayout(java.awt.FlowLayout.LEFT, 15, 15)
-        );
-        gridPanel.setBackground(BG_PRIMARY);
+        java.util.Map<String, java.util.List<Model.SanPham>> singleSection = new java.util.LinkedHashMap<>();
+        singleSection.put(title, products);
+        updateProductGridMultiSection(singleSection);
+    }
 
-        if (products != null) {
-            for (Model.SanPham p : products) {
-                View.Customers.ProductPanel.ProductCard card = new View.Customers.ProductPanel.ProductCard();
-                card.setData(p);
-                
-                // Bắt sự kiện click để chuyển sang InfoProductPanel
-                card.setOnClickListener(sp -> {
-                    java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
-                    if (window instanceof View.Customers.Main) {
-                        View.Customers.ProductPanel.InfoProductPanel infoPanel = new View.Customers.ProductPanel.InfoProductPanel();
-                        infoPanel.setData(sp);
-                        ((View.Customers.Main) window).showForm(infoPanel);
-                    }
-                });
-                
-                gridPanel.add(card);
+    private void updateProductGridMultiSection(java.util.Map<String, java.util.List<Model.SanPham>> sections) {
+        // Create a vertical wrapper for all content (Banner + Sections)
+        javax.swing.JPanel contentWrapper = new javax.swing.JPanel();
+        contentWrapper.setLayout(new javax.swing.BoxLayout(contentWrapper, javax.swing.BoxLayout.Y_AXIS));
+        contentWrapper.setBackground(BG_PRIMARY);
+
+        // Remove BannerPanel from its old parent if it has one
+        if (BannerPanel.getParent() != null) {
+            BannerPanel.getParent().remove(BannerPanel);
+        }
+        
+        // Add Banner to the wrapper
+        contentWrapper.add(BannerPanel);
+
+        // Add sections to the wrapper
+        for (java.util.Map.Entry<String, java.util.List<Model.SanPham>> entry : sections.entrySet()) {
+            String title = entry.getKey();
+            java.util.List<Model.SanPham> products = entry.getValue();
+
+            // Create grid panel with WrapLayout
+            javax.swing.JPanel gridPanel = new javax.swing.JPanel(
+                new View.Customers.ProductPanel.WrapLayout(java.awt.FlowLayout.LEFT, 15, 15)
+            );
+            gridPanel.setBackground(BG_PRIMARY);
+
+            if (products != null) {
+                for (Model.SanPham p : products) {
+                    View.Customers.ProductPanel.ProductCard card = new View.Customers.ProductPanel.ProductCard();
+                    card.setData(p);
+                    
+                    // Bắt sự kiện click để chuyển sang InfoProductPanel
+                    card.setOnClickListener(sp -> {
+                        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+                        if (window instanceof View.Customers.Main) {
+                            View.Customers.ProductPanel.InfoProductPanel infoPanel = new View.Customers.ProductPanel.InfoProductPanel();
+                            infoPanel.setData(sp);
+                            ((View.Customers.Main) window).showForm(infoPanel);
+                        }
+                    });
+                    
+                    gridPanel.add(card);
+                }
             }
+
+            // Add section title
+            javax.swing.JLabel sectionTitle = new javax.swing.JLabel(title) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    // Draw gradient bottom border
+                    int w = getWidth();
+                    int h = getHeight();
+                    java.awt.GradientPaint gp = new java.awt.GradientPaint(
+                        0, h - 3, ACCENT_PRIMARY, w, h - 3, ACCENT_SECONDARY);
+                    g2.setPaint(gp);
+                    g2.fillRect(0, h - 3, w, 3);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            sectionTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            sectionTitle.setForeground(ACCENT_PRIMARY);
+            sectionTitle.setPreferredSize(new java.awt.Dimension(200, 44));
+            sectionTitle.setBorder(new EmptyBorder(8, 4, 8, 4));
+            sectionTitle.setOpaque(false);
+            sectionTitle.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            
+            javax.swing.JPanel titlePanel = new javax.swing.JPanel(new java.awt.BorderLayout());
+            titlePanel.setBackground(BG_PRIMARY);
+            titlePanel.add(sectionTitle, java.awt.BorderLayout.CENTER);
+            // Limit height so it doesn't expand vertically in BoxLayout
+            titlePanel.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 44));
+
+            contentWrapper.add(titlePanel);
+            contentWrapper.add(gridPanel);
         }
 
-        // Wrap in scroll pane
-        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(gridPanel);
+        // Wrap the entire contentWrapper in a scroll pane
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(contentWrapper);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -275,51 +343,21 @@ public class ProductPanel extends javax.swing.JPanel {
         scrollPane.setBackground(BG_PRIMARY);
         scrollPane.getViewport().setBackground(BG_PRIMARY);
 
-        // Recalculate wrap on resize
+        // Recalculate layout on resize
         scrollPane.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
                 javax.swing.SwingUtilities.invokeLater(() -> {
-                    gridPanel.revalidate();
-                    gridPanel.repaint();
+                    contentWrapper.revalidate();
+                    contentWrapper.repaint();
                 });
             }
         });
 
-        // Add section title
-        javax.swing.JLabel sectionTitle = new javax.swing.JLabel(title) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Draw gradient bottom border
-                int w = getWidth();
-                int h = getHeight();
-                java.awt.GradientPaint gp = new java.awt.GradientPaint(
-                    0, h - 3, ACCENT_PRIMARY, w, h - 3, ACCENT_SECONDARY);
-                g2.setPaint(gp);
-                g2.fillRect(0, h - 3, w, 3);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        sectionTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        sectionTitle.setForeground(ACCENT_PRIMARY);
-        sectionTitle.setPreferredSize(new java.awt.Dimension(0, 44));
-        sectionTitle.setBorder(new EmptyBorder(8, 4, 8, 4));
-        sectionTitle.setOpaque(false);
-
         // Replace ProductPanel (inner) layout
         ProductPanel.setLayout(new java.awt.BorderLayout(0, 10));
         ProductPanel.removeAll();
-        ProductPanel.add(BannerPanel, java.awt.BorderLayout.NORTH);
-
-        javax.swing.JPanel bottomSection = new javax.swing.JPanel(new java.awt.BorderLayout());
-        bottomSection.setBackground(BG_PRIMARY);
-        bottomSection.add(sectionTitle, java.awt.BorderLayout.NORTH);
-        bottomSection.add(scrollPane, java.awt.BorderLayout.CENTER);
-
-        ProductPanel.add(bottomSection, java.awt.BorderLayout.CENTER);
+        ProductPanel.add(scrollPane, java.awt.BorderLayout.CENTER);
         ProductPanel.revalidate();
         ProductPanel.repaint();
     }
@@ -494,7 +532,7 @@ public class ProductPanel extends javax.swing.JPanel {
             java.util.List<Model.SanPham> results = Controller.SanPhamDAO.searchByName(text);
             updateProductGrid(results, "KẾT QUẢ TÌM KIẾM: " + text.toUpperCase());
         } else {
-            updateProductGrid(Controller.SanPhamDAO.getAllSanPham(), "  GỢI Ý HÔM NAY");
+            setupProductGrid(); // Reload all sections when search is cleared
         }
     }
 
