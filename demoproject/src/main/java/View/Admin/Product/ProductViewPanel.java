@@ -42,7 +42,7 @@ public class ProductViewPanel extends JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        JButton btnDeleteSelected = new JButton("🗑️ Xóa");
+        JButton btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
@@ -307,7 +307,7 @@ public class ProductViewPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến sản phẩm đó\n" +
+            " CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến sản phẩm đó\n" +
             "(bao gồm tất cả mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
             "Bạn có chắc chắn muốn xóa không?",
             "Cảnh báo xóa dữ liệu liên quan",

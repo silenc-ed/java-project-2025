@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Panel tồn kho chi nhánh — 3 cấp drill-down:
- * Chi nhánh → Sản phẩm (số lượng) → Serial (trạng thái)
+ * Chi nhánh -> Sản phẩm (số lượng) -> Serial (trạng thái)
  */
 public class WarehousePanel extends javax.swing.JPanel {
 
@@ -121,7 +121,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         });
         txtSearchBranch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
 
-        JButton btnSearch = new JButton("🔍");
+        JButton btnSearch = new JButton("Tìm");
         UIUtils.styleButton(btnSearch);
         btnSearch.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
 
@@ -130,14 +130,14 @@ public class WarehousePanel extends javax.swing.JPanel {
         rightHeader.add(searchPanel);
 
         // Button Cập nhật
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadBranches(getSearchText(txtSearchBranch)));
         rightHeader.add(btnRefresh);
 
         // Button Sửa chi nhánh
-        JButton btnEditBranch = new JButton("✏ Sửa chi nhánh");
+        JButton btnEditBranch = new JButton("Sửa chi nhánh");
         UIUtils.styleButton(btnEditBranch);
         btnEditBranch.setPreferredSize(new Dimension(150, 36));
         btnEditBranch.addActionListener(e -> showEditBranchDialog());
@@ -175,7 +175,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         branchTable.getColumnModel().getColumn(0).setCellRenderer(centerR);
         branchTable.getColumnModel().getColumn(3).setCellRenderer(centerR);
 
-        // Double-click → drill into branch
+        // Double-click -> drill into branch
         branchTable.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -231,7 +231,7 @@ public class WarehousePanel extends javax.swing.JPanel {
 
         // Header with back button
         lblProductTitle = new JLabel();
-        JPanel header = createHeader("", "← Quay lại", e -> {
+        JPanel header = createHeader("", "<- Quay lại", e -> {
             cardLayout.show(cardContainer, "branches");
         });
         txtSearchProduct = addSearchToHeader(header, "Tìm sản phẩm...", e -> loadProducts(getSearchText(txtSearchProduct)));
@@ -289,7 +289,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         productTable.getColumnModel().getColumn(4).setCellRenderer(stockR);
 
         // Store MA_BIENTHE as hidden data
-        // Double-click → drill into serials
+        // Double-click -> drill into serials
         productTable.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -353,7 +353,7 @@ public class WarehousePanel extends javax.swing.JPanel {
 
         // Header
         lblSerialTitle = new JLabel();
-        JPanel header = createHeader("", "← Quay lại", e -> {
+        JPanel header = createHeader("", "<- Quay lại", e -> {
             cardLayout.show(cardContainer, "products");
         });
         txtSearchSerial = addSearchToHeader(header, "Tìm serial...", e -> loadSerials(getSearchText(txtSearchSerial)));
@@ -473,10 +473,10 @@ public class WarehousePanel extends javax.swing.JPanel {
 
             StringBuilder sb = new StringBuilder();
             sb.append("Tổng: ").append(total).append("  |  ");
-            sb.append("🟢 Khả dụng: ").append(khaDung).append("  |  ");
-            sb.append("🟡 Đang đặt: ").append(dangDat).append("  |  ");
-            sb.append("🔴 Đã bán: ").append(daBan);
-            if (khac > 0) sb.append("  |  ⚪ Khác: ").append(khac);
+            sb.append("Khả dụng: ").append(khaDung).append("  |  ");
+            sb.append("Đang đặt: ").append(dangDat).append("  |  ");
+            sb.append("Đã bán: ").append(daBan);
+            if (khac > 0) sb.append("  |  Khác: ").append(khac);
             lblStats.setText(sb.toString());
         } catch (Exception e) {
             lblStats.setText(" ");
@@ -535,7 +535,7 @@ public class WarehousePanel extends javax.swing.JPanel {
         });
         txt.addActionListener(searchAction);
 
-        JButton btnSearch = new JButton("🔍");
+        JButton btnSearch = new JButton("Tìm");
         UIUtils.styleButton(btnSearch);
         btnSearch.addActionListener(searchAction);
 

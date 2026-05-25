@@ -221,15 +221,15 @@ public class ProductPanel extends javax.swing.JPanel {
 
         bannerSlideshow = new View.Customers.ProductPanel.BannerSlideshow();
         bannerSlideshow.loadBannerImages(new String[]{
-            "/Default/Theme/wallpaper/wallpaperflare.com_wallpaper(1).jpg",
-            "/Default/Theme/wallpaper/wallpaperflare.com_wallpaper(2).jpg",
-            "/Default/Theme/wallpaper/wallpaperflare.com_wallpaper(3).jpg",
-            "/Default/Theme/wallpaper/wallpaperflare.com_wallpaper(4).jpg",
-            "/Default/Theme/wallpaper/wallpaperflare.com_wallpaper(5).jpg"
+            "/Default/Theme/1.jpg",
+            "/Default/Theme/2.png",
+            "/Default/Theme/3.png",
+            "/Default/Theme/4.png",
+            "/Default/Theme/5.png"
         });
         bannerSlideshow.startAutoSlide(5000);
 
-        BannerPanel.setPreferredSize(new java.awt.Dimension(0, 200));
+        BannerPanel.setPreferredSize(new java.awt.Dimension(0, 506));
         BannerPanel.add(bannerSlideshow, java.awt.BorderLayout.CENTER);
         BannerPanel.revalidate();
         BannerPanel.repaint();

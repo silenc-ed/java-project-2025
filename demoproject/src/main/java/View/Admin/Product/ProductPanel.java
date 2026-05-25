@@ -214,17 +214,17 @@ public class ProductPanel extends javax.swing.JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        btnSwitchMode = new JButton("🗂️ Loại sản phẩm");
+        btnSwitchMode = new JButton(" Loại sản phẩm");
         View.Admin.UIUtils.styleButton(btnSwitchMode);
         btnSwitchMode.setPreferredSize(new Dimension(160, 36));
         btnSwitchMode.addActionListener(e -> toggleMode());
 
-        btnDeleteSelected = new JButton("🗑️ Xóa");
+        btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.setPreferredSize(new Dimension(140, 36));
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> {
@@ -439,7 +439,7 @@ public class ProductPanel extends javax.swing.JPanel {
         isProductMode = !isProductMode;
         if (isProductMode) {
             lblTitle.setText("Quản lý sản phẩm");
-            btnSwitchMode.setText("🗂️ Loại sản phẩm");
+            btnSwitchMode.setText(" Loại sản phẩm");
             btnAdd.setText("+ Thêm sản phẩm");
             txtSearch.setText("Tìm kiếm sản phẩm...");
             txtSearch.setForeground(Color.GRAY);
@@ -447,7 +447,7 @@ public class ProductPanel extends javax.swing.JPanel {
             loadDataToTable();
         } else {
             lblTitle.setText("Quản lý loại sản phẩm");
-            btnSwitchMode.setText("📦 Sản phẩm");
+            btnSwitchMode.setText("Sản phẩm");
             btnAdd.setText("+ Thêm loại sản phẩm");
             txtSearch.setText("Tìm kiếm loại sản phẩm...");
             txtSearch.setForeground(Color.GRAY);
@@ -816,7 +816,7 @@ public class ProductPanel extends javax.swing.JPanel {
         String itemType = isProductMode ? "sản phẩm" : "loại sản phẩm";
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến " + itemType + " đó\n" +
+            " CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến " + itemType + " đó\n" +
             "(bao gồm tất cả mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
             "Bạn có chắc chắn muốn xóa không?",
             "Cảnh báo xóa dữ liệu liên quan",

@@ -124,7 +124,7 @@ public class BillPanel extends javax.swing.JPanel {
         btnDelete.setPreferredSize(new Dimension(130, 36));
         btnDelete.addActionListener(e -> deleteSelectedRows());
 
-        JButton btnRefresh = createGradientButton("↻ Cập nhật");
+        JButton btnRefresh = createGradientButton("Cập nhật");
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable(listModel));
 
@@ -264,7 +264,7 @@ public class BillPanel extends javax.swing.JPanel {
         JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         leftHeader.setOpaque(false);
         
-        JButton btnBack = createGradientButton("← Quay lại");
+        JButton btnBack = createGradientButton("<- Quay lại");
         btnBack.setPreferredSize(new Dimension(120, 36));
         btnBack.addActionListener(e -> {
             loadDataToTable(listModel); 

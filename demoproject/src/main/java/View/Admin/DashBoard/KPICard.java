@@ -6,7 +6,7 @@ import javax.swing.border.*;
 
 /**
  * Professional KPI Card component for BI dashboard.
- * Displays a metric with title, value, trend badge (↑/↓ %) and accent color.
+ * Displays a metric with title, value, trend badge (^/v %) and accent color.
  */
 public class KPICard extends JPanel {
 
@@ -21,7 +21,7 @@ public class KPICard extends JPanel {
 
     /**
      * @param title       Card title (e.g. "Tổng doanh thu")
-     * @param icon        Emoji or text icon (e.g. "💰")
+     * @param icon        Emoji or text icon (e.g. "")
      * @param accentColor Primary accent color
      * @param tintColor   Light tint for the accent bar
      */
@@ -98,7 +98,7 @@ public class KPICard extends JPanel {
             lblTrend.setForeground(new Color(100, 116, 139));
             return;
         }
-        String arrow = percent > 0 ? "↑" : "↓";
+        String arrow = percent > 0 ? "^" : "v";
         Color color = percent > 0 ? new Color(5, 150, 105) : new Color(220, 38, 38);
         String text = String.format("%s %.1f%% %s", arrow, Math.abs(percent), label);
         lblTrend.setText(text);

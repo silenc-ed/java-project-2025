@@ -148,17 +148,17 @@ public class VoucherPanel extends JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        btnSwitchMode = new JButton("🗂️ Loại khuyến mãi");
+        btnSwitchMode = new JButton(" Loại khuyến mãi");
         UIUtils.styleButton(btnSwitchMode);
         btnSwitchMode.setPreferredSize(new Dimension(160, 36));
         btnSwitchMode.addActionListener(e -> toggleMode());
 
-        btnDeleteSelected = new JButton("🗑️ Xóa");
+        btnDeleteSelected = new JButton("Xóa");
         UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.setPreferredSize(new Dimension(100, 36));
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> {
@@ -335,7 +335,7 @@ public class VoucherPanel extends JPanel {
         isKhuyenMaiMode = !isKhuyenMaiMode;
         if (isKhuyenMaiMode) {
             lblTitle.setText("Quản lý khuyến mãi");
-            btnSwitchMode.setText("🗂️ Loại khuyến mãi");
+            btnSwitchMode.setText(" Loại khuyến mãi");
             btnAdd.setText("+ Thêm khuyến mãi");
             txtSearch.setText("Tìm khuyến mãi...");
             txtSearch.setForeground(Color.GRAY);
@@ -343,7 +343,7 @@ public class VoucherPanel extends JPanel {
             loadDataToTable(null);
         } else {
             lblTitle.setText("Quản lý loại khuyến mãi");
-            btnSwitchMode.setText("🎟️ Khuyến mãi");
+            btnSwitchMode.setText(" Khuyến mãi");
             btnAdd.setText("+ Thêm loại khuyến mãi");
             txtSearch.setText("Tìm loại khuyến mãi...");
             txtSearch.setForeground(Color.GRAY);

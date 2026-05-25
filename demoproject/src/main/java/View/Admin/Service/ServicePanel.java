@@ -116,12 +116,12 @@ public class ServicePanel extends javax.swing.JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        btnDeleteSelected = new JButton("🗑️ Xóa");
+        btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.setPreferredSize(new Dimension(140, 36));
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable());

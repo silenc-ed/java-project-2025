@@ -212,13 +212,13 @@ public class RevenuePanel extends JPanel {
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        cardDoanhThu = new KPICard("Tổng doanh thu", "💰",
+        cardDoanhThu = new KPICard("Tổng doanh thu", "",
                 DashboardChartFactory.PRIMARY, new Color(219, 234, 254));
-        cardLoiNhuan = new KPICard("Tổng lợi nhuận", "📈",
+        cardLoiNhuan = new KPICard("Tổng lợi nhuận", "",
                 DashboardChartFactory.SUCCESS, new Color(209, 250, 229));
-        cardTongDon = new KPICard("Tổng đơn hàng", "🛒",
+        cardTongDon = new KPICard("Tổng đơn hàng", "",
                 DashboardChartFactory.PURPLE, new Color(237, 233, 254));
-        cardTrungBinh = new KPICard("TB giá trị đơn", "💳",
+        cardTrungBinh = new KPICard("TB giá trị đơn", "",
                 DashboardChartFactory.WARNING, new Color(254, 243, 199));
 
         row.add(cardDoanhThu);

@@ -46,12 +46,12 @@ public class CategoryViewPanel extends JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        JButton btnDeleteSelected = new JButton("🗑️ Xóa");
+        JButton btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.setPreferredSize(new Dimension(100, 36));
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(110, 36));
         btnRefresh.addActionListener(e -> refreshData());
@@ -276,7 +276,7 @@ public class CategoryViewPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến loại sản phẩm đó\n" +
+            " CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến loại sản phẩm đó\n" +
             "(bao gồm tất cả sản phẩm, mã serial, số lượng tồn kho, các phiên bản/biến thể liên quan)!\n\n" +
             "Bạn có chắc chắn muốn xóa không?",
             "Cảnh báo xóa dữ liệu liên quan",

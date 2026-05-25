@@ -229,7 +229,7 @@ public class ListMenu extends javax.swing.JPanel {
         try {
             menuUserIcon.setIcon(new ImageIcon(getClass().getResource("/Default/Icon/menu.png")));
         } catch (Exception e) {
-            menuUserIcon.setText("👤");
+            menuUserIcon.setText("");
         }
 
         menuUserIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));

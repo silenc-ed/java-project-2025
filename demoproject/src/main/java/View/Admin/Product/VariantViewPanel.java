@@ -40,7 +40,7 @@ public class VariantViewPanel extends JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        JButton btnDeleteSelected = new JButton("🗑️ Xóa");
+        JButton btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 
@@ -278,7 +278,7 @@ public class VariantViewPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(
             this,
-            "⚠️ CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến biến thể đó\n" +
+            " CẢNH BÁO: Hành động này sẽ XÓA HẾT tất cả dữ liệu liên quan đến biến thể đó\n" +
             "(bao gồm tất cả các mã serial và số lượng tồn kho liên quan)!\n\n" +
             "Bạn có chắc chắn muốn xóa không?",
             "Cảnh báo xóa dữ liệu liên quan",

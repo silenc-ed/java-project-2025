@@ -1,64 +1,54 @@
 package Controller.Admin.BaoHanh;
 
 import ConnectDB.ConnectionUtils;
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class BaoHanhDAO {
     
-    public static String checking(String sdt, String imei, Date[] dates) {
-        String bien = "Không tìm thấy"; 
+    public static Map<String, Object> getWarrantyDetails(String imei) {
+        Map<String, Object> details = new HashMap<>();
         try (Connection con = ConnectionUtils.getMyConnection()) {
-            String SQL = "SELECT NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI " + 
-                         "FROM BAO_HANH WHERE SERIAL_NUMBER = ?";
+            String SQL = "{call SP_TRA_CUU_LICH_SU_BAO_HANH(?, ?)}";
             
-            try (PreparedStatement ps = con.prepareStatement(SQL)) {
-                ps.setString(1, imei.trim());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()){
-                        String trangThai = rs.getString("TRANG_THAI");
-                        dates[0] = rs.getDate("NGAY_BAT_DAU");
-                        dates[1] = rs.getDate("NGAY_KET_THUC");            
-                        
-                        if("Còn hiệu lực".equals(trangThai)) {
-                            bien = "Còn hiệu lực";
-                        } else if("Hết hiệu lực".equals(trangThai)){
-                            bien = "Hết hiệu lực";
-                        } else{
-                            bien = "Vô hiệu lực";
-                        }
+            try (CallableStatement cstmt = con.prepareCall(SQL)) {
+                cstmt.setString(1, imei.trim());
+                cstmt.registerOutParameter(2, -10); // -10 is oracle.jdbc.OracleTypes.CURSOR
+                
+                cstmt.execute();
+                
+                try (ResultSet rs = (ResultSet) cstmt.getObject(2)) {
+                    if (rs.next()) {
+                        details.put("SERIAL_NUMBER", rs.getString("SERIAL_NUMBER"));
+                        details.put("TEN_SP", rs.getString("TEN_SP"));
+                        details.put("TEN_BIENTHE", rs.getString("TEN_BIENTHE"));
+                        details.put("TRANG_THAI_SERIAL", rs.getString("TRANG_THAI_SERIAL"));
+                        details.put("MA_HD", rs.getString("MA_HD"));
+                        details.put("NGAY_MUA", rs.getDate("NGAY_MUA"));
+                        details.put("PHUONG_THUC_TT", rs.getString("PHUONG_THUC_TT"));
+                        details.put("MA_KH", rs.getString("MA_KH"));
+                        details.put("TEN_KHACH_HANG", rs.getString("TEN_KHACH_HANG"));
+                        details.put("SDT_KHACH_HANG", rs.getString("SDT_KHACH_HANG"));
+                        details.put("CHI_NHANH_BAN", rs.getString("CHI_NHANH_BAN"));
+                        details.put("BH_TU_NGAY", rs.getDate("BH_TU_NGAY"));
+                        details.put("BH_DEN_NGAY", rs.getDate("BH_DEN_NGAY"));
+                        details.put("SO_THANG_BH", rs.getInt("SO_THANG_BH"));
+                        details.put("TRANG_THAI_BH", rs.getString("TRANG_THAI_BH"));
+                        details.put("GHI_CHU_BH", rs.getString("GHI_CHU_BH"));
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-        return bien; 
-    }
-
-    public static Map<String, String> getProductDetailsByImei(String imei) {
-        Map<String, String> details = new HashMap<>();
-        String checkProdSQL = "SELECT SP.TEN_SP, BT.TEN_BIENTHE "
-                            + "FROM KHO_SERIAL KS "
-                            + "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE "
-                            + "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP "
-                            + "WHERE KS.SERIAL_NUMBER = ?";
-        try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(checkProdSQL)) {
-            ps.setString(1, imei);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    details.put("TEN_SP", rs.getString("TEN_SP"));
-                    details.put("TEN_BIENTHE", rs.getString("TEN_BIENTHE"));
-                }
+            if (e.getMessage().contains("-20090")) {
+                details.put("ERROR", "NOT_FOUND");
+            } else {
+                details.put("ERROR", e.getMessage());
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
-        return details;
+        return details; 
     }
 }

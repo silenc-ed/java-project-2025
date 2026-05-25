@@ -63,7 +63,7 @@ public class EmployeePanel extends JPanel {
         btnAdd.addActionListener(e -> showAddDialog());
         // Ẩn nút Thêm nếu không có quyền
         btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Nhan vien"));
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadData());

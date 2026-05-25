@@ -64,7 +64,7 @@ public class Main extends javax.swing.JFrame {
         // --- Load quyền từ DB ---
         Controller.Admin.PermissionService.loadPermissions();
 
-        // --- Mapping: key chức năng (DB) → tên hiển thị menu ---
+        // --- Mapping: key chức năng (DB) -> tên hiển thị menu ---
         // Thứ tự phải nhất quán với switch-case bên dưới
         final java.util.LinkedHashMap<String, String> featureToLabel = new java.util.LinkedHashMap<>();
         featureToLabel.put("DASHBOARD",   "Tổng quan");   // luôn hiển thị
@@ -78,6 +78,7 @@ public class Main extends javax.swing.JFrame {
         featureToLabel.put("Khuyen mai",  "Khuyến mãi");
         featureToLabel.put("Nhap kho",    "Nhập kho");
         featureToLabel.put("Cham cong",   "Chấm công");
+        featureToLabel.put("Bao hanh",    "Bảo hành");
 
         // --- Build menu động: chỉ gồm tab user được xem ---
         final java.util.List<String> menuLabels = new java.util.ArrayList<>();
@@ -157,6 +158,9 @@ public class Main extends javax.swing.JFrame {
                         break;
                     case "Cham cong":
                         showForm(new View.Admin.Attendance.AttendancePanel());
+                        break;
+                    case "Bao hanh":
+                        showForm(new View.Admin.Warranty.WarrantyPanel());
                         break;
                 }
             }

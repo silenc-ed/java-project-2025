@@ -60,7 +60,7 @@ public class CustomerPanel extends javax.swing.JPanel {
         btnAdd.addActionListener(e -> showAddDialog());
         // Ẩn nếu không có quyền Thêm
         btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Khach hang"));
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         View.Admin.UIUtils.styleButton(btnRefresh);
         btnRefresh.addActionListener(e -> loadData());
 

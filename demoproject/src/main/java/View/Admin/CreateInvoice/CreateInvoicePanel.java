@@ -382,7 +382,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             }
 
             String displayId = (sn != null) ? sn : "SP#" + selected.get("MA_SP");
-            cartTableModel.addRow(new Object[]{ "Sản phẩm", displayId, tenHienThi, soLuong, DF.format(giaBan) + "đ", DF.format(giaBan * soLuong) + "đ", "✕" });
+            cartTableModel.addRow(new Object[]{ "Sản phẩm", displayId, tenHienThi, soLuong, DF.format(giaBan) + "đ", DF.format(giaBan * soLuong) + "đ", "X" });
             cartMetadata.add(new CartItemMetadata("SP", displayId, (int) selected.get("MA_SP"), giaBan, soLuong, maBienThe));
             
             txtSearchSP.setText("");
@@ -403,7 +403,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 if ("DV".equals(m.type) && m.maId == selDV.id) { dup = true; break; }
             }
             if (!dup) {
-                cartTableModel.addRow(new Object[]{ "Dịch vụ", "DV#" + selDV.id, selDV.name, 1, DF.format(selDV.giaCuoc) + "đ", DF.format(selDV.giaCuoc) + "đ", "✕" });
+                cartTableModel.addRow(new Object[]{ "Dịch vụ", "DV#" + selDV.id, selDV.name, 1, DF.format(selDV.giaCuoc) + "đ", DF.format(selDV.giaCuoc) + "đ", "X" });
                 cartMetadata.add(new CartItemMetadata("DV", "DV#" + selDV.id, selDV.id, selDV.giaCuoc, 1, null));
                 added = true;
                 cbServices.setSelectedIndex(0);
@@ -509,14 +509,14 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             private JButton btn;
             private int rowToDelete = -1;
             {
-                btn = new JButton("✕");
+                btn = new JButton("X");
                 btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 btn.setForeground(new Color(220, 38, 38));
                 btn.setBorderPainted(false); btn.setContentAreaFilled(false);
                 btn.addActionListener(e -> { rowToDelete = partTable.getSelectedRow(); fireEditingStopped(); });
             }
             @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) { return btn; }
-            @Override public Object getCellEditorValue() { return "✕"; }
+            @Override public Object getCellEditorValue() { return "X"; }
             @Override protected void fireEditingStopped() {
                 super.fireEditingStopped();
                 if (rowToDelete >= 0 && rowToDelete < parts.size()) {
@@ -595,7 +595,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 partDraft.serials = selectedSerials;
                 parts.add(partDraft);
                 
-                partModel.addRow(new Object[]{"SP#"+maSP, tenSP, sl, DF.format(donGia)+"đ", DF.format(donGia*sl)+"đ", "✕"});
+                partModel.addRow(new Object[]{"SP#"+maSP, tenSP, sl, DF.format(donGia)+"đ", DF.format(donGia*sl)+"đ", "X"});
                 txtSearchPart.setText("");
             } catch(Exception ex) { ex.printStackTrace(); }
         };
@@ -623,7 +623,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 long totalParts = parts.stream().mapToLong(p -> p.donGia * p.soLuong).sum();
                 long total = gc + totalParts;
                 
-                cartTableModel.addRow(new Object[]{"SC (Mới)", "NEW_SC", mt, 1, DF.format(total)+"đ", DF.format(total)+"đ", "✕"});
+                cartTableModel.addRow(new Object[]{"SC (Mới)", "NEW_SC", mt, 1, DF.format(total)+"đ", DF.format(total)+"đ", "X"});
                 cartMetadata.add(new CartItemMetadata(draft));
                 updateTotals();
                 dialog.dispose();
@@ -655,11 +655,11 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             KhachHang kh = dao.getCustomerByPhone(phone);
             if (kh != null) {
                 currentMaKH = (int) kh.getMaKH();
-                txtCustomerName.setText("✅ " + kh.getHoTen());
+                txtCustomerName.setText("v " + kh.getHoTen());
                 txtCustomerName.setForeground(new Color(5, 122, 85));
             } else {
                 currentMaKH = null;
-                txtCustomerName.setText("❌ Không tìm thấy");
+                txtCustomerName.setText("X Không tìm thấy");
                 txtCustomerName.setForeground(new Color(185, 28, 28));
             }
         } catch (Exception ex) {
@@ -686,7 +686,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 lblPromoResult.setForeground(new Color(5, 122, 85));
             } catch (Exception e) {
                 currentDiscount = 0; currentMaKM = -1;
-                lblPromoResult.setText("❌ " + e.getMessage());
+                lblPromoResult.setText("X " + e.getMessage());
                 lblPromoResult.setForeground(new Color(185, 28, 28));
             }
         } else {
@@ -709,7 +709,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             currentMaKM = maKM;
             updateTotals();
         } catch (NumberFormatException ex) {
-            lblPromoResult.setText("❌ Mã KM phải là số!");
+            lblPromoResult.setText("X Mã KM phải là số!");
             lblPromoResult.setForeground(new Color(185, 28, 28));
         }
     }
@@ -857,7 +857,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
 
     static class DeleteBtnRenderer extends DefaultTableCellRenderer {
         @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
-            JLabel lbl = new JLabel("✕", SwingConstants.CENTER);
+            JLabel lbl = new JLabel("X", SwingConstants.CENTER);
             lbl.setFont(new Font("Segoe UI", Font.BOLD, 16));
             lbl.setForeground(new Color(220, 38, 38));
             lbl.setOpaque(true);
@@ -872,7 +872,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
 
         DeleteBtnEditor(JTable tbl, DefaultTableModel mdl, Runnable onDeleted) {
             super(new JCheckBox());
-            btn = new JButton("✕");
+            btn = new JButton("X");
             btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
             btn.setForeground(new Color(220, 38, 38));
             btn.setBorderPainted(false); btn.setContentAreaFilled(false);
@@ -882,7 +882,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             });
         }
         @Override public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) { return btn; }
-        @Override public Object getCellEditorValue() { return "✕"; }
+        @Override public Object getCellEditorValue() { return "X"; }
         @Override protected void fireEditingStopped() {
             super.fireEditingStopped();
             if (rowToDelete >= 0 && rowToDelete < cartMetadata.size()) {

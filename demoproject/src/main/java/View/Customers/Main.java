@@ -80,6 +80,7 @@ public class Main extends javax.swing.JFrame {
         menu1.setMenu(new String[]{
             "Trang chủ",
             "Giỏ hàng",
+            "Lịch sử mua hàng",
             "Khuyến mãi",
             "Bảo hành"
         });
@@ -108,8 +109,10 @@ public class Main extends javax.swing.JFrame {
                 } else if (index == 1) {
                     showForm(new PacketPanel());
                 } else if (index == 2) {
-                    showForm(new VoucherPanel());
+                    showForm(new View.Customers.PurchaseHistory.PurchaseHistoryPanel());
                 } else if (index == 3) {
+                    showForm(new VoucherPanel());
+                } else if (index == 4) {
                     showForm(new WarrantyPanel());
                 }
             }

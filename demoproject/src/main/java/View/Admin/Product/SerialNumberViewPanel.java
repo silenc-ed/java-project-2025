@@ -37,7 +37,7 @@ public class SerialNumberViewPanel extends JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        JButton btnDeleteSelected = new JButton("🗑️ Xóa");
+        JButton btnDeleteSelected = new JButton("Xóa");
         View.Admin.UIUtils.styleButton(btnDeleteSelected);
         btnDeleteSelected.addActionListener(e -> handleDeleteSelected());
 

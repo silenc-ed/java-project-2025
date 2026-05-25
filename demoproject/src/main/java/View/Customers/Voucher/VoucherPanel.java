@@ -68,13 +68,13 @@ public class VoucherPanel extends javax.swing.JPanel {
             String rank = "THÀNH VIÊN ĐỒNG";
             Color rankColor = Color.GRAY;
             if (customerProfile.diemTichLuy >= 2000) {
-                rank = "⭐ THÀNH VIÊN KIM CƯƠNG";
+                rank = "THÀNH VIÊN KIM CƯƠNG";
                 rankColor = new Color(125, 60, 152);
             } else if (customerProfile.diemTichLuy >= 1000) {
-                rank = "✨ THÀNH VIÊN VÀNG";
+                rank = "THÀNH VIÊN VÀNG";
                 rankColor = new Color(212, 172, 13);
             } else if (customerProfile.diemTichLuy >= 500) {
-                rank = "🛡️ THÀNH VIÊN BẠC";
+                rank = "THÀNH VIÊN BẠC";
                 rankColor = new Color(127, 140, 141);
             }
             lblMemberRank.setText(rank);
@@ -105,7 +105,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         pnlRightHeader.setOpaque(false);
 
         // Create "Ví của tôi" (My Wallet) button next to points badge
-        JButton btnMyWallet = new JButton("💼 Ví của tôi");
+        JButton btnMyWallet = new JButton("Ví của tôi");
         btnMyWallet.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btnMyWallet.setBackground(Color.WHITE);
         btnMyWallet.setForeground(SHOPEE_ORANGE);
@@ -144,7 +144,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        JLabel lblPointsTitle = new JLabel("🪙 ĐIỂM TÍCH LŨY CỦA BẠN");
+        JLabel lblPointsTitle = new JLabel("ĐIỂM TÍCH LŨY CỦA BẠN");
         lblPointsTitle.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblPointsTitle.setForeground(GOLD_DARK);
         gbc.gridy = 0;
@@ -218,7 +218,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         }
 
         // Create dialog
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "💼 Ví Khuyến Mãi Của Tôi", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Ví Khuyến Mãi Của Tôi", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(680, 500);
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
@@ -231,7 +231,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel lblWalletTitle = new JLabel("💼 Ví Khuyến Mãi Của Tôi");
+        JLabel lblWalletTitle = new JLabel("Ví Khuyến Mãi Của Tôi");
         lblWalletTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblWalletTitle.setForeground(TEXT_DARK);
         headerPanel.add(lblWalletTitle, BorderLayout.WEST);
@@ -402,7 +402,7 @@ public class VoucherPanel extends javax.swing.JPanel {
         JLabel lblInfo = new JLabel();
         lblInfo.setFont(new Font("Segoe UI", Font.BOLD, 11));
         if (isWallet) {
-            lblInfo.setText("📦 Đã có: " + soLuongSoHuu + " lượt sử dụng");
+            lblInfo.setText("Đã có: " + soLuongSoHuu + " lượt sử dụng");
             lblInfo.setForeground(new Color(40, 167, 69)); // Healthy green
         } else {
             lblInfo.setText("🪙 " + diemDoi + " điểm  |  Còn lại: " + soLuongCL);
@@ -507,10 +507,10 @@ public class VoucherPanel extends javax.swing.JPanel {
                 + "<body style='font-family: Segoe UI, sans-serif; padding: 10px; color: #334155;'>"
                 + "  <h3 style='margin: 0 0 10px 0; color: #ee4d2d;'>" + name + "</h3>"
                 + "  <hr style='border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 10px;'>"
-                + "  <p><b>🎟️ Loại khuyến mãi:</b> " + (type != null ? type : "Giảm giá đặc biệt") + "</p>"
-                + "  <p><b>💰 Giá trị giảm giá:</b> " + DF.format(value) + (type != null && type.contains("trăm") ? "%" : " VNĐ") + "</p>"
-                + "  <p><b>📅 Hạn sử dụng (HSD):</b> " + expiry + "</p>"
-                + "  <p><b>🏷️ Điều kiện áp dụng (Thể lệ):</b> " + (rule != null && !rule.trim().isEmpty() ? rule : "Áp dụng cho mọi đơn hàng không giới hạn giá trị tối thiểu.") + "</p>"
+                + "  <p><b> Loại khuyến mãi:</b> " + (type != null ? type : "Giảm giá đặc biệt") + "</p>"
+                + "  <p><b>Giá trị giảm giá:</b> " + DF.format(value) + (type != null && type.contains("trăm") ? "%" : " VNĐ") + "</p>"
+                + "  <p><b>Hạn sử dụng (HSD):</b> " + expiry + "</p>"
+                + "  <p><b> Điều kiện áp dụng (Thể lệ):</b> " + (rule != null && !rule.trim().isEmpty() ? rule : "Áp dụng cho mọi đơn hàng không giới hạn giá trị tối thiểu.") + "</p>"
                 + "  <p style='color: #64748b; font-size: 10px; margin-top: 20px; font-style: italic;'>"
                 + "     * Hệ thống giữ quyền quyết định cuối cùng trong việc giải quyết tranh chấp liên quan đến quy đổi điểm."
                 + "  </p>"

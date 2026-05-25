@@ -128,7 +128,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         titleBar.setBackground(isEdit ? new Color(0, 123, 255) : new Color(40, 167, 69));
         titleBar.setBorder(new EmptyBorder(0, 24, 0, 24));
 
-        JLabel lblDialogTitle = new JLabel(isEdit ? "✏  Chỉnh sửa hóa đơn #" + maHd : "➕  Thêm hóa đơn mới");
+        JLabel lblDialogTitle = new JLabel(isEdit ? "Chỉnh sửa hóa đơn #" + maHd : "Thêm hóa đơn mới");
         lblDialogTitle.setFont(new Font("Segoe UI", Font.BOLD, 17));
         lblDialogTitle.setForeground(Color.WHITE);
         titleBar.add(lblDialogTitle, BorderLayout.WEST);
@@ -256,10 +256,10 @@ public class ProcurementPanel extends javax.swing.JPanel {
         btnPanel.setOpaque(false);
         btnPanel.setBorder(new EmptyBorder(8, 28, 18, 28));
 
-        JButton btnSave = new JButton(isEdit ? "💾 Cập nhật" : "💾 Lưu");
+        JButton btnSave = new JButton(isEdit ? "Cập nhật" : "Lưu");
         UIUtils.styleButton(btnSave);
         btnSave.setPreferredSize(new Dimension(140, 38));
-        JButton btnCancel = new JButton("✖ Hủy");
+        JButton btnCancel = new JButton("Hủy");
         UIUtils.styleButton(btnCancel);
         btnCancel.setPreferredSize(new Dimension(140, 38));
 
@@ -393,17 +393,17 @@ public class ProcurementPanel extends javax.swing.JPanel {
         cbFilter.setPreferredSize(new Dimension(180, 35));
         cbFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
-        JButton btnRefresh = new JButton("↻ Cập nhật");
+        JButton btnRefresh = new JButton("Cập nhật");
         UIUtils.styleButton(btnRefresh);
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable(tableModel));
 
-        JButton btnAdd = new JButton("➕ Thêm mới");
+        JButton btnAdd = new JButton("Thêm mới");
         UIUtils.styleButton(btnAdd);
         btnAdd.setPreferredSize(new Dimension(140, 36));
         btnAdd.addActionListener(e -> showOrderDialog(false, -1));
 
-        JButton btnDelete = new JButton("🗑 Xóa");
+        JButton btnDelete = new JButton("Xóa");
         UIUtils.styleButton(btnDelete);
         btnDelete.setPreferredSize(new Dimension(140, 36));
         btnDelete.addActionListener(e -> deleteSelectedRows());

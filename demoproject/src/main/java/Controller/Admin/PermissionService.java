@@ -14,8 +14,8 @@ import java.util.Map;
  * Load quyền từ DB dựa trên token hiện tại và cache lại trong phiên làm việc.
  *
  * Quyền được tổng hợp từ 2 nguồn (UNION/OR):
- *   1. Qua ROLE_GROUP: ACCOUNT_ASSIGN_ROLEGROUP → ROLE_GROUP_ASSIGN_ROLE → VAI_TRO
- *   2. Trực tiếp:      ACCOUNT_ASSIGN_ROLE → VAI_TRO
+ *   1. Qua ROLE_GROUP: ACCOUNT_ASSIGN_ROLEGROUP -> ROLE_GROUP_ASSIGN_ROLE -> VAI_TRO
+ *   2. Trực tiếp:      ACCOUNT_ASSIGN_ROLE -> VAI_TRO
  */
 public class PermissionService {
 
@@ -40,7 +40,7 @@ public class PermissionService {
         }
     }
 
-    // Cache: TEN_HIEN_THI (lowercase) → Permission
+    // Cache: TEN_HIEN_THI (lowercase) -> Permission
     private static Map<String, Permission> permissionCache = null;
 
     // Trạng thái: có phải Admin toàn quyền không (ví dụ khi load thất bại)
@@ -110,7 +110,7 @@ public class PermissionService {
 
             System.out.println("[PermissionService] Đã load " + permissionCache.size() + " quyền.");
 
-            // Nếu không có quyền nào → có thể là Admin hệ thống hoặc chưa cấu hình
+            // Nếu không có quyền nào -> có thể là Admin hệ thống hoặc chưa cấu hình
             if (permissionCache.isEmpty()) {
                 System.out.println("[PermissionService] Không tìm thấy quyền trong DB, cấp toàn quyền.");
                 isFullAccess = true;
@@ -172,6 +172,15 @@ public class PermissionService {
             }
         }
         return result;
+    }
+
+    /**
+     * Kiểm tra xem người dùng hiện tại có phải là Quản lý/Admin không
+     * (bằng cách kiểm tra xem có đầy đủ 4 quyền XEM, THÊM, SỬA, XÓA đối với mục Chấm công)
+     */
+    public static boolean isAdminOrManager() {
+        if (isFullAccess || permissionCache == null) return true;
+        return canView("Cham cong") && canAdd("Cham cong") && canEdit("Cham cong") && canDelete("Cham cong");
     }
 
     /**

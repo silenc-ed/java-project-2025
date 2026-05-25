@@ -33,7 +33,6 @@ public class WarrantyPanel extends javax.swing.JPanel {
     private static final Color STATUS_VOID_BG = new Color(255, 247, 237);
     private static final Color STATUS_VOID_FG = new Color(249, 115, 22);
 
-    private JTextField sdtField;
     private JTextField imeiField;
     private JButton confirmButton;
     
@@ -46,6 +45,9 @@ public class WarrantyPanel extends javax.swing.JPanel {
     private JLabel lblResultActivationDate;
     private JLabel lblResultExpirationDate;
     private JLabel lblResultImei;
+    private JLabel lblResultCustomer;
+    private JLabel lblResultBranch;
+    private JLabel lblResultPurchaseDate;
     private JLabel lblResultRemainTime;
 
     public WarrantyPanel() {
@@ -66,7 +68,7 @@ public class WarrantyPanel extends javax.swing.JPanel {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(TEXT_PRIMARY);
 
-        JLabel subLabel = new JLabel("Nhập số điện thoại và số sê-ri (IMEI) cúa thiết bị để kiểm tra thời hạn bảo hành");
+        JLabel subLabel = new JLabel("Nhập mã số sê-ri (Serial / IMEI) của thiết bị để kiểm tra thời hạn bảo hành");
         subLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         subLabel.setForeground(TEXT_SECONDARY);
         subLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
@@ -106,27 +108,17 @@ public class WarrantyPanel extends javax.swing.JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 10, 5, 10);
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.4;
-        JLabel lblPhone = new JLabel("Số điện thoại / Email:");
-        lblPhone.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblPhone.setForeground(TEXT_SECONDARY);
-        pnlSearchCard.add(lblPhone, gbc);
-
-        gbc.gridx = 1; gbc.weightx = 0.4;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.8;
         JLabel lblImei = new JLabel("Số sê-ri (Serial / IMEI):");
         lblImei.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblImei.setForeground(TEXT_SECONDARY);
         pnlSearchCard.add(lblImei, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.4;
-        sdtField = createStyledTextField("Số điện thoại hoặc Email");
-        pnlSearchCard.add(sdtField, gbc);
-
-        gbc.gridx = 1; gbc.weightx = 0.4;
-        imeiField = createStyledTextField("Mã sê-ri cúa máy");
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.8;
+        imeiField = createStyledTextField("Nhập mã sê-ri cúa máy");
         pnlSearchCard.add(imeiField, gbc);
 
-        gbc.gridx = 2; gbc.weightx = 0.2;
+        gbc.gridx = 1; gbc.weightx = 0.2;
         confirmButton = new JButton("Xác nhận") {
             @Override
             protected void paintComponent(Graphics g) {
@@ -182,8 +174,8 @@ public class WarrantyPanel extends javax.swing.JPanel {
         };
         pnlResultCard.setOpaque(false);
         pnlResultCard.setBorder(new EmptyBorder(15, 25, 20, 25));
-        pnlResultCard.setMaximumSize(new Dimension(850, 280));
-        pnlResultCard.setPreferredSize(new Dimension(850, 280));
+        pnlResultCard.setMaximumSize(new Dimension(850, 420));
+        pnlResultCard.setPreferredSize(new Dimension(850, 420));
         pnlResultCard.setLayout(new BorderLayout(0, 15));
         pnlResultCard.setVisible(false);
 
@@ -259,6 +251,45 @@ public class WarrantyPanel extends javax.swing.JPanel {
         lblResultImei.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         lblResultImei.setForeground(TEXT_PRIMARY);
         pnlResultBody.add(lblResultImei, gbcRes);
+
+        // Customer Row
+        gbcRes.gridx = 0; gbcRes.gridy++; gbcRes.weightx = 0.3;
+        JLabel lblResCust = new JLabel("Khách hàng:");
+        lblResCust.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblResCust.setForeground(TEXT_SECONDARY);
+        pnlResultBody.add(lblResCust, gbcRes);
+
+        gbcRes.gridx = 1; gbcRes.weightx = 0.7;
+        lblResultCustomer = new JLabel("Nguyễn Văn A - 0987654321");
+        lblResultCustomer.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblResultCustomer.setForeground(TEXT_PRIMARY);
+        pnlResultBody.add(lblResultCustomer, gbcRes);
+
+        // Branch Row
+        gbcRes.gridx = 0; gbcRes.gridy++; gbcRes.weightx = 0.3;
+        JLabel lblResBranch = new JLabel("Nơi mua hàng:");
+        lblResBranch.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblResBranch.setForeground(TEXT_SECONDARY);
+        pnlResultBody.add(lblResBranch, gbcRes);
+
+        gbcRes.gridx = 1; gbcRes.weightx = 0.7;
+        lblResultBranch = new JLabel("Chi nhánh trung tâm");
+        lblResultBranch.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblResultBranch.setForeground(TEXT_PRIMARY);
+        pnlResultBody.add(lblResultBranch, gbcRes);
+
+        // Purchase Date Row
+        gbcRes.gridx = 0; gbcRes.gridy++; gbcRes.weightx = 0.3;
+        JLabel lblResPurch = new JLabel("Ngày mua hàng:");
+        lblResPurch.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblResPurch.setForeground(TEXT_SECONDARY);
+        pnlResultBody.add(lblResPurch, gbcRes);
+
+        gbcRes.gridx = 1; gbcRes.weightx = 0.7;
+        lblResultPurchaseDate = new JLabel("19/10/2025");
+        lblResultPurchaseDate.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblResultPurchaseDate.setForeground(TEXT_PRIMARY);
+        pnlResultBody.add(lblResultPurchaseDate, gbcRes);
 
         // Activation Date Row
         gbcRes.gridx = 0; gbcRes.gridy++; gbcRes.weightx = 0.3;
@@ -336,11 +367,10 @@ public class WarrantyPanel extends javax.swing.JPanel {
     }
 
     private void confirmButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        String sdt = sdtField.getText().trim();
         String imei = imeiField.getText().trim();
         
-        if (sdt.isEmpty() || imei.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin tra cứu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+        if (imei.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập số sê-ri / IMEI để tra cứu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -357,57 +387,62 @@ public class WarrantyPanel extends javax.swing.JPanel {
         Date[] thoiGian = new Date[2];
         WarrantyCheckingProcess checkingWarranty = new WarrantyCheckingProcess();
 
-        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-            private String prodName = "Thiết bị di động";
-            private String prodConfig = "Tiêu chuẩn";
-            
+        SwingWorker<java.util.Map<String, Object>, Void> worker = new SwingWorker<java.util.Map<String, Object>, Void>() {
             @Override
-            protected String doInBackground() throws Exception {
-                // Fetch product details using BaoHanhDAO
-                java.util.Map<String, String> details = Controller.Admin.BaoHanh.BaoHanhDAO.getProductDetailsByImei(imei);
-                if (details != null && !details.isEmpty()) {
-                    if (details.containsKey("TEN_SP")) {
-                        prodName = details.get("TEN_SP");
-                    }
-                    if (details.containsKey("TEN_BIENTHE")) {
-                        prodConfig = details.get("TEN_BIENTHE");
-                    }
-                }
-                
-                return checkingWarranty.checking(sdt, imei, thoiGian);
+            protected java.util.Map<String, Object> doInBackground() throws Exception {
+                return checkingWarranty.getWarrantyDetails(imei);
             }
 
             @Override
             protected void done() {
                 progressDlg.dispose();
                 try {
-                    String result = get();
+                    java.util.Map<String, Object> result = get();
                     
-                    if ("Không tìm thấy".equals(result)) {
+                    if (result == null || result.isEmpty() || "NOT_FOUND".equals(result.get("ERROR"))) {
                         pnlResultCard.setVisible(false);
                         JOptionPane.showMessageDialog(WarrantyPanel.this, 
-                            "Không tìm thấy thông tin bảo hành cúa thiết bị này trong hệ thống!\nVui lòng kiểm tra lại Số sê-ri.", 
+                            "Không tìm thấy thông tin bảo hành của thiết bị này trong hệ thống!\nVui lòng kiểm tra lại Số sê-ri.", 
                             "Không tìm thấy", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
+
+                    if (result.containsKey("ERROR") && !"NOT_FOUND".equals(result.get("ERROR"))) {
+                        JOptionPane.showMessageDialog(WarrantyPanel.this, "Lỗi từ hệ thống: " + result.get("ERROR"), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                     
-                    // Format dates
                     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                    String actDate = thoiGian[0] != null ? sdf.format(thoiGian[0]) : "Chưa kích hoạt";
-                    String expDate = thoiGian[1] != null ? sdf.format(thoiGian[1]) : "Chưa kích hoạt";
+                    
+                    String prodName = result.get("TEN_SP") != null ? result.get("TEN_SP").toString() : "Thiết bị di động";
+                    String prodConfig = result.get("TEN_BIENTHE") != null ? result.get("TEN_BIENTHE").toString() : "Tiêu chuẩn";
+                    
+                    String custName = result.get("TEN_KHACH_HANG") != null ? result.get("TEN_KHACH_HANG").toString() : "Chưa bán / Máy tồn kho";
+                    String custPhone = result.get("SDT_KHACH_HANG") != null ? " - " + result.get("SDT_KHACH_HANG").toString() : "";
+                    String branch = result.get("CHI_NHANH_BAN") != null ? result.get("CHI_NHANH_BAN").toString() : "Tồn kho";
+                    
+                    String purchDate = result.get("NGAY_MUA") != null ? sdf.format((Date) result.get("NGAY_MUA")) : "Chưa kích hoạt";
+                    String actDate = result.get("BH_TU_NGAY") != null ? sdf.format((Date) result.get("BH_TU_NGAY")) : "Chưa kích hoạt";
+                    String expDate = result.get("BH_DEN_NGAY") != null ? sdf.format((Date) result.get("BH_DEN_NGAY")) : "Chưa kích hoạt";
+                    
+                    String status = result.get("TRANG_THAI_BH") != null ? result.get("TRANG_THAI_BH").toString() : "Vô hiệu lực";
                     
                     lblResultProductName.setText(prodName);
                     lblResultProductVariant.setText(prodConfig);
                     lblResultImei.setText(imei);
+                    lblResultCustomer.setText(custName + custPhone);
+                    lblResultBranch.setText(branch);
+                    lblResultPurchaseDate.setText(purchDate);
                     lblResultActivationDate.setText(actDate);
                     lblResultExpirationDate.setText(expDate);
 
-                    if ("Còn hiệu lực".equals(result)) {
-                        lblResultStatusBadge.setText("Còn hiệu lực");
+                    if ("Còn bảo hành".equals(status)) {
+                        lblResultStatusBadge.setText("Còn bảo hành");
                         lblResultStatusBadge.setBackground(STATUS_ACTIVE_BG);
                         lblResultStatusBadge.setForeground(STATUS_ACTIVE_FG);
                         
-                        long diff = thoiGian[1].getTime() - System.currentTimeMillis();
+                        Date expD = (Date) result.get("BH_DEN_NGAY");
+                        long diff = expD.getTime() - System.currentTimeMillis();
                         long days = diff / (1000 * 60 * 60 * 24);
                         if (days > 0) {
                             lblResultRemainTime.setText("Còn lại " + days + " ngày bảo hành");
@@ -416,18 +451,19 @@ public class WarrantyPanel extends javax.swing.JPanel {
                         }
                         lblResultRemainTime.setForeground(STATUS_ACTIVE_FG);
                         
-                    } else if ("Hết hiệu lực".equals(result)) {
-                        lblResultStatusBadge.setText("Hết hiệu lực");
+                    } else if ("Hết hạn bảo hành".equals(status)) {
+                        lblResultStatusBadge.setText("Hết hạn bảo hành");
                         lblResultStatusBadge.setBackground(STATUS_EXPIRED_BG);
                         lblResultStatusBadge.setForeground(STATUS_EXPIRED_FG);
                         
-                        long diff = System.currentTimeMillis() - thoiGian[1].getTime();
+                        Date expD = (Date) result.get("BH_DEN_NGAY");
+                        long diff = System.currentTimeMillis() - expD.getTime();
                         long days = diff / (1000 * 60 * 60 * 24);
                         lblResultRemainTime.setText("Đã hết hạn cách đây " + days + " ngày");
                         lblResultRemainTime.setForeground(STATUS_EXPIRED_FG);
                         
                     } else {
-                        lblResultStatusBadge.setText("Chưa kích hoạt / Vô hiệu lực");
+                        lblResultStatusBadge.setText("Chưa kích hoạt bảo hành");
                         lblResultStatusBadge.setBackground(STATUS_VOID_BG);
                         lblResultStatusBadge.setForeground(STATUS_VOID_FG);
                         lblResultRemainTime.setText("Thiết bị chưa được kích hoạt bảo hành");

@@ -25,13 +25,13 @@ public class UIUtils {
         String text = btn.getText() != null ? btn.getText().toLowerCase() : "";
 
         // Assign colors based on functional keywords
-        if (text.contains("xóa") || text.contains("✕") || text.contains("✖")) {
+        if (text.contains("xóa") || text.equals("x")) {
             btn.setBackground(new Color(220, 53, 69)); // Red (Delete)
-        } else if (text.contains("thêm") || text.contains("lưu") || text.contains("➕")) {
+        } else if (text.contains("thêm") || text.contains("lưu")) {
             btn.setBackground(new Color(40, 167, 69)); // Green (Add/Save)
-        } else if (text.contains("sửa") || text.contains("lọc") || text.contains("🔍") || text.contains("✏")) {
+        } else if (text.contains("sửa") || text.contains("lọc") || text.contains("tìm")) {
             btn.setBackground(new Color(0, 123, 255)); // Blue (Edit/Filter/Search)
-        } else if (text.contains("cập nhật") || text.contains("đổi") || text.contains("chuyển") || text.contains("loại sản phẩm") || text.contains("sản phẩm") || text.contains("↻") || text.contains("chi tiết")) {
+        } else if (text.contains("cập nhật") || text.contains("đổi") || text.contains("chuyển") || text.contains("loại sản phẩm") || text.contains("sản phẩm")  || text.contains("chi tiết")) {
             btn.setBackground(new Color(111, 66, 193)); // Purple (Update/Switch/Details)
         } else if (text.contains("hủy") || text.contains("quay lại") || text.contains("hủy bỏ")) {
             btn.setBackground(new Color(108, 117, 125)); // Gray (Cancel/Back)

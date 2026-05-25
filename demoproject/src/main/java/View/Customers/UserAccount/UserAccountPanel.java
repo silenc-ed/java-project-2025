@@ -132,7 +132,7 @@ public class UserAccountPanel extends javax.swing.JPanel {
         lblUsernameValue.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblUsernameValue.setForeground(TEXT_PRIMARY);
 
-        JLabel lblEditProfile = new JLabel("✎ Sửa hồ sơ");
+        JLabel lblEditProfile = new JLabel("Sửa hồ sơ");
         lblEditProfile.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblEditProfile.setForeground(TEXT_SECONDARY);
         lblEditProfile.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -192,7 +192,7 @@ public class UserAccountPanel extends javax.swing.JPanel {
         lblSectionLoyalty.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebarMenuPanel.add(lblSectionLoyalty);
 
-        pnlNavDiem = createSidebarItem("  🌟 Điểm tích lũy");
+        pnlNavDiem = createSidebarItem("  Điểm tích lũy");
         pnlNavDiem.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebarMenuPanel.add(pnlNavDiem);
 
@@ -511,7 +511,7 @@ public class UserAccountPanel extends javax.swing.JPanel {
 
         // Graphic Placeholder
         gbc.gridx = 1; gbc.gridy++; gbc.insets = new Insets(30, 10, 10, 10);
-        JLabel lblTruck = new JLabel("🚚 Hàng hóa sẽ được vận chuyển trực tiếp đến địa chỉ mặc định này cúa bạn!");
+        JLabel lblTruck = new JLabel("Hàng hóa sẽ được vận chuyển trực tiếp đến địa chỉ mặc định này cúa bạn!");
         lblTruck.setFont(new Font("Segoe UI", Font.ITALIC, 13));
         lblTruck.setForeground(TEXT_SECONDARY);
         contentPanel.add(lblTruck, gbc);
@@ -666,7 +666,7 @@ public class UserAccountPanel extends javax.swing.JPanel {
         lblTierName.setForeground(Color.WHITE);
         pnlCardTop.add(lblTierName, BorderLayout.WEST);
 
-        JLabel lblLogo = new JLabel("👑");
+        JLabel lblLogo = new JLabel("");
         lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblLogo.setForeground(Color.WHITE);
         pnlCardTop.add(lblLogo, BorderLayout.EAST);
@@ -864,9 +864,9 @@ public class UserAccountPanel extends javax.swing.JPanel {
             
             if (!nextTierName.isEmpty()) {
                 long needed = nextTierPoints - profile.diemTichLuy;
-                lblNextTierPromo.setText(String.format("🌟 Bạn cần thêm %,d điểm nữa để thăng hạng %s!", needed, nextTierName));
+                lblNextTierPromo.setText(String.format("Bạn cần thêm %,d điểm nữa để thăng hạng %s!", needed, nextTierName));
             } else {
-                lblNextTierPromo.setText("🎉 Chúc mừng! Bạn đang sở hữu thứ hạng cao nhất (BẠCH KIM)!");
+                lblNextTierPromo.setText("Chúc mừng! Bạn đang sở hữu thứ hạng cao nhất (BẠCH KIM)!");
             }
 
             repaint();

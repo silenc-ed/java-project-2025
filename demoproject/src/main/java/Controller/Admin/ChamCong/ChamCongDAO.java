@@ -111,7 +111,7 @@ public class ChamCongDAO {
 
     // ─── CA LÀM VIỆC ───────────────────────────────────────────────
 
-    /** Lấy tất cả ca làm việc → {MA_CA, TEN_CA, GIO_BAT_DAU, GIO_KET_THUC} */
+    /** Lấy tất cả ca làm việc -> {MA_CA, TEN_CA, GIO_BAT_DAU, GIO_KET_THUC} */
     public static List<Object[]> getAllCaLamViec() {
         List<Object[]> list = new ArrayList<>();
         String sql = "SELECT MA_CA, TEN_CA, TO_CHAR(GIO_BAT_DAU, 'HH24:MI') AS GIO_BAT_DAU, TO_CHAR(GIO_KET_THUC, 'HH24:MI') AS GIO_KET_THUC " +
@@ -157,7 +157,7 @@ public class ChamCongDAO {
 
     /**
      * Tổng hợp chấm công theo tháng cho calendar.
-     * Trả về Map: {ngày_trong_tháng → [tổng_lịch, đã_chấm_công]}
+     * Trả về Map: {ngày_trong_tháng -> [tổng_lịch, đã_chấm_công]}
      */
     public static Map<Integer, int[]> getMonthSummary(int year, int month) {
         Map<Integer, int[]> map = new TreeMap<>();
@@ -330,7 +330,7 @@ public class ChamCongDAO {
 
     /**
      * Chấm công cho 1 lịch làm việc.
-     * Nếu đã có bản ghi → UPDATE, chưa có → INSERT.
+     * Nếu đã có bản ghi -> UPDATE, chưa có -> INSERT.
      */
     public static boolean chamCong(long maLLV, Timestamp gioVao, Timestamp gioRa,
                                     String trangThai, String ghiChu) {
@@ -463,5 +463,72 @@ public class ChamCongDAO {
             if (rs.next()) return rs.getLong(1);
         } catch (Exception e) { e.printStackTrace(); }
         return 1L;
+    }
+
+    /**
+     * Gọi stored procedure SP_TINH_LUONG_NHAN_VIEN để tính toán lương cho 1 nhân viên trong tháng
+     */
+    public static Object[] tinhLuongNhanVien(long maNV, int thang, int nam) {
+        String sql = "{call SP_TINH_LUONG_NHAN_VIEN(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             CallableStatement cs = con.prepareCall(sql)) {
+            cs.setLong(1, maNV);
+            cs.setInt(2, thang);
+            cs.setInt(3, nam);
+            cs.registerOutParameter(4, Types.NUMERIC); // p_luong_cb
+            cs.registerOutParameter(5, Types.NUMERIC); // p_he_so
+            cs.registerOutParameter(6, Types.NUMERIC); // p_so_ca
+            cs.registerOutParameter(7, Types.NUMERIC); // p_so_tre
+            cs.registerOutParameter(8, Types.NUMERIC); // p_thuong
+            cs.registerOutParameter(9, Types.NUMERIC); // p_phat
+            cs.registerOutParameter(10, Types.NUMERIC); // p_tong_tien
+            cs.execute();
+            return new Object[] {
+                cs.getLong(4),   // Lương cơ bản
+                cs.getDouble(5), // Hệ số
+                cs.getInt(6),    // Số ca
+                cs.getInt(7),    // Số trễ
+                cs.getLong(8),   // Thưởng
+                cs.getLong(9),   // Phạt
+                cs.getLong(10)   // Tổng tiền
+            };
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Lấy danh sách chi tiết các ca làm việc của 1 nhân viên trong 1 tháng cụ thể để hiển thị thống kê
+     */
+    public static List<Object[]> getEmployeeMonthDetails(long maNV, int thang, int nam) {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT llv.NGAY_LAM, ca.TEN_CA, NVL(cc.TRANG_THAI, N'Chưa chấm') AS TRANG_THAI, cc.GIO_VAO_THUC_TE, cc.GIO_RA_THUC_TE, cc.GHI_CHU " +
+                     "FROM LICH_LAM_VIEC llv " +
+                     "JOIN CA_LAM_VIEC ca ON llv.MA_CA = ca.MA_CA " +
+                     "LEFT JOIN CHAM_CONG cc ON llv.MA_LLV = cc.MA_LLV " +
+                     "WHERE llv.MA_NV = ? " +
+                     "  AND EXTRACT(YEAR FROM llv.NGAY_LAM) = ? " +
+                     "  AND EXTRACT(MONTH FROM llv.NGAY_LAM) = ? " +
+                     "ORDER BY llv.NGAY_LAM";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, maNV);
+            ps.setInt(2, nam);
+            ps.setInt(3, thang);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Object[] {
+                        rs.getDate("NGAY_LAM"),
+                        rs.getString("TEN_CA"),
+                        rs.getString("TRANG_THAI"),
+                        rs.getTimestamp("GIO_VAO_THUC_TE"),
+                        rs.getTimestamp("GIO_RA_THUC_TE"),
+                        rs.getString("GHI_CHU")
+                    });
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
     }
 }
