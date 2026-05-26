@@ -65,7 +65,7 @@ public class AttendancePanel extends JPanel {
     private JTable tab1Table;
     private JComboBox<String> cbAddNV, cbAddCa;
     private JComboBox<String> cbFilterCa; // Bộ lọc ca
-    private JLabel lblGioLamViec, lblChuCa; // Nhãn hiển thị ca & chủ ca
+    private JLabel lblGioLamViec; // Nhãn hiển thị ca
     private List<Object[]> currentSchedule = new ArrayList<>(); // Lịch hiện tại
     private List<Object[]> nvList = new ArrayList<>();
     private List<Object[]> caList = new ArrayList<>();
@@ -642,16 +642,10 @@ public class AttendancePanel extends JPanel {
         lblGioLamViec.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblGioLamViec.setForeground(SUB_FG);
 
-        lblChuCa = new JLabel("Chủ ca: —");
-        lblChuCa.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblChuCa.setForeground(new Color(124, 58, 237)); // BTN_PURPLE
-
         leftFilter.add(new JLabel("Lọc theo Ca:"));
         leftFilter.add(cbFilterCa);
         leftFilter.add(Box.createHorizontalStrut(15));
         leftFilter.add(lblGioLamViec);
-        leftFilter.add(Box.createHorizontalStrut(20));
-        leftFilter.add(lblChuCa);
 
         filterPanel.add(leftFilter, BorderLayout.WEST);
         
@@ -659,7 +653,7 @@ public class AttendancePanel extends JPanel {
         rightFilter.setOpaque(false);
 
         // Bảng lịch làm việc
-        String[] cols = {"Mã LLV", "Họ tên", "Ca làm việc", "Giờ BĐ", "Giờ KT", "Vai trò", "Trạng thái"};
+        String[] cols = {"Mã LLV", "Họ tên", "Ca làm việc", "Giờ BĐ", "Giờ KT", "Trạng thái"};
         tab1Model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -733,48 +727,6 @@ public class AttendancePanel extends JPanel {
             }
         });
 
-        // Nút Chỉ định chủ ca
-        JButton btnSetLeader = makeBtn("Chỉ định chủ ca", BTN_PURPLE);
-        btnSetLeader.addActionListener(e -> {
-            int row = tab1Table.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên muốn chỉ định làm chủ ca.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            long maLLV = (Long) tab1Model.getValueAt(row, 0);
-            
-            long maCa = -1;
-            String empName = "";
-            for (Object[] r : currentSchedule) {
-                if ((Long)r[0] == maLLV) {
-                    maCa = (Long) r[12];
-                    empName = (String) r[2];
-                    break;
-                }
-            }
-
-            int opt = JOptionPane.showConfirmDialog(this,
-                    "Bạn muốn chỉ định " + empName + " làm chủ ca cho ca này?",
-                    "Xác nhận", JOptionPane.YES_NO_OPTION);
-            if (opt != JOptionPane.YES_OPTION) return;
-
-            final long finalMaCa = maCa;
-            new SwingWorker<Boolean, Void>() {
-                @Override protected Boolean doInBackground() {
-                    return ChamCongDAO.chiDinhChuCa(maLLV, finalMaCa, selectedDate);
-                }
-                @Override protected void done() {
-                    try {
-                        if (get()) {
-                            loadTab1Data();
-                        } else {
-                            JOptionPane.showMessageDialog(AttendancePanel.this, "Chỉ định chủ ca thất bại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                        }
-                    } catch (Exception ex) { ex.printStackTrace(); }
-                }
-            }.execute();
-        });
-
         // Nút xóa
         JButton btnDel = makeBtn("Xóa khỏi lịch", BTN_RED);
         btnDel.addActionListener(e -> {
@@ -803,11 +755,9 @@ public class AttendancePanel extends JPanel {
         boolean canEditCC = Controller.Admin.PermissionService.canEdit("Cham cong");
         boolean canDeleteCC = Controller.Admin.PermissionService.canDelete("Cham cong");
         btnEdit.setVisible(canEditCC);
-        btnSetLeader.setVisible(canEditCC);
         btnDel.setVisible(canDeleteCC);
 
         rightFilter.add(btnEdit);
-        rightFilter.add(btnSetLeader);
         rightFilter.add(btnDel);
         filterPanel.add(rightFilter, BorderLayout.EAST);
 
@@ -887,10 +837,8 @@ public class AttendancePanel extends JPanel {
         int idx = cbFilterCa.getSelectedIndex();
         if (idx <= 0) { // Tất cả các ca
             lblGioLamViec.setText("Giờ làm việc: —");
-            lblChuCa.setText("Chủ ca: —");
             for (Object[] r : currentSchedule) {
-                String vaiTro = ((Integer)r[10] == 1) ? "Chủ ca" : "Nhân viên";
-                tab1Model.addRow(new Object[]{r[0], r[2], r[3], r[4], r[5], vaiTro, r[8]});
+                tab1Model.addRow(new Object[]{r[0], r[2], r[3], r[4], r[5], r[8]});
             }
         } else {
             Object[] selectedCa = caList.get(idx - 1);
@@ -900,22 +848,10 @@ public class AttendancePanel extends JPanel {
 
             lblGioLamViec.setText("Giờ làm việc: " + gioBD + " - " + gioKT);
 
-            String chuCaName = "Chưa chỉ định";
             for (Object[] r : currentSchedule) {
                 long rMaCa = (Long) r[12];
                 if (rMaCa == maCa) {
-                    if ((Integer)r[10] == 1) {
-                        chuCaName = (String) r[2];
-                    }
-                }
-            }
-            lblChuCa.setText("Chủ ca: " + chuCaName);
-
-            for (Object[] r : currentSchedule) {
-                long rMaCa = (Long) r[12];
-                if (rMaCa == maCa) {
-                    String vaiTro = ((Integer)r[10] == 1) ? "Chủ ca" : "Nhân viên";
-                    tab1Model.addRow(new Object[]{r[0], r[2], r[3], r[4], r[5], vaiTro, r[8]});
+                    tab1Model.addRow(new Object[]{r[0], r[2], r[3], r[4], r[5], r[8]});
                 }
             }
         }

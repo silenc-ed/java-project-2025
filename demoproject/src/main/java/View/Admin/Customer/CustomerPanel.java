@@ -387,11 +387,19 @@ public class CustomerPanel extends javax.swing.JPanel {
                 }
                 String newUser = tfUsername.getText().trim();
                 String newPass = new String(tfNewPass.getPassword());
+                
+                if (!hasAccount && (!newUser.isEmpty() || !newPass.isEmpty())) {
+                    if (newUser.isEmpty() || newPass.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Khách hàng chưa có tài khoản. Vui lòng nhập đầy đủ Username và Mật khẩu để tạo mới.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+                
                 new SwingWorker<Boolean, Void>() {
                     @Override protected Boolean doInBackground() {
                         boolean khOk = KhachHangDAO.capNhatKhachHang(maKh, hoTen, sdt,
                                 tfDiaChi.getText().trim(), tfEmail.getText().trim());
-                        if (hasAccount && !newUser.isEmpty()) {
+                        if (!newUser.isEmpty()) {
                             KhachHangDAO.capNhatTaiKhoan(maKh, newUser, newPass);
                         }
                         return khOk;

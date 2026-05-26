@@ -150,7 +150,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         JComboBox<DBItem> dlgCbChiNhanh = new JComboBox<>();
         JComboBox<DBItem> dlgCbKhuyenMai = new JComboBox<>();
         JComboBox<String> dlgCbPhuongThuc = new JComboBox<>(new String[]{"Tiền mặt", "Chuyển khoản", "Thẻ tín dụng", "Ví điện tử"});
-        JComboBox<String> dlgCbTrangThai = new JComboBox<>(new String[]{"Hoàn thành", "Đang xử lý", "Chờ thanh toán", "Đã hủy"});
+        JComboBox<String> dlgCbTrangThai = new JComboBox<>(new String[]{"Hoàn thành", "Đang xử lý", "Đang chuẩn bị hàng", "Chờ thanh toán", "Đã hủy"});
         JTextField dlgTxtTongTien = new JTextField("0");
         JTextField dlgTxtGiamGia = new JTextField("0");
         JTextField dlgTxtThanhTien = new JTextField("0");
@@ -388,7 +388,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
         JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         rightHeader.setOpaque(false);
 
-        String[] statusFilterItems = {"Tất cả trạng thái", "Hoàn thành", "Đang xử lý", "Chờ thanh toán", "Đã hủy"};
+        String[] statusFilterItems = {"Tất cả trạng thái", "Hoàn thành", "Đang xử lý", "Đang chuẩn bị hàng", "Chờ thanh toán", "Đã hủy"};
         cbFilter = new JComboBox<>(statusFilterItems);
         cbFilter.setPreferredSize(new Dimension(180, 35));
         cbFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -540,6 +540,9 @@ public class ProcurementPanel extends javax.swing.JPanel {
                             break;
                         case "Đang xử lý":
                             label.setForeground(new Color(217, 119, 6));
+                            break;
+                        case "Đang chuẩn bị hàng":
+                            label.setForeground(new Color(147, 51, 234));
                             break;
                         case "Chờ thanh toán":
                             label.setForeground(new Color(37, 99, 235));

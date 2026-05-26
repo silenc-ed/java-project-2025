@@ -300,7 +300,7 @@ public class SerialNumberViewPanel extends JPanel {
     class SerialDialog extends JDialog {
         private JTextField txtMaSerial = new JTextField();
         private JComboBox<Model.ChiNhanh> cbChiNhanh = new JComboBox<>();
-        private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Khả dụng", "Không khả dụng", "Đang đặt", "Lỗi"});
+        private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Khả dụng", "Không khả dụng", "Đang đặt", "Lỗi", "Đã bán"});
         private JButton btnSave = new JButton("Lưu");
         private JButton btnCancel = new JButton("Hủy");
         private boolean isSaveClicked = false;

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CustomerOrderDAO {
 
-    public static boolean placeOrder(long maKh, double discountPercent, double discountFixed, List<CartItem> items, String ptThanhToan) throws Exception {
+    public static boolean placeOrder(long maKh, double discountPercent, double discountFixed, List<CartItem> items, String ptThanhToan, Integer maKm) throws Exception {
         if (items == null || items.isEmpty()) {
             throw new Exception("Giỏ hàng trống!");
         }
@@ -62,8 +62,8 @@ public class CustomerOrderDAO {
             }
 
             // 2. Insert HOA_DON
-            String insertHdSql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI, IS_DELETED) " +
-                                 "VALUES (?, 1, 1, ?, ?, ?, ?, 'Đang chuẩn bị hàng', 0)";
+            String insertHdSql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI, IS_DELETED, MA_KM) " +
+                                 "VALUES (?, 1, 1, ?, ?, ?, ?, 'Đang chuẩn bị hàng', 0, ?)";
             long newHdId = -1;
             try (PreparedStatement ps = con.prepareStatement(insertHdSql, new String[]{"MA_HD"})) {
                 if (maKh > 0) {
@@ -75,6 +75,11 @@ public class CustomerOrderDAO {
                 ps.setDouble(3, discountAmount);
                 ps.setDouble(4, finalAmount);
                 ps.setString(5, ptThanhToan);
+                if (maKm != null && maKm > 0) {
+                    ps.setInt(6, maKm);
+                } else {
+                    ps.setNull(6, java.sql.Types.NUMERIC);
+                }
                 
                 ps.executeUpdate();
                 
@@ -104,6 +109,16 @@ public class CustomerOrderDAO {
                     ps.addBatch();
                 }
                 ps.executeBatch();
+            }
+
+            // 4. Update VI_KHUYENMAI if a voucher was used
+            if (maKh > 0 && maKm != null && maKm > 0) {
+                String updateViSql = "UPDATE VI_KHUYENMAI SET SO_LUONG = SO_LUONG - 1 WHERE MA_KH = ? AND MA_KM = ? AND SO_LUONG > 0";
+                try (PreparedStatement psVi = con.prepareStatement(updateViSql)) {
+                    psVi.setLong(1, maKh);
+                    psVi.setInt(2, maKm);
+                    psVi.executeUpdate();
+                }
             }
 
             con.commit();

@@ -19,7 +19,9 @@ public class PacketPanel extends javax.swing.JPanel {
     private double discountFixed = 0;
     private double discountPercent = 0;
 
-    private JTextField txtName, txtPhone, txtAddress, txtPromo;
+    private JTextField txtName, txtPhone, txtAddress;
+    private JComboBox<VoucherItem> cbPromo;
+    private Integer selectedMaKm = null;
     private JTextArea txtNote;
     private Preferences prefs;
     private JRadioButton cod;
@@ -148,28 +150,57 @@ public class PacketPanel extends javax.swing.JPanel {
         promo.setAlignmentX(Component.CENTER_ALIGNMENT);
         promo.setMaximumSize(new Dimension(400, 80));
 
-        txtPromo = new JTextField();
-        txtPromo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        txtPromo.putClientProperty("JTextField.placeholderText", "Nhập mã giảm giá...");
+        cbPromo = new JComboBox<>();
+        cbPromo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        cbPromo.setPreferredSize(new Dimension(0, 42));
+        cbPromo.addItem(new VoucherItem(0, "Chọn mã giảm giá...", 0, ""));
         
-        GradientButton btnApply = new GradientButton("Tìm & Áp dụng", new Color(0, 123, 255), new Color(51, 153, 255));
+        // Load user's vouchers
+        try {
+            Controller.ProfileDAO.Profile profile = Controller.ProfileDAO.getProfileByToken(Common.TokenManager.getLocalToken());
+            if (profile != null) {
+                Controller.Customers.Voucher.CustomerVoucherDAO vDao = new Controller.Customers.Voucher.CustomerVoucherDAO();
+                java.util.List<java.util.Map<String, Object>> vouchers = vDao.getMyVouchers(profile.id);
+                for (java.util.Map<String, Object> v : vouchers) {
+                    int soLuong = (int) v.get("SO_LUONG");
+                    if (soLuong > 0) {
+                        cbPromo.addItem(new VoucherItem(
+                            (int) v.get("MA_KM"),
+                            (String) v.get("TEN_KM"),
+                            (long) v.get("GIA_TRI"),
+                            (String) v.get("TEN_LOAI_KM")
+                        ));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        GradientButton btnApply = new GradientButton("Áp dụng", new Color(0, 123, 255), new Color(51, 153, 255));
         btnApply.setBorder(new EmptyBorder(5, 15, 5, 15));
         btnApply.addActionListener(e -> {
-            String code = txtPromo.getText().trim().toUpperCase();
-            if (code.isEmpty()) {
-                discountFixed = 0; discountPercent = 0;
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập mã giảm giá!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            VoucherItem selected = (VoucherItem) cbPromo.getSelectedItem();
+            if (selected == null || selected.maKm == 0) {
+                discountFixed = 0; discountPercent = 0; selectedMaKm = null;
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một mã giảm giá!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 updateCartData();
                 return;
             }
             
-            // Note: Temporarily checking against static codes. A real app would query the database.
-            discountFixed = 0; discountPercent = 0;
-            JOptionPane.showMessageDialog(this, "Mã giảm giá không hợp lệ hoặc đã hết hạn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            selectedMaKm = selected.maKm;
+            if (selected.loaiKm != null && (selected.loaiKm.toLowerCase().contains("phần trăm") || selected.loaiKm.toLowerCase().contains("tỷ lệ"))) {
+                discountPercent = selected.giaTri / 100.0;
+                discountFixed = 0;
+            } else {
+                discountFixed = selected.giaTri;
+                discountPercent = 0;
+            }
+            JOptionPane.showMessageDialog(this, "Áp dụng thành công Voucher: " + selected.tenKm, "Thành công", JOptionPane.INFORMATION_MESSAGE);
             updateCartData();
         });
 
-        promo.add(txtPromo, BorderLayout.CENTER);
+        promo.add(cbPromo, BorderLayout.CENTER);
         promo.add(btnApply, BorderLayout.EAST);
         panel.add(promo);
         panel.add(Box.createVerticalStrut(20));
@@ -253,14 +284,15 @@ public class PacketPanel extends javax.swing.JPanel {
             
             boolean success = CustomerOrderDAO.placeOrder(
                 maKh, discountPercent, discountFixed, 
-                Model.CartManager.getInstance().getItems(), paymentMethod
+                Model.CartManager.getInstance().getItems(), paymentMethod, selectedMaKm
             );
             
             if (success) {
                 savePreferences();
                 JOptionPane.showMessageDialog(this, "Đặt hàng thành công! Đơn hàng đang được chuẩn bị.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 Model.CartManager.getInstance().getItems().clear();
-                discountFixed = 0; discountPercent = 0;
+                discountFixed = 0; discountPercent = 0; selectedMaKm = null;
+                cbPromo.setSelectedIndex(0);
                 updateCartData();
             }
         } catch (Exception ex) {
@@ -398,6 +430,23 @@ public class PacketPanel extends javax.swing.JPanel {
             g2d.setPaint(gp);
             g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
             super.paintComponent(g);
+        }
+    }
+
+    private static class VoucherItem {
+        int maKm;
+        String tenKm;
+        long giaTri;
+        String loaiKm;
+        public VoucherItem(int maKm, String tenKm, long giaTri, String loaiKm) {
+            this.maKm = maKm; this.tenKm = tenKm; this.giaTri = giaTri; this.loaiKm = loaiKm;
+        }
+        @Override
+        public String toString() {
+            if (maKm == 0) return tenKm;
+            String typeStr = (loaiKm != null && loaiKm.toLowerCase().contains("phần trăm")) ? "%" : "K";
+            long displayVal = (typeStr.equals("K") && giaTri >= 1000) ? (giaTri / 1000) : giaTri;
+            return tenKm + " (Giảm " + displayVal + typeStr + ")";
         }
     }
 }

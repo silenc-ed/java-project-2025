@@ -165,25 +165,61 @@ public class KhachHangDAO {
     }
 
     public static boolean capNhatTaiKhoan(long maKh, String username, String newPassword) {
-        if (newPassword != null && !newPassword.trim().isEmpty()) {
-            String sql = "UPDATE TAI_KHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?";
-            try (Connection con = ConnectionUtils.getMyConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, username);
-                ps.setString(2, HashUtil.hashPassword(newPassword));
-                ps.setLong(3, maKh);
-                return ps.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
-        } else {
-            String sql = "UPDATE TAI_KHOAN SET USERNAME = ? WHERE MA_KH = ?";
-            try (Connection con = ConnectionUtils.getMyConnection();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-                ps.setString(1, username);
-                ps.setLong(2, maKh);
-                return ps.executeUpdate() > 0;
-            } catch (Exception e) { e.printStackTrace(); }
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+
+            String checkSql = "SELECT MA_TK FROM TAI_KHOAN WHERE MA_KH = ?";
+            boolean hasTk = false;
+            try (PreparedStatement ps = con.prepareStatement(checkSql)) {
+                ps.setLong(1, maKh);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        hasTk = true;
+                    }
+                }
+            }
+
+            if (!hasTk) {
+                if (username != null && !username.trim().isEmpty()
+                        && newPassword != null && !newPassword.trim().isEmpty()) {
+                    String sqlTK = "INSERT INTO TAI_KHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) " +
+                                   "VALUES (?, ?, ?, 'Hoạt động')";
+                    try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
+                        ps.setLong(1, maKh);
+                        ps.setString(2, username);
+                        ps.setString(3, HashUtil.hashPassword(newPassword));
+                        ps.executeUpdate();
+                    }
+                }
+            } else {
+                if (newPassword != null && !newPassword.trim().isEmpty()) {
+                    String sql = "UPDATE TAI_KHOAN SET USERNAME = ?, PASSWORD_HASH = ? WHERE MA_KH = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sql)) {
+                        ps.setString(1, username);
+                        ps.setString(2, HashUtil.hashPassword(newPassword));
+                        ps.setLong(3, maKh);
+                        ps.executeUpdate();
+                    }
+                } else if (username != null && !username.trim().isEmpty()) {
+                    String sql = "UPDATE TAI_KHOAN SET USERNAME = ? WHERE MA_KH = ?";
+                    try (PreparedStatement ps = con.prepareStatement(sql)) {
+                        ps.setString(1, username);
+                        ps.setLong(2, maKh);
+                        ps.executeUpdate();
+                    }
+                }
+            }
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (con != null) try { con.rollback(); } catch (Exception ex) {}
+            return false;
+        } finally {
+            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ex) {}
         }
-        return false;
     }
 
     public static List<Object[]> timKiemKhachHang(String keyword) {

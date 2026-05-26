@@ -274,6 +274,36 @@ public class NhanVienDAO {
         } catch (Exception e) { e.printStackTrace(); return false; }
     }
 
+    // ─── Cho nghỉ việc ────────────────────────────────────────────────
+    public static boolean choNghiViec(long maNV) {
+        Connection con = null;
+        try {
+            con = ConnectionUtils.getMyConnection();
+            con.setAutoCommit(false);
+            
+            String sqlNV = "UPDATE NHAN_VIEN SET TRANG_THAI = N'Đã nghỉ việc' WHERE MA_NV = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlNV)) {
+                ps.setLong(1, maNV);
+                ps.executeUpdate();
+            }
+            
+            String sqlTK = "UPDATE TAI_KHOAN SET TRANG_THAI = N'Bị khóa' WHERE MA_NV = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlTK)) {
+                ps.setLong(1, maNV);
+                ps.executeUpdate();
+            }
+            
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (con != null) try { con.rollback(); } catch (Exception ex) {}
+            return false;
+        } finally {
+            if (con != null) try { con.setAutoCommit(true); con.close(); } catch (Exception ex) {}
+        }
+    }
+
     // ─── Xóa nhân viên ──────────────────────────────────────────────
     public static boolean xoaNhanVien(long maNV) {
         Connection con = null;

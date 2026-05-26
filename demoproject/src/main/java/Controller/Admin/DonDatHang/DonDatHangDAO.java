@@ -340,7 +340,7 @@ public class DonDatHangDAO {
                     if (rs.next()) {
                         int maKM = rs.getInt("MA_KM");
                         if (!rs.wasNull() && maKM > 0) {
-                            giamGia = calculateDiscount(con, maKM, tongTien);
+                            giamGia = calculateDiscount(con, maKM, tongTien, maKH);
                         }
                     }
                 }
@@ -617,17 +617,22 @@ public class DonDatHangDAO {
             con = ConnectionUtils.getMyConnection();
             con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
-            // Lấy tổng tiền hàng
+            // Lấy tổng tiền hàng và khách hàng
             long tongTien = 0;
-            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN FROM HOA_DON WHERE MA_HD = ? FOR UPDATE")) {
+            Integer maKH = null;
+            try (PreparedStatement ps = con.prepareStatement("SELECT TONG_TIEN, MA_KH FROM HOA_DON WHERE MA_HD = ? FOR UPDATE")) {
                 ps.setInt(1, maHD);
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) tongTien = rs.getLong("TONG_TIEN");
+                    if (rs.next()) {
+                        tongTien = rs.getLong("TONG_TIEN");
+                        int kh = rs.getInt("MA_KH");
+                        if (!rs.wasNull()) maKH = kh;
+                    }
                 }
             }
 
             // Validate và tính giảm giá
-            long giamGia = validateAndCalculateDiscount(con, maKM, tongTien);
+            long giamGia = validateAndCalculateDiscount(con, maKM, tongTien, maKH);
 
             // Cập nhật HOADON
             String sqlUpd = "UPDATE HOA_DON SET MA_KM = ?, GIAM_GIA = ?, THANH_TIEN = ? WHERE MA_HD = ?";
@@ -637,6 +642,16 @@ public class DonDatHangDAO {
                 ps.setLong(3, tongTien - giamGia);
                 ps.setInt(4, maHD);
                 ps.executeUpdate();
+            }
+
+            // Trừ số lượng trong ví khách hàng
+            if (maKH != null) {
+                String updWallet = "UPDATE VI_KHUYENMAI SET SO_LUONG = SO_LUONG - 1 WHERE MA_KH = ? AND MA_KM = ?";
+                try (PreparedStatement psW = con.prepareStatement(updWallet)) {
+                    psW.setInt(1, maKH);
+                    psW.setInt(2, maKM);
+                    psW.executeUpdate();
+                }
             }
 
             con.commit();
@@ -652,8 +667,8 @@ public class DonDatHangDAO {
     /**
      * Validate mã khuyến mãi và trả về số tiền giảm
      */
-    public long validateAndCalculateDiscount(Connection con, int maKM, long tongTien) throws Exception {
-        String sql = "SELECT GIA_TRI, RANG_BUOC_GIA_TRI, NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI FROM KHUYEN_MAI WHERE MA_KM = ?";
+    public long validateAndCalculateDiscount(Connection con, int maKM, long tongTien, Integer maKH) throws Exception {
+        String sql = "SELECT GIA_TRI, NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI FROM KHUYEN_MAI WHERE MA_KM = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maKM);
             try (ResultSet rs = ps.executeQuery()) {
@@ -674,30 +689,31 @@ public class DonDatHangDAO {
                     throw new Exception("Mã khuyến mãi đã hết hạn hoặc chưa có hiệu lực!");
                 }
 
-                long giaTri = rs.getLong("GIA_TRI"); // phần trăm
-                String rangBuoc = rs.getString("RANG_BUOC_GIA_TRI");
-
-                // Kiểm tra ràng buộc giá trị: áp dụng khi tổng tiền dưới ngưỡng
-                if (rangBuoc != null && !rangBuoc.trim().isEmpty()) {
-                    try {
-                        long threshold = Long.parseLong(rangBuoc.trim());
-                        if (tongTien > threshold) {
-                            throw new Exception("Đơn hàng vượt ngưỡng áp dụng khuyến mãi (" + threshold + "đ)!");
+                // Kiểm tra trong ví khách hàng
+                if (maKH != null) {
+                    String checkWalletSql = "SELECT SO_LUONG FROM VI_KHUYENMAI WHERE MA_KH = ? AND MA_KM = ?";
+                    try (PreparedStatement psW = con.prepareStatement(checkWalletSql)) {
+                        psW.setInt(1, maKH);
+                        psW.setInt(2, maKM);
+                        try (ResultSet rsW = psW.executeQuery()) {
+                            if (!rsW.next() || rsW.getInt("SO_LUONG") <= 0) {
+                                throw new Exception("Khách hàng không sở hữu mã này hoặc đã dùng hết lượt!");
+                            }
                         }
-                    } catch (NumberFormatException e) {
-                        // Ràng buộc không phải số, bỏ qua
                     }
+                } else {
+                    throw new Exception("Vui lòng xác định khách hàng trước khi dùng khuyến mãi!");
                 }
 
-                // Tính giảm giá = tổng tiền * phần trăm / 100
+                long giaTri = rs.getLong("GIA_TRI"); // phần trăm
                 return tongTien * giaTri / 100;
             }
         }
     }
 
-    private long calculateDiscount(Connection con, int maKM, long tongTien) {
+    private long calculateDiscount(Connection con, int maKM, long tongTien, Integer maKH) {
         try {
-            return validateAndCalculateDiscount(con, maKM, tongTien);
+            return validateAndCalculateDiscount(con, maKM, tongTien, maKH);
         } catch (Exception e) {
             return 0; // Nếu KM không hợp lệ, không giảm
         }

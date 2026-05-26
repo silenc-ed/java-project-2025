@@ -74,14 +74,14 @@ public class WarrantyPanel extends javax.swing.JPanel {
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         filterPanel.setBackground(COLOR_BACKGROUND);
 
-        txtSearch = new JTextField("Tìm kiếm theo Mã Serial, SĐT, Tên KH...");
+        txtSearch = new JTextField("Tìm kiếm theo Mã BH, Mã HĐ, Mã Serial, SĐT, Tên KH...");
         txtSearch.setPreferredSize(new Dimension(300, 35));
         txtSearch.setFont(FONT_NORMAL);
         txtSearch.setForeground(Color.GRAY);
         txtSearch.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Tìm kiếm theo Mã Serial, SĐT, Tên KH...")) {
+                if (txtSearch.getText().equals("Tìm kiếm theo Mã BH, Mã HĐ, Mã Serial, SĐT, Tên KH...")) {
                     txtSearch.setText("");
                     txtSearch.setForeground(COLOR_TEXT_DARK);
                 }
@@ -89,7 +89,7 @@ public class WarrantyPanel extends javax.swing.JPanel {
             @Override
             public void focusLost(FocusEvent e) {
                 if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Tìm kiếm theo Mã Serial, SĐT, Tên KH...");
+                    txtSearch.setText("Tìm kiếm theo Mã BH, Mã HĐ, Mã Serial, SĐT, Tên KH...");
                     txtSearch.setForeground(Color.GRAY);
                 }
             }
@@ -114,7 +114,7 @@ public class WarrantyPanel extends javax.swing.JPanel {
         contentPanel.add(filterPanel, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"STT", "Mã BH", "Serial Number", "Sản phẩm", "Phiên bản", "Khách hàng", "SĐT", "Ngày BH", "Hết hạn", "Trạng thái"};
+        String[] columns = {"Mã BH", "Mã HĐ", "Serial Number", "Sản phẩm", "Phiên bản", "Khách hàng", "SĐT", "Ngày BH", "Hết hạn", "Trạng thái"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -187,8 +187,8 @@ public class WarrantyPanel extends javax.swing.JPanel {
             String endDate = w.get("NGAY_KET_THUC") != null ? sdf.format((java.util.Date) w.get("NGAY_KET_THUC")) : "";
             
             tableModel.addRow(new Object[]{
-                stt++,
                 w.get("MA_BH"),
+                w.get("MA_HD"),
                 w.get("SERIAL_NUMBER"),
                 w.get("TEN_SP"),
                 w.get("TEN_BIENTHE"),
@@ -206,15 +206,17 @@ public class WarrantyPanel extends javax.swing.JPanel {
         String selectedStatus = cbStatusFilter.getSelectedItem().toString();
 
         RowFilter<DefaultTableModel, Object> searchFilter = null;
-        if (!searchText.isEmpty() && !searchText.equals("Tìm kiếm theo Mã Serial, SĐT, Tên KH...")) {
+        if (!searchText.isEmpty() && !searchText.equals("Tìm kiếm theo Mã BH, Mã HĐ, Mã Serial, SĐT, Tên KH...")) {
             final String searchLower = searchText.toLowerCase();
             searchFilter = new RowFilter<DefaultTableModel, Object>() {
                 @Override
                 public boolean include(RowFilter.Entry<? extends DefaultTableModel, ? extends Object> entry) {
+                    String maBH = entry.getStringValue(0).toLowerCase();
+                    String maHD = entry.getStringValue(1).toLowerCase();
                     String serial = entry.getStringValue(2).toLowerCase();
                     String kh = entry.getStringValue(5).toLowerCase();
                     String sdt = entry.getStringValue(6).toLowerCase();
-                    return serial.contains(searchLower) || kh.contains(searchLower) || sdt.contains(searchLower);
+                    return maBH.contains(searchLower) || maHD.contains(searchLower) || serial.contains(searchLower) || kh.contains(searchLower) || sdt.contains(searchLower);
                 }
             };
         }

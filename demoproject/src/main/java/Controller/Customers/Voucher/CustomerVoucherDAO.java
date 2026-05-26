@@ -93,7 +93,7 @@ public class CustomerVoucherDAO {
     public List<Map<String, Object>> getAvailablePromotions() throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         // Query các chương trình khuyến mãi có trạng thái "Có hiệu lực", còn thời hạn và yêu cầu điểm
-        String sql = "SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, "
+        String sql = "SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, "
                    + "KM.NGAY_BAT_DAU, KM.NGAY_KET_THUC, KM.DIEM_DOI, KM.SO_LUONG_CL, "
                    + "LKM.TEN_LOAI_KM "
                    + "FROM KHUYEN_MAI KM "
@@ -111,7 +111,6 @@ public class CustomerVoucherDAO {
                 row.put("MA_KM", rs.getInt("MA_KM"));
                 row.put("TEN_KM", rs.getString("TEN_KM"));
                 row.put("GIA_TRI", rs.getLong("GIA_TRI"));
-                row.put("RANG_BUOC", rs.getString("RANG_BUOC_GIA_TRI"));
                 row.put("NGAY_BAT_DAU", rs.getTimestamp("NGAY_BAT_DAU"));
                 row.put("NGAY_KET_THUC", rs.getTimestamp("NGAY_KET_THUC"));
                 row.put("DIEM_DOI", rs.getInt("DIEM_DOI"));
@@ -129,7 +128,7 @@ public class CustomerVoucherDAO {
     public List<Map<String, Object>> getMyVouchers(long maKH) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         String sql = "SELECT VK.MA_KM, VK.SO_LUONG, VK.NGAY_LUU, "
-                   + "KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, KM.NGAY_KET_THUC, "
+                   + "KM.TEN_KM, KM.GIA_TRI, KM.NGAY_KET_THUC, "
                    + "LKM.TEN_LOAI_KM "
                    + "FROM VI_KHUYENMAI VK "
                    + "JOIN KHUYEN_MAI KM ON VK.MA_KM = KM.MA_KM "
@@ -148,7 +147,6 @@ public class CustomerVoucherDAO {
                     row.put("NGAY_LUU", rs.getDate("NGAY_LUU"));
                     row.put("TEN_KM", rs.getString("TEN_KM"));
                     row.put("GIA_TRI", rs.getLong("GIA_TRI"));
-                    row.put("RANG_BUOC", rs.getString("RANG_BUOC_GIA_TRI"));
                     row.put("NGAY_KET_THUC", rs.getTimestamp("NGAY_KET_THUC"));
                     row.put("TEN_LOAI_KM", rs.getString("TEN_LOAI_KM"));
                     results.add(row);

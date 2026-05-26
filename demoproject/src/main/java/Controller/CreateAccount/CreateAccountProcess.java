@@ -29,7 +29,7 @@ public class CreateAccountProcess {
                 if (rs.next()) {
                     long maKH = rs.getLong(1);
 
-                    String sqlTK = "INSERT INTO TAI_KHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) VALUES (?, ?, ?, 'Đã kích hoạt')";
+                    String sqlTK = "INSERT INTO TAI_KHOAN (MA_KH, USERNAME, PASSWORD_HASH, TRANG_THAI) VALUES (?, ?, ?, 'Hoạt động')";
                     PreparedStatement psTK = con.prepareStatement(sqlTK);
                     
                     psTK.setLong(1, maKH); 

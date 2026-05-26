@@ -14,13 +14,31 @@ import java.util.Map;
  */
 public class KhuyenMaiDAO {
 
+    static {
+        try (Connection con = ConnectionUtils.getMyConnection();
+             Statement st = con.createStatement()) {
+            st.execute("CREATE OR REPLACE TRIGGER TRG_KM_TRANG_THAI\n" +
+                       "BEFORE UPDATE ON KHUYEN_MAI\n" +
+                       "FOR EACH ROW\n" +
+                       "BEGIN\n" +
+                       "    IF :NEW.NGAY_KET_THUC < SYSTIMESTAMP THEN\n" +
+                       "        :NEW.TRANG_THAI := 'Hết hạn';\n" +
+                       "    ELSIF :NEW.SO_LUONG_CL <= 0 THEN\n" +
+                       "        :NEW.TRANG_THAI := 'Hết lượt';\n" +
+                       "    END IF;\n" +
+                       "END;");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Lấy tất cả khuyến mãi (JOIN LOAI_KHUYENMAI)
      */
     public List<Map<String, Object>> getAllPromotions(String keyword) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, KM.RANG_BUOC_GIA_TRI, ");
+        sql.append("SELECT KM.MA_KM, KM.TEN_KM, KM.GIA_TRI, KM.DIEM_DOI, KM.SO_LUONG_CL, ");
         sql.append("KM.NGAY_BAT_DAU, KM.NGAY_KET_THUC, KM.TRANG_THAI, ");
         sql.append("LKM.MA_LOAI_KM, LKM.TEN_LOAI_KM ");
         sql.append("FROM KHUYEN_MAI KM ");
@@ -43,7 +61,8 @@ public class KhuyenMaiDAO {
                     row.put("MA_KM", rs.getInt("MA_KM"));
                     row.put("TEN_KM", rs.getString("TEN_KM"));
                     row.put("GIA_TRI", rs.getLong("GIA_TRI"));
-                    row.put("RANG_BUOC", rs.getString("RANG_BUOC_GIA_TRI"));
+                    row.put("DIEM_DOI", rs.getInt("DIEM_DOI"));
+                    row.put("SO_LUONG_CL", rs.getInt("SO_LUONG_CL"));
                     row.put("NGAY_BAT_DAU", rs.getTimestamp("NGAY_BAT_DAU"));
                     row.put("NGAY_KET_THUC", rs.getTimestamp("NGAY_KET_THUC"));
                     row.put("TRANG_THAI", rs.getString("TRANG_THAI"));
@@ -79,19 +98,20 @@ public class KhuyenMaiDAO {
     /**
      * Thêm khuyến mãi mới
      */
-    public int addPromotion(int maLoaiKM, String tenKM, long giaTri, String rangBuoc,
+    public int addPromotion(int maLoaiKM, String tenKM, long giaTri, int diemDoi, int soLuongCL,
                             Timestamp ngayBD, Timestamp ngayKT, String trangThai) throws Exception {
-        String sql = "INSERT INTO KHUYEN_MAI (MA_LOAI_KM, TEN_KM, GIA_TRI, RANG_BUOC_GIA_TRI, " +
-                     "NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO KHUYEN_MAI (MA_LOAI_KM, TEN_KM, GIA_TRI, DIEM_DOI, SO_LUONG_CL, " +
+                     "NGAY_BAT_DAU, NGAY_KET_THUC, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql, new String[]{"MA_KM"})) {
             ps.setInt(1, maLoaiKM);
             ps.setString(2, tenKM);
             ps.setLong(3, giaTri);
-            ps.setString(4, rangBuoc);
-            ps.setTimestamp(5, ngayBD);
-            ps.setTimestamp(6, ngayKT);
-            ps.setString(7, trangThai);
+            ps.setInt(4, diemDoi);
+            ps.setInt(5, soLuongCL);
+            ps.setTimestamp(6, ngayBD);
+            ps.setTimestamp(7, ngayKT);
+            ps.setString(8, trangThai);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) return rs.getInt(1);
@@ -104,19 +124,20 @@ public class KhuyenMaiDAO {
      * Cập nhật khuyến mãi
      */
     public void updatePromotion(int maKM, int maLoaiKM, String tenKM, long giaTri,
-                                String rangBuoc, Timestamp ngayBD, Timestamp ngayKT, String trangThai) throws Exception {
-        String sql = "UPDATE KHUYEN_MAI SET MA_LOAI_KM=?, TEN_KM=?, GIA_TRI=?, RANG_BUOC_GIA_TRI=?, " +
+                                int diemDoi, int soLuongCL, Timestamp ngayBD, Timestamp ngayKT, String trangThai) throws Exception {
+        String sql = "UPDATE KHUYEN_MAI SET MA_LOAI_KM=?, TEN_KM=?, GIA_TRI=?, DIEM_DOI=?, SO_LUONG_CL=?, " +
                      "NGAY_BAT_DAU=?, NGAY_KET_THUC=?, TRANG_THAI=? WHERE MA_KM=?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maLoaiKM);
             ps.setString(2, tenKM);
             ps.setLong(3, giaTri);
-            ps.setString(4, rangBuoc);
-            ps.setTimestamp(5, ngayBD);
-            ps.setTimestamp(6, ngayKT);
-            ps.setString(7, trangThai);
-            ps.setInt(8, maKM);
+            ps.setInt(4, diemDoi);
+            ps.setInt(5, soLuongCL);
+            ps.setTimestamp(6, ngayBD);
+            ps.setTimestamp(7, ngayKT);
+            ps.setString(8, trangThai);
+            ps.setInt(9, maKM);
             ps.executeUpdate();
         }
     }
@@ -130,6 +151,21 @@ public class KhuyenMaiDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maKM);
             ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Kiểm tra trùng tên khuyến mãi
+     */
+    public boolean checkDuplicatePromotionName(int maKM, String tenKM) throws Exception {
+        String sql = "SELECT 1 FROM KHUYEN_MAI WHERE UPPER(TEN_KM) = UPPER(?) AND MA_KM != ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, tenKM.trim());
+            ps.setInt(2, maKM);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // true nếu trùng
+            }
         }
     }
 

@@ -108,6 +108,7 @@ public class VoucherPanel extends JPanel {
     private JButton btnSwitchMode;
     private JButton btnAdd;
     private JButton btnDeleteSelected;
+    private JButton btnEditSelected;
     
     private boolean isKhuyenMaiMode = true;
     private List<LoaiKMItem> promoTypeList = new ArrayList<>();
@@ -256,14 +257,14 @@ public class VoucherPanel extends JPanel {
 
     private void updateTableStructure() {
         if (isKhuyenMaiMode) {
-            String[] cols = {"", "Mã KM", "Tên KM", "Loại", "Giá trị (%)", "Ràng buộc", "Bắt đầu", "Kết thúc", "Trạng thái", "Thao tác"};
+            String[] cols = {"", "Mã KM", "Tên KM", "Loại", "Giá trị (%)", "Điểm đổi", "Số lượng", "Bắt đầu", "Kết thúc", "Trạng thái", "Thao tác"};
             tableModel = new DefaultTableModel(cols, 0) {
                 @Override public Class<?> getColumnClass(int c) {
                     if (c == 0) return Boolean.class;
                     return super.getColumnClass(c);
                 }
                 @Override public boolean isCellEditable(int r, int c) {
-                    return c == 0 || c == 9;
+                    return c == 0 || c == 10;
                 }
             };
             dataTable.setModel(tableModel);
@@ -276,6 +277,8 @@ public class VoucherPanel extends JPanel {
             dataTable.getColumnModel().getColumn(2).setPreferredWidth(150);
             dataTable.getColumnModel().getColumn(9).setPreferredWidth(80);
             dataTable.getColumnModel().getColumn(9).setMaxWidth(100);
+            dataTable.getColumnModel().getColumn(10).setPreferredWidth(80);
+            dataTable.getColumnModel().getColumn(10).setMaxWidth(100);
 
             // Renderers
             DefaultTableCellRenderer centerR = new DefaultTableCellRenderer();
@@ -286,12 +289,12 @@ public class VoucherPanel extends JPanel {
             dataTable.getColumnModel().getColumn(5).setCellRenderer(centerR);
             dataTable.getColumnModel().getColumn(6).setCellRenderer(centerR);
             dataTable.getColumnModel().getColumn(7).setCellRenderer(centerR);
-            dataTable.getColumnModel().getColumn(8).setCellRenderer(new StatusBadgeRenderer());
+            dataTable.getColumnModel().getColumn(8).setCellRenderer(centerR);
+            dataTable.getColumnModel().getColumn(9).setCellRenderer(new StatusBadgeRenderer());
 
-            // Action Editor & Renderer
             ActionCellEditor actionEditor = new ActionCellEditor(dataTable, () -> handleEditVoucher());
-            dataTable.getColumnModel().getColumn(9).setCellRenderer(new ActionCellRenderer());
-            dataTable.getColumnModel().getColumn(9).setCellEditor(actionEditor);
+            dataTable.getColumnModel().getColumn(10).setCellRenderer(new ActionCellRenderer());
+            dataTable.getColumnModel().getColumn(10).setCellEditor(actionEditor);
 
         } else {
             String[] cols = {"", "Mã Loại", "Tên Loại", "Mô Tả", "Thao tác"};
@@ -318,7 +321,6 @@ public class VoucherPanel extends JPanel {
             centerR.setHorizontalAlignment(SwingConstants.CENTER);
             dataTable.getColumnModel().getColumn(1).setCellRenderer(centerR);
 
-            // Action Editor & Renderer
             ActionCellEditor actionEditor = new ActionCellEditor(dataTable, () -> handleEditPromoType());
             dataTable.getColumnModel().getColumn(4).setCellRenderer(new ActionCellRenderer());
             dataTable.getColumnModel().getColumn(4).setCellEditor(actionEditor);
@@ -384,11 +386,12 @@ public class VoucherPanel extends JPanel {
                     r.get("TEN_KM"),
                     r.get("TEN_LOAI_KM"),
                     r.get("GIA_TRI") + "%",
-                    r.get("RANG_BUOC") != null ? r.get("RANG_BUOC") : "",
+                    r.get("DIEM_DOI") != null ? r.get("DIEM_DOI") : 0,
+                    r.get("SO_LUONG_CL") != null ? r.get("SO_LUONG_CL") : 0,
                     bd != null ? SDF.format(bd) : "",
                     kt != null ? SDF.format(kt) : "",
                     r.get("TRANG_THAI"),
-                    r.get("MA_KM")
+                    "Sửa"
                 });
             }
         } catch (Exception e) {
@@ -408,7 +411,7 @@ public class VoucherPanel extends JPanel {
                     t.get("MA_LOAI_KM"),
                     t.get("TEN_LOAI_KM"),
                     t.get("MO_TA") != null ? t.get("MO_TA") : "",
-                    t.get("MA_LOAI_KM")
+                    "Sửa"
                 });
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -427,44 +430,53 @@ public class VoucherPanel extends JPanel {
         Window parent = SwingUtilities.getWindowAncestor(this);
         Frame frame = parent instanceof Frame ? (Frame) parent : null;
         VoucherDialog dialog = new VoucherDialog(frame, "Thêm Khuyến Mãi", promoTypeList);
-        dialog.setVisible(true);
+        dialog.setSaveHandler(() -> {
+            LoaiKMItem loai = dialog.getSelectedCategory();
+            String ten = dialog.getTenKM();
+            long giaTri = dialog.getGiaTri();
+            int diemDoi = dialog.getDiemDoi();
+            int soLuong = dialog.getSoLuong();
+            Timestamp bd = new Timestamp(dialog.getNgayBD().getTime());
+            Timestamp kt = new Timestamp(dialog.getNgayKT().getTime());
+            String trangThai = dialog.getTrangThai();
 
-        if (dialog.isSaveClicked()) {
-            try {
-                LoaiKMItem loai = dialog.getSelectedCategory();
-                String ten = dialog.getTenKM();
-                long giaTri = dialog.getGiaTri();
-                String rangBuoc = dialog.getRangBuoc();
-                Timestamp bd = new Timestamp(dialog.getNgayBD().getTime());
-                Timestamp kt = new Timestamp(dialog.getNgayKT().getTime());
-                String trangThai = dialog.getTrangThai();
-
-                int newId = dao.addPromotion(loai.getId(), ten, giaTri, rangBuoc, bd, kt, trangThai);
-                if (newId > 0) {
-                    JOptionPane.showMessageDialog(this, "Thêm thành công!");
-                    loadDataToTable(null);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi thêm!");
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            // Kiểm tra trùng tên (truyền ID = -1 vì đây là thêm mới)
+            if (dao.checkDuplicatePromotionName(-1, ten)) {
+                JOptionPane.showMessageDialog(dialog, "Tên chương trình đã tồn tại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return false;
             }
-        }
+
+            int newId = dao.addPromotion(loai.getId(), ten, giaTri, diemDoi, soLuong, bd, kt, trangThai);
+            if (newId > 0) {
+                JOptionPane.showMessageDialog(VoucherPanel.this, "Thêm thành công!");
+                loadDataToTable(null);
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Lỗi khi thêm!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        });
+
+        dialog.setVisible(true);
     }
 
     private void handleEditVoucher() {
         int row = dataTable.getSelectedRow();
-        if (row == -1) return;
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa!");
+            return;
+        }
         int modelRow = dataTable.convertRowIndexToModel(row);
 
         int id = (int) tableModel.getValueAt(modelRow, 1);
         String ten = (String) tableModel.getValueAt(modelRow, 2);
         String tenLoai = (String) tableModel.getValueAt(modelRow, 3);
         String giaTriStr = ((String) tableModel.getValueAt(modelRow, 4)).replace("%", "");
-        String rangBuoc = (String) tableModel.getValueAt(modelRow, 5);
-        String bdStr = (String) tableModel.getValueAt(modelRow, 6);
-        String ktStr = (String) tableModel.getValueAt(modelRow, 7);
-        String tt = (String) tableModel.getValueAt(modelRow, 8);
+        int diemDoi = (int) tableModel.getValueAt(modelRow, 5);
+        int soLuong = (int) tableModel.getValueAt(modelRow, 6);
+        String bdStr = (String) tableModel.getValueAt(modelRow, 7);
+        String ktStr = (String) tableModel.getValueAt(modelRow, 8);
+        String tt = (String) tableModel.getValueAt(modelRow, 9);
 
         Window parent = SwingUtilities.getWindowAncestor(this);
         Frame frame = parent instanceof Frame ? (Frame) parent : null;
@@ -472,7 +484,8 @@ public class VoucherPanel extends JPanel {
 
         dialog.setTenKM(ten);
         dialog.setGiaTri(giaTriStr);
-        dialog.setRangBuoc(rangBuoc);
+        dialog.setDiemDoi(diemDoi);
+        dialog.setSoLuong(soLuong);
         dialog.setTrangThai(tt);
 
         for (LoaiKMItem item : promoTypeList) {
@@ -487,25 +500,29 @@ public class VoucherPanel extends JPanel {
             if (!ktStr.isEmpty()) dialog.setNgayKT(SDF.parse(ktStr));
         } catch (Exception ignored) {}
 
-        dialog.setVisible(true);
+        dialog.setSaveHandler(() -> {
+            LoaiKMItem loai = dialog.getSelectedCategory();
+            String newTen = dialog.getTenKM();
+            long giaTri = dialog.getGiaTri();
+            int newDiemDoi = dialog.getDiemDoi();
+            int newSoLuong = dialog.getSoLuong();
+            Timestamp bd = new Timestamp(dialog.getNgayBD().getTime());
+            Timestamp kt = new Timestamp(dialog.getNgayKT().getTime());
+            String trangThai = dialog.getTrangThai();
 
-        if (dialog.isSaveClicked()) {
-            try {
-                LoaiKMItem loai = dialog.getSelectedCategory();
-                String newTen = dialog.getTenKM();
-                long giaTri = dialog.getGiaTri();
-                String newRangBuoc = dialog.getRangBuoc();
-                Timestamp bd = new Timestamp(dialog.getNgayBD().getTime());
-                Timestamp kt = new Timestamp(dialog.getNgayKT().getTime());
-                String trangThai = dialog.getTrangThai();
-
-                dao.updatePromotion(id, loai.getId(), newTen, giaTri, newRangBuoc, bd, kt, trangThai);
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-                loadDataToTable(null);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            // Kiểm tra trùng tên
+            if (dao.checkDuplicatePromotionName(id, newTen)) {
+                JOptionPane.showMessageDialog(dialog, "Tên chương trình đã tồn tại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return false;
             }
-        }
+
+            dao.updatePromotion(id, loai.getId(), newTen, giaTri, newDiemDoi, newSoLuong, bd, kt, trangThai);
+            JOptionPane.showMessageDialog(VoucherPanel.this, "Cập nhật thành công!");
+            loadDataToTable(null);
+            return true;
+        });
+
+        dialog.setVisible(true);
     }
 
     private void handleAddPromoType() {
@@ -529,7 +546,10 @@ public class VoucherPanel extends JPanel {
 
     private void handleEditPromoType() {
         int row = dataTable.getSelectedRow();
-        if (row == -1) return;
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa!");
+            return;
+        }
         int modelRow = dataTable.convertRowIndexToModel(row);
 
         int id = (int) tableModel.getValueAt(modelRow, 1);
@@ -596,17 +616,27 @@ public class VoucherPanel extends JPanel {
 
     // ================== DIALOG CLASSES ==================
 
+    interface SaveHandler {
+        boolean onSave() throws Exception;
+    }
+
     class VoucherDialog extends JDialog {
         private JTextField txtTenKM = new JTextField();
         private JComboBox<LoaiKMItem> cbLoaiKM = new JComboBox<>();
         private JTextField txtGiaTri = new JTextField();
-        private JTextField txtRangBuoc = new JTextField();
+        private JTextField txtDiemDoi = new JTextField("0");
+        private JTextField txtSoLuong = new JTextField("0");
         private JSpinner spNgayBD = new JSpinner(new SpinnerDateModel());
         private JSpinner spNgayKT = new JSpinner(new SpinnerDateModel());
         private JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Có hiệu lực", "Vô hiệu lực"});
         private JButton btnSave = new JButton("Lưu");
         private JButton btnCancel = new JButton("Hủy");
         private boolean isSaveClicked = false;
+        private SaveHandler saveHandler;
+
+        public void setSaveHandler(SaveHandler handler) {
+            this.saveHandler = handler;
+        }
 
         public VoucherDialog(Frame owner, String title, List<LoaiKMItem> categories) {
             super(owner, title, true);
@@ -647,8 +677,12 @@ public class VoucherPanel extends JPanel {
             gbc.gridy = row++; txtGiaTri.setFont(fieldFont); txtGiaTri.setPreferredSize(new Dimension(0, 35)); content.add(txtGiaTri, gbc);
 
             gbc.gridy = row++;
-            JLabel lbl4 = new JLabel("Ràng Buộc Tối Đa (VNĐ)"); lbl4.setFont(labelFont); content.add(lbl4, gbc);
-            gbc.gridy = row++; txtRangBuoc.setFont(fieldFont); txtRangBuoc.setPreferredSize(new Dimension(0, 35)); content.add(txtRangBuoc, gbc);
+            JLabel lbl4 = new JLabel("Điểm Đổi (0 nếu không cần)"); lbl4.setFont(labelFont); content.add(lbl4, gbc);
+            gbc.gridy = row++; txtDiemDoi.setFont(fieldFont); txtDiemDoi.setPreferredSize(new Dimension(0, 35)); content.add(txtDiemDoi, gbc);
+
+            gbc.gridy = row++;
+            JLabel lblSL = new JLabel("Số Lượng Còn Lại"); lblSL.setFont(labelFont); content.add(lblSL, gbc);
+            gbc.gridy = row++; txtSoLuong.setFont(fieldFont); txtSoLuong.setPreferredSize(new Dimension(0, 35)); content.add(txtSoLuong, gbc);
 
             gbc.gridy = row; gbc.gridwidth = 1;
             JLabel lbl5 = new JLabel("Ngày BĐ"); lbl5.setFont(labelFont); content.add(lbl5, gbc);
@@ -686,13 +720,31 @@ public class VoucherPanel extends JPanel {
                 try { Long.parseLong(txtGiaTri.getText().trim()); } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Giá trị phải là số hợp lệ!"); return;
                 }
+                try { Integer.parseInt(txtDiemDoi.getText().trim()); } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Điểm đổi phải là số hợp lệ!"); return;
+                }
+                try { Integer.parseInt(txtSoLuong.getText().trim()); } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Số lượng phải là số hợp lệ!"); return;
+                }
                 Date bd = (Date) spNgayBD.getValue();
                 Date kt = (Date) spNgayKT.getValue();
                 if (kt.before(bd)) {
                     JOptionPane.showMessageDialog(this, "Ngày kết thúc phải sau ngày bắt đầu!"); return;
                 }
-                isSaveClicked = true;
-                setVisible(false);
+                
+                if (saveHandler != null) {
+                    try {
+                        if (saveHandler.onSave()) {
+                            isSaveClicked = true;
+                            setVisible(false);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    isSaveClicked = true;
+                    setVisible(false);
+                }
             });
             btnCancel.addActionListener(e -> setVisible(false));
         }
@@ -709,8 +761,14 @@ public class VoucherPanel extends JPanel {
         public void setTenKM(String v) { txtTenKM.setText(v); }
         public long getGiaTri() { return Long.parseLong(txtGiaTri.getText().trim()); }
         public void setGiaTri(String v) { txtGiaTri.setText(v); }
-        public String getRangBuoc() { return txtRangBuoc.getText().trim(); }
-        public void setRangBuoc(String v) { txtRangBuoc.setText(v); }
+        public int getDiemDoi() { 
+            try { return Integer.parseInt(txtDiemDoi.getText().trim()); } catch (Exception e) { return 0; }
+        }
+        public void setDiemDoi(int v) { txtDiemDoi.setText(String.valueOf(v)); }
+        public int getSoLuong() { 
+            try { return Integer.parseInt(txtSoLuong.getText().trim()); } catch (Exception e) { return 0; }
+        }
+        public void setSoLuong(int v) { txtSoLuong.setText(String.valueOf(v)); }
         public Date getNgayBD() { return (Date) spNgayBD.getValue(); }
         public void setNgayBD(Date d) { spNgayBD.setValue(d); }
         public Date getNgayKT() { return (Date) spNgayKT.getValue(); }

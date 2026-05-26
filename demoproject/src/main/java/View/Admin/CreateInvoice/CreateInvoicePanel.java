@@ -681,7 +681,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         
         if (currentMaKM > 0) {
             try (java.sql.Connection con = ConnectDB.ConnectionUtils.getMyConnection()) {
-                currentDiscount = dao.validateAndCalculateDiscount(con, currentMaKM, total);
+                currentDiscount = dao.validateAndCalculateDiscount(con, currentMaKM, total, currentMaKH);
                 lblPromoResult.setText("Đã áp dụng giảm " + DF.format(currentDiscount) + "đ");
                 lblPromoResult.setForeground(new Color(5, 122, 85));
             } catch (Exception e) {

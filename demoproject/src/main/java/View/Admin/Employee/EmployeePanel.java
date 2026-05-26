@@ -642,9 +642,16 @@ public class EmployeePanel extends JPanel {
                     }
                 }
 
-                if (!hasAccount && !selectedRoles.isEmpty() && (newUser.isEmpty() || newPass.isEmpty())) {
-                    JOptionPane.showMessageDialog(dialog, "Nhân viên chưa có tài khoản. Vui lòng nhập Username và Mật khẩu để gán vai trò.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
+                if (!hasAccount) {
+                    if (!newUser.isEmpty() || !newPass.isEmpty()) {
+                        if (newUser.isEmpty() || newPass.isEmpty()) {
+                            JOptionPane.showMessageDialog(dialog, "Vui lòng nhập đầy đủ Username và Mật khẩu để tạo tài khoản mới.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    } else if (!selectedRoles.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "Nhân viên chưa có tài khoản. Vui lòng nhập Username và Mật khẩu để tạo tài khoản trước khi gán vai trò.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                 }
 
                 new SwingWorker<Boolean, Void>() {
@@ -652,7 +659,9 @@ public class EmployeePanel extends JPanel {
                         boolean nvOk = NhanVienDAO.capNhatNhanVien(maNv, origMaCN, hoTen,
                                 origNgaySinh, tfCccd.getText().trim(), sdt,
                                 tfEmail.getText().trim(), origLuong, origNgayVaoLam, origTrangThai);
-                        NhanVienDAO.capNhatTaiKhoan(maNv, newUser, newPass, selectedRoles);
+                        if (hasAccount || !newUser.isEmpty()) {
+                            NhanVienDAO.capNhatTaiKhoan(maNv, newUser, newPass, selectedRoles);
+                        }
                         return nvOk;
                     }
                     @Override protected void done() {
@@ -669,12 +678,46 @@ public class EmployeePanel extends JPanel {
             }
         });
 
+        JButton btnNghiViec = new JButton("Nghỉ việc");
+        View.Admin.UIUtils.styleButton(btnNghiViec);
+        btnNghiViec.setBackground(new Color(220, 53, 69));
+        btnNghiViec.addActionListener(e -> {
+            int opt = JOptionPane.showConfirmDialog(dialog, 
+                "Bạn có chắc muốn cho nhân viên #" + maNv + " nghỉ việc? (Hành động này sẽ khóa tài khoản và không thể hoàn tác)", 
+                "Xác nhận nghỉ việc", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (opt == JOptionPane.YES_OPTION) {
+                new SwingWorker<Boolean, Void>() {
+                    @Override protected Boolean doInBackground() {
+                        return NhanVienDAO.choNghiViec(maNv);
+                    }
+                    @Override protected void done() {
+                        try {
+                            if (get()) {
+                                dialog.dispose();
+                                loadData();
+                                JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(EmployeePanel.this),
+                                        "Đã chuyển trạng thái nhân viên thành Đã nghỉ việc và khóa tài khoản.", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        } catch (Exception ex) { ex.printStackTrace(); }
+                    }
+                }.execute();
+            }
+        });
+
         btnRow.add(btnToggle);
         // Ẩn nút Chỉnh sửa và Khóa/Mở khóa nếu không có quyền Sửa
         boolean canEditEmployee = Controller.Admin.PermissionService.canEdit("Nhan vien");
         btnToggle.setVisible(canEditEmployee);
+        btnNghiViec.setVisible(canEditEmployee);
         btnEdit.setVisible(canEditEmployee);
+        btnRow.add(btnNghiViec);
         btnRow.add(btnEdit);
+
+        if ("Đã nghỉ việc".equals(origTrangThai)) {
+            btnToggle.setVisible(false);
+            btnNghiViec.setVisible(false);
+            btnEdit.setVisible(false);
+        }
 
         content.add(dlgTitle);
         content.add(Box.createVerticalStrut(14));

@@ -655,8 +655,13 @@ public class BillPanel extends javax.swing.JPanel {
         JTextField txtSupplier = new JTextField();
         JTextField txtMaNV = new JTextField();
         JTextField txtMaCN = new JTextField();
-        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đã hủy", "Đã nhập"});
-        cbTrangThai.setSelectedItem("Đã nhập");
+        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đã hủy", "Đã nhập", "Chờ xác nhận"});
+        if (!isEditMode) {
+            cbTrangThai.setSelectedItem("Chờ xác nhận");
+            cbTrangThai.setEnabled(false);
+        } else {
+            cbTrangThai.setSelectedItem("Đã nhập");
+        }
         JTextField txtGhiChu = new JTextField();
 
         JComponent[] inputs = {txtSupplier, txtMaNV, txtMaCN, cbTrangThai, txtGhiChu};
@@ -683,6 +688,11 @@ public class BillPanel extends javax.swing.JPanel {
                 txtMaCN.setText(listModel.getValueAt(modelRow, 4).toString());
                 String statusStr = listModel.getValueAt(modelRow, 9).toString();
                 cbTrangThai.setSelectedItem(statusStr);
+                
+                if (!"Chờ xác nhận".equals(statusStr)) {
+                    cbTrangThai.setEnabled(false);
+                }
+                
                 Object noteObj = listModel.getValueAt(modelRow, 10);
                 txtGhiChu.setText(noteObj != null ? noteObj.toString() : "");
             }
@@ -765,7 +775,7 @@ public class BillPanel extends javax.swing.JPanel {
                     row.get("SO_LUONG"),
                     df.format(row.get("DON_GIA_NHAP")),
                     df.format(row.get("TONG_TIEN")),
-                    ((Number)row.get("TRANG_THAI")).intValue() == 1 ? "Đã nhập" : "Đã hủy",
+                    ((Number)row.get("TRANG_THAI")).intValue() == 2 ? "Chờ xác nhận" : (((Number)row.get("TRANG_THAI")).intValue() == 1 ? "Đã nhập" : "Đã hủy"),
                     row.get("GHI_CHU")
                 });
             }
