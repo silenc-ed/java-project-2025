@@ -22,12 +22,13 @@ public class Demoproject {
 
         java.awt.EventQueue.invokeLater(() -> {
             String role = Controller.SignIn.AuthProcess.validateToken();
-            if ("CUSTOMER".equals(role)) {
-                new View.Customers.Main().setVisible(true);
-            } else if ("ADMIN".equals(role)) {
+            if ("ADMIN".equals(role)) {
                 new View.Admin.Main().setVisible(true);
+            } else if ("EMPLOYEE".equals(role)) { // Optional check if there is an employee view
+                // new View.Employees.Main().setVisible(true);
+                new View.Customers.Main().setVisible(true); // Fallback
             } else {
-                new SignInView().setVisible(true);
+                new View.Customers.Main().setVisible(true); // Default entry point
             }
         });
     }

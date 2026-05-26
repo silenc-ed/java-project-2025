@@ -43,7 +43,7 @@ public class SerialNumberDAO {
             ps.setString(1, sn.getMaSerial());
             ps.setInt(2, sn.getMaBienThe());
             ps.setInt(3, sn.getMaCn());
-            ps.setString(4, sn.getTrangThai() != null ? sn.getTrangThai() : "Trong kho");
+            ps.setString(4, sn.getTrangThai() != null ? sn.getTrangThai() : "Khả dụng");
             return ps.executeUpdate() > 0;
         }
     }

@@ -152,8 +152,12 @@ public class CreateUserView extends javax.swing.JFrame {
                 .addGap(73, 73, 73))
         );
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Login/Theme/theme.jpg"))); // NOI18N
-
+        java.net.URL imgUrl = getClass().getResource("/Login/Theme/theme.jpg");
+        if (imgUrl != null) {
+            jLabel1.setIcon(new javax.swing.ImageIcon(imgUrl));
+        } else {
+            System.err.println("Warning: Cannot load theme image from /Login/Theme/theme.jpg");
+        }
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(

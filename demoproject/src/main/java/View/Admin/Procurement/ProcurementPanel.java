@@ -398,18 +398,12 @@ public class ProcurementPanel extends javax.swing.JPanel {
         btnRefresh.setPreferredSize(new Dimension(130, 36));
         btnRefresh.addActionListener(e -> loadDataToTable(tableModel));
 
-        JButton btnAdd = new JButton("Thêm mới");
-        UIUtils.styleButton(btnAdd);
-        btnAdd.setPreferredSize(new Dimension(140, 36));
-        btnAdd.addActionListener(e -> showOrderDialog(false, -1));
-
         JButton btnDelete = new JButton("Xóa");
         UIUtils.styleButton(btnDelete);
         btnDelete.setPreferredSize(new Dimension(140, 36));
         btnDelete.addActionListener(e -> deleteSelectedRows());
 
         // Ẩn nút theo quyền
-        btnAdd.setVisible(Controller.Admin.PermissionService.canAdd("Don hang"));
         btnDelete.setVisible(Controller.Admin.PermissionService.canDelete("Don hang"));
         // Nếu không có quyền Sửa, ẩn cột Chỉnh sửa
         if (!Controller.Admin.PermissionService.canEdit("Don hang")) {
@@ -418,7 +412,6 @@ public class ProcurementPanel extends javax.swing.JPanel {
             dataTable.getColumnModel().getColumn(8).setWidth(0);
         }
 
-        rightHeader.add(btnAdd);
         rightHeader.add(btnDelete);
         rightHeader.add(cbFilter);
         rightHeader.add(btnRefresh);

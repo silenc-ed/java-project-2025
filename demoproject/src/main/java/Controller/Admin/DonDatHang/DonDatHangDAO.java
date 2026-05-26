@@ -70,7 +70,7 @@ public class DonDatHangDAO {
             if (serials != null && !serials.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) " +
                                "VALUES (?, ?, ?, ?, ?, ?)";
-                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
                      PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
@@ -227,7 +227,7 @@ public class DonDatHangDAO {
             }
 
             // Release serial cũ
-            String sqlReleaseOld = "UPDATE KHO_SERIAL SET TRANG_THAI = N'KHA_DUNG' " +
+            String sqlReleaseOld = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Khả dụng' " +
                                    "WHERE SERIAL_NUMBER IN (SELECT SERIAL_NUMBER FROM CHI_TIET_HOA_DON WHERE MA_HD = ? AND SERIAL_NUMBER IS NOT NULL)";
             try (PreparedStatement psRelease = con.prepareStatement(sqlReleaseOld)) {
                 psRelease.setInt(1, maHD);
@@ -257,7 +257,7 @@ public class DonDatHangDAO {
             if (serials != null && !serials.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) " +
                                "VALUES (?, ?, ?, ?, ?, ?)";
-                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
                      PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
@@ -400,8 +400,8 @@ public class DonDatHangDAO {
                 }
             }
 
-            // Release serial về KHA_DUNG
-            String sqlRelease = "UPDATE KHO_SERIAL SET TRANG_THAI = N'KHA_DUNG' " +
+            // Release serial về Khả dụng
+            String sqlRelease = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Khả dụng' " +
                                 "WHERE SERIAL_NUMBER IN (SELECT SERIAL_NUMBER FROM CHI_TIET_HOA_DON WHERE MA_HD = ? AND SERIAL_NUMBER IS NOT NULL)";
             try (PreparedStatement psRelease = con.prepareStatement(sqlRelease)) {
                 psRelease.setInt(1, maHD);
@@ -756,7 +756,7 @@ public class DonDatHangDAO {
     }
 
     /**
-     * Tìm serial khả dụng (TRANG_THAI = 'KHA_DUNG')
+     * Tìm serial khả dụng (TRANG_THAI = 'Khả dụng')
      */
     public List<Map<String, Object>> searchAvailableSerials(String keyword) throws Exception {
         List<Map<String, Object>> results = new ArrayList<>();
@@ -764,7 +764,7 @@ public class DonDatHangDAO {
                      "FROM KHO_SERIAL KS " +
                      "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE " +
                      "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
-                     "WHERE KS.TRANG_THAI = N'KHA_DUNG' " +
+                     "WHERE KS.TRANG_THAI = N'Khả dụng' " +
                      "AND (UPPER(KS.SERIAL_NUMBER) LIKE UPPER(?) OR UPPER(SP.TEN_SP) LIKE UPPER(?)) " +
                      "AND ROWNUM <= 50";
         try (Connection con = ConnectionUtils.getMyConnection();
@@ -935,7 +935,7 @@ public class DonDatHangDAO {
         String sql = "SELECT BT.MA_BIENTHE, SP.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, " +
                      "SP.CO_QUAN_LY_SERIAL, " +
                      "(CASE WHEN SP.CO_QUAN_LY_SERIAL = 1 THEN " +
-                     "   (SELECT COUNT(*) FROM KHO_SERIAL KS WHERE KS.MA_BIENTHE = BT.MA_BIENTHE AND KS.TRANG_THAI = N'KHA_DUNG') " +
+                     "   (SELECT COUNT(*) FROM KHO_SERIAL KS WHERE KS.MA_BIENTHE = BT.MA_BIENTHE AND KS.TRANG_THAI = N'Khả dụng') " +
                      " ELSE " +
                      "   (SELECT SUM(TK.SO_LUONG_TON) FROM TON_KHO TK WHERE TK.MA_BIENTHE = BT.MA_BIENTHE AND TK.SO_LUONG_TON > 0) " +
                      " END) AS SO_LUONG_TON " +
@@ -968,7 +968,7 @@ public class DonDatHangDAO {
 
     public List<String> getAvailableSerialsForVariant(int maBienThe) throws Exception {
         List<String> results = new ArrayList<>();
-        String sql = "SELECT SERIAL_NUMBER FROM KHO_SERIAL WHERE MA_BIENTHE = ? AND TRANG_THAI = N'KHA_DUNG'";
+        String sql = "SELECT SERIAL_NUMBER FROM KHO_SERIAL WHERE MA_BIENTHE = ? AND TRANG_THAI = N'Khả dụng'";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, maBienThe);
@@ -991,7 +991,7 @@ public class DonDatHangDAO {
                          "FROM KHO_SERIAL KS " +
                          "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE " +
                          "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
-                         "WHERE KS.TRANG_THAI = N'KHA_DUNG' " +
+                         "WHERE KS.TRANG_THAI = N'Khả dụng' " +
                          "AND (UPPER(KS.SERIAL_NUMBER) LIKE UPPER(?) OR UPPER(SP.TEN_SP) LIKE UPPER(?)) " +
                          "AND ROWNUM <= 30";
             try (PreparedStatement ps = con.prepareStatement(sqlSerial)) {
@@ -1084,7 +1084,7 @@ public class DonDatHangDAO {
             long tongTienSP = 0;
             if (products != null && !products.isEmpty()) {
                 String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?, ?)";
-                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
                      PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
@@ -1193,7 +1193,7 @@ public class DonDatHangDAO {
                                     for (RepairPartDraft part : draft.parts) {
                                         // Update TON_KHO linh kiện hoặc KHO_SERIAL
                                         if (part.serials != null && !part.serials.isEmpty()) {
-                                            String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'DANG_DUOC_DAT' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'KHA_DUNG'";
+                                            String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
                                             try (PreparedStatement psSerial = con.prepareStatement(sqlSerial)) {
                                                 for (String sn : part.serials) {
                                                     psSerial.setString(1, sn);

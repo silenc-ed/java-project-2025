@@ -17,8 +17,8 @@ import javax.swing.table.*;
 /**
  * AttendancePanel — Quản lý ca làm việc & chấm công.
  * Layout: CardLayout gồm 2 card:
- *   Card "calendar"  -> lịch tháng
- *   Card "detail"    -> panel chi tiết ngày (3 tabs)
+ *   Card "calendar"  → lịch tháng
+ *   Card "detail"    → panel chi tiết ngày (3 tabs)
  */
 public class AttendancePanel extends JPanel {
 
@@ -280,13 +280,13 @@ public class AttendancePanel extends JPanel {
             bg = OFF_BG;
             fg = OFF_FG;
             String reason = monthOffDays.get(dayNum);
-            statusTxt = "Nghỉ" + (reason != null && !reason.trim().isEmpty() ? ": " + reason : "");
+            statusTxt = "🚫 Nghỉ" + (reason != null && !reason.trim().isEmpty() ? ": " + reason : "");
         } else if (isFuture || total == 0) {
             bg = NONE_BG; fg = NONE_FG;
             statusTxt = total == 0 ? "" : total + " lịch";
         } else if (done == total) {
             bg = FULL_BG; fg = FULL_FG;
-            statusTxt = "v " + done + "/" + total;
+            statusTxt = "✓ " + done + "/" + total;
         } else if (done > 0) {
             bg = PART_BG; fg = PART_FG;
             statusTxt = "… " + done + "/" + total;
@@ -360,7 +360,7 @@ public class AttendancePanel extends JPanel {
         topBar.setOpaque(false);
         topBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
-        JButton btnBack = makeBtn("<- Quay lại lịch", new Color(100, 116, 139));
+        JButton btnBack = makeBtn("← Quay lại lịch", new Color(100, 116, 139));
         btnBack.addActionListener(e -> {
             cardLayout.show(cardContainer, "calendar");
             loadMonthData();
@@ -381,10 +381,10 @@ public class AttendancePanel extends JPanel {
         tab2Panel = buildTab2();
         tab3Panel = buildTab3();
 
-        tabbedPane.addTab("Chi tiết ngày", tab1Panel);
-        tabbedPane.addTab("Chấm công", tab2Panel);
+        tabbedPane.addTab("📋  Chi tiết ngày", tab1Panel);
+        tabbedPane.addTab(" Chấm công", tab2Panel);
         if (Controller.Admin.PermissionService.isAdminOrManager()) {
-            tabbedPane.addTab("Cấu hình ca", tab3Panel);
+            tabbedPane.addTab("⚙  Cấu hình ca", tab3Panel);
         }
 
         storeOffPanel = new JPanel();
@@ -421,10 +421,10 @@ public class AttendancePanel extends JPanel {
         topBar.setOpaque(false);
         topBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
-        JButton btnBack = makeBtn("<- Quay lại lịch", new Color(100, 116, 139));
+        JButton btnBack = makeBtn("← Quay lại lịch", new Color(100, 116, 139));
         btnBack.addActionListener(e -> cardLayout.show(cardContainer, "calendar"));
 
-        JLabel lblTitle = new JLabel("Tính lương nhân viên theo tháng");
+        JLabel lblTitle = new JLabel("💵  Tính lương nhân viên theo tháng");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setForeground(HDR_FG);
         lblTitle.setBorder(new EmptyBorder(0, 16, 0, 0));
@@ -479,11 +479,11 @@ public class AttendancePanel extends JPanel {
                 new EmptyBorder(10, 16, 10, 16)
             ));
             
-            JLabel lblStatus = new JLabel("Cửa hàng đang hoạt động bình thường ngày này.");
+            JLabel lblStatus = new JLabel("💡 Cửa hàng đang hoạt động bình thường ngày này.");
             lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
             lblStatus.setForeground(SUB_FG);
             
-            JButton btnOff = makeBtn("Báo nghỉ cửa hàng", BTN_RED);
+            JButton btnOff = makeBtn("🚫 Báo nghỉ cửa hàng", BTN_RED);
             btnOff.addActionListener(e -> {
                 JTextArea txtReason = new JTextArea(4, 30);
                 txtReason.setLineWrap(true);
@@ -572,7 +572,7 @@ public class AttendancePanel extends JPanel {
                 new EmptyBorder(10, 16, 10, 16)
             ));
             
-            JLabel lblStatus = new JLabel(" CỬA HÀNG ĐANG NGHỈ ĐÓNG CỬA: " + offReason);
+            JLabel lblStatus = new JLabel("CỬA HÀNG ĐANG NGHỈ ĐÓNG CỬA: " + offReason);
             lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 13));
             lblStatus.setForeground(OFF_FG);
             
@@ -676,7 +676,7 @@ public class AttendancePanel extends JPanel {
         JPanel addPanel = buildTab1AddForm();
 
         // Nút đổi ca
-        JButton btnEdit = makeBtn("  Đổi ca làm", BTN_BLUE);
+        JButton btnEdit = makeBtn("Đổi ca làm", BTN_BLUE);
         btnEdit.addActionListener(e -> {
             int row = tab1Table.getSelectedRow();
             if (row < 0) {
@@ -995,7 +995,7 @@ public class AttendancePanel extends JPanel {
         cbNV2.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbNV2.setPreferredSize(new Dimension(220, 32));
 
-        JButton btnFind = makeBtn("Tìm", BTN_BLUE);
+        JButton btnFind = makeBtn("🔍 Tìm", BTN_BLUE);
 
         lblNVInfo = new JLabel("—  Chưa tìm kiếm");
         lblNVInfo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -1041,7 +1041,7 @@ public class AttendancePanel extends JPanel {
         JPanel row3 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 4));
         row3.setOpaque(false);
         row3.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JButton btnSave2 = makeBtn("Lưu chấm công", BTN_GREEN);
+        JButton btnSave2 = makeBtn("💾  Lưu chấm công", BTN_GREEN);
         btnSave2.addActionListener(e -> saveChamCong());
         row3.add(btnSave2);
 
@@ -1101,7 +1101,7 @@ public class AttendancePanel extends JPanel {
                     Object[] data = get();
                     if (data == null) {
                         lblNVInfo.setForeground(BTN_RED);
-                        lblNVInfo.setText("X Không có lịch làm việc ngày này");
+                        lblNVInfo.setText("✗ Không có lịch làm việc ngày này");
                         foundMaLLV2 = -1;
                         tfGioVao.setText("");
                         tfGioRa.setText("");
@@ -1109,7 +1109,7 @@ public class AttendancePanel extends JPanel {
                         tfGhiChu2.setText("");
                     } else {
                         foundMaLLV2 = (Long) data[0];
-                        String info = "v  " + data[2] + "   |   Ca: " + data[3]
+                        String info = "✓  " + data[2] + "   |   Ca: " + data[3]
                                 + "  (" + data[4] + " - " + data[5] + ")";
                         lblNVInfo.setForeground(FULL_FG);
                         lblNVInfo.setText(info);
@@ -1207,7 +1207,7 @@ public class AttendancePanel extends JPanel {
         scroll3.getViewport().setBackground(WHITE);
         scroll3.setPreferredSize(new Dimension(0, 200));
 
-        JButton btnDelCa = makeBtn("Xóa ca", BTN_RED);
+        JButton btnDelCa = makeBtn("🗑  Xóa ca", BTN_RED);
         btnDelCa.addActionListener(e -> {
             int row = tab3Table.getSelectedRow();
             if (row < 0) {

@@ -65,6 +65,17 @@ public class Main extends javax.swing.JFrame {
         worker.execute();
     }
 
+    public boolean checkLogin() {
+        String role = Controller.SignIn.AuthProcess.validateToken();
+        if (!"CUSTOMER".equals(role)) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Vui lòng đăng nhập hoặc đăng ký để sử dụng chức năng này!");
+            new View.SignIn.SignInView().setVisible(true);
+            dispose();
+            return false;
+        }
+        return true;
+    }
+
     public Main() {
         initComponents();
         this.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
@@ -104,6 +115,11 @@ public class Main extends javax.swing.JFrame {
         menu1.addEventMenuSelected(new EventMenuSelected() {
             @Override
             public void selected(int index) {
+                if (index != 0 && !checkLogin()) {
+                    menu1.setSelectedIndex(0);
+                    return;
+                }
+                
                 if (index == 0) {
                     showForm(new ProductPanel());
                 } else if (index == 1) {
@@ -122,6 +138,8 @@ public class Main extends javax.swing.JFrame {
         menu1.addEventProfileClicked(new Runnable() {
             @Override
             public void run() {
+                if (!checkLogin()) return;
+                
                 javax.swing.JPopupMenu popupMenu = new javax.swing.JPopupMenu();
                 popupMenu.setBorder(javax.swing.BorderFactory.createEmptyBorder()); // optional styling
                 
@@ -165,6 +183,8 @@ public class Main extends javax.swing.JFrame {
         menu1.addEventUserNameClicked(new Runnable() {
             @Override
             public void run() {
+                if (!checkLogin()) return;
+                
                 menu1.clearSelection();
                 showForm(new UserAccountPanel());
             }

@@ -113,6 +113,7 @@ public class ProductPanel extends javax.swing.JPanel {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(ProductPanel.this);
                 if (window instanceof View.Customers.Main) {
+                    if (!((View.Customers.Main) window).checkLogin()) return;
                     ((View.Customers.Main) window).toggleCartDrawer();
                 }
             }
@@ -290,6 +291,7 @@ public class ProductPanel extends javax.swing.JPanel {
                     card.setOnClickListener(sp -> {
                         java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
                         if (window instanceof View.Customers.Main) {
+                            if (!((View.Customers.Main) window).checkLogin()) return;
                             View.Customers.ProductPanel.InfoProductPanel infoPanel = new View.Customers.ProductPanel.InfoProductPanel();
                             infoPanel.setData(sp);
                             ((View.Customers.Main) window).showForm(infoPanel);
