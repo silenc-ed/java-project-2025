@@ -265,8 +265,13 @@ public class DashboardDAO {
         return map;
     }
 
-    public static List<Object[]> getTopSanPhamThinhHanh(Date from, Date to, int limit) {
+    public static List<Object[]> getTopSanPhamThinhHanh(Date from, Date to, int limit, String sortBy) {
         List<Object[]> list = new ArrayList<>();
+        String orderBy = "TONG_BAN DESC";
+        if ("DOANH_THU_DESC".equals(sortBy)) orderBy = "DOANH_THU DESC";
+        else if ("DOANH_THU_ASC".equals(sortBy)) orderBy = "DOANH_THU ASC";
+        else if ("SO_LUONG_ASC".equals(sortBy)) orderBy = "TONG_BAN ASC";
+
         String sql = "SELECT sp.TEN_SP, lsp.TEN_LSP, " +
                      "NVL(SUM(ct.SO_LUONG), 0) AS TONG_BAN, " +
                      "NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
@@ -276,7 +281,7 @@ public class DashboardDAO {
                      "JOIN LOAI_SAN_PHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY sp.MA_SP, sp.TEN_SP, lsp.TEN_LSP " +
-                     "ORDER BY TONG_BAN DESC " +
+                     "ORDER BY " + orderBy + " " +
                      "FETCH FIRST ? ROWS ONLY";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -299,8 +304,13 @@ public class DashboardDAO {
         return list;
     }
 
-    public static List<Object[]> getTopLoaiSanPhamThinhHanh(Date from, Date to, int limit) {
+    public static List<Object[]> getTopLoaiSanPhamThinhHanh(Date from, Date to, int limit, String sortBy) {
         List<Object[]> list = new ArrayList<>();
+        String orderBy = "TONG_BAN DESC";
+        if ("DOANH_THU_DESC".equals(sortBy)) orderBy = "DOANH_THU DESC";
+        else if ("DOANH_THU_ASC".equals(sortBy)) orderBy = "DOANH_THU ASC";
+        else if ("SO_LUONG_ASC".equals(sortBy)) orderBy = "TONG_BAN ASC";
+
         String sql = "SELECT lsp.TEN_LSP, " +
                      "NVL(SUM(ct.SO_LUONG), 0) AS TONG_BAN, " +
                      "NVL(SUM(ct.THANH_TIEN), 0) AS DOANH_THU " +
@@ -310,7 +320,7 @@ public class DashboardDAO {
                      "JOIN LOAI_SAN_PHAM lsp ON sp.MA_LSP = lsp.MA_LSP " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
                      "GROUP BY lsp.MA_LSP, lsp.TEN_LSP " +
-                     "ORDER BY TONG_BAN DESC " +
+                     "ORDER BY " + orderBy + " " +
                      "FETCH FIRST ? ROWS ONLY";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -355,8 +365,13 @@ public class DashboardDAO {
         return countQuery(sql, from, to);
     }
 
-    public static List<Object[]> getDonHangGanDay(Date from, Date to, int limit) {
+    public static List<Object[]> getDonHangGanDay(Date from, Date to, int limit, String sortBy) {
         List<Object[]> list = new ArrayList<>();
+        String orderBy = "h.THOI_GIAN_LAP DESC";
+        if ("THOI_GIAN_ASC".equals(sortBy)) orderBy = "h.THOI_GIAN_LAP ASC";
+        else if ("THANH_TIEN_DESC".equals(sortBy)) orderBy = "h.THANH_TIEN DESC";
+        else if ("THANH_TIEN_ASC".equals(sortBy)) orderBy = "h.THANH_TIEN ASC";
+
         String sql = "SELECT h.MA_HD, NVL(kh.HO_TEN, 'Khách lẻ') AS HO_TEN, " +
                      "(SELECT LISTAGG(sp.TEN_SP, ', ') WITHIN GROUP (ORDER BY sp.TEN_SP) " +
                      " FROM CHI_TIET_HOA_DON ct2 JOIN SAN_PHAM sp ON ct2.MA_SP = sp.MA_SP " +
@@ -366,7 +381,7 @@ public class DashboardDAO {
                      "FROM HOA_DON h " +
                      "LEFT JOIN KHACH_HANG kh ON h.MA_KH = kh.MA_KH " +
                      "WHERE h.THOI_GIAN_LAP >= ? AND h.THOI_GIAN_LAP < ? " +
-                     "ORDER BY h.THOI_GIAN_LAP DESC " +
+                     "ORDER BY " + orderBy + " " +
                      "FETCH FIRST ? ROWS ONLY";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

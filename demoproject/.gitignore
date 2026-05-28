@@ -1,0 +1,8 @@
+# Tệp cấu hình chứa thông tin nhạy cảm (Tài khoản DB, Mật khẩu Email, v.v.)
+application.properties
+
+# Các thư mục IDE và Build
+target/
+.idea/
+*.iml
+.vscode/

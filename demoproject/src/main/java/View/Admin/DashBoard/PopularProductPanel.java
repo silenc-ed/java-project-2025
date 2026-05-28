@@ -19,6 +19,7 @@ public class PopularProductPanel extends JPanel {
     private DefaultTableModel tableModel;
     private JTable table;
     private JButton btnToggleMode;
+    private JComboBox<String> cbSort;
 
     private boolean isByCategory = false;
 
@@ -73,6 +74,12 @@ public class PopularProductPanel extends JPanel {
         View.Admin.UIUtils.styleButton(btnLoc);
         btnLoc.addActionListener(e -> loadData());
 
+        cbSort = new JComboBox<>(new String[]{
+            "Số lượng giảm dần", "Số lượng tăng dần", "Doanh thu giảm dần", "Doanh thu tăng dần"
+        });
+        cbSort.setPreferredSize(new Dimension(160, 28));
+        cbSort.addActionListener(e -> loadData());
+
         btnToggleMode = new JButton("Loại sản phẩm");
         styleToggleBtn(btnToggleMode, false);
         btnToggleMode.addActionListener(e -> toggleMode());
@@ -82,6 +89,7 @@ public class PopularProductPanel extends JPanel {
         panel.add(spinnerFrom);
         panel.add(lblTo);
         panel.add(spinnerTo);
+        panel.add(cbSort);
         panel.add(btnLoc);
         panel.add(btnToggleMode);
         return panel;
@@ -238,10 +246,16 @@ public class PopularProductPanel extends JPanel {
             protected Void doInBackground() {
                 tongLuotBan = DashboardDAO.getTongSanPhamBan(from, to);
                 tongDoanhThu = DashboardDAO.getTongDoanhThu(from, to);
+                
+                String sortBy = "SO_LUONG_DESC";
+                if (cbSort.getSelectedIndex() == 1) sortBy = "SO_LUONG_ASC";
+                else if (cbSort.getSelectedIndex() == 2) sortBy = "DOANH_THU_DESC";
+                else if (cbSort.getSelectedIndex() == 3) sortBy = "DOANH_THU_ASC";
+                
                 if (byCategory) {
-                    rows = DashboardDAO.getTopLoaiSanPhamThinhHanh(from, to, 10);
+                    rows = DashboardDAO.getTopLoaiSanPhamThinhHanh(from, to, 10, sortBy);
                 } else {
-                    rows = DashboardDAO.getTopSanPhamThinhHanh(from, to, 10);
+                    rows = DashboardDAO.getTopSanPhamThinhHanh(from, to, 10, sortBy);
                 }
                 return null;
             }

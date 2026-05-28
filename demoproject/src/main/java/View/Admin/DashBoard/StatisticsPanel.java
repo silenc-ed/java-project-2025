@@ -16,6 +16,7 @@ public class StatisticsPanel extends JPanel {
     private JLabel lblTongDonValue;
     private JLabel lblDoanhThuValue;
     private DefaultTableModel tableModel;
+    private JComboBox<String> cbSort;
 
     public StatisticsPanel() {
         setLayout(new BorderLayout());
@@ -68,11 +69,18 @@ public class StatisticsPanel extends JPanel {
         View.Admin.UIUtils.styleButton(btnLoc);
         btnLoc.addActionListener(e -> loadData());
 
+        cbSort = new JComboBox<>(new String[]{
+            "Mới nhất", "Cũ nhất", "Thành tiền giảm dần", "Thành tiền tăng dần"
+        });
+        cbSort.setPreferredSize(new Dimension(160, 28));
+        cbSort.addActionListener(e -> loadData());
+
         panel.add(lbl);
         panel.add(lblFrom);
         panel.add(spinnerFrom);
         panel.add(lblTo);
         panel.add(spinnerTo);
+        panel.add(cbSort);
         panel.add(btnLoc);
         return panel;
     }
@@ -191,7 +199,13 @@ public class StatisticsPanel extends JPanel {
             protected Void doInBackground() {
                 tongDon = DashboardDAO.getTongDonHang(from, to);
                 doanhThu = DashboardDAO.getTongDoanhThu(from, to);
-                rows = DashboardDAO.getDonHangGanDay(from, to, 20);
+                
+                String sortBy = "THOI_GIAN_DESC";
+                if (cbSort.getSelectedIndex() == 1) sortBy = "THOI_GIAN_ASC";
+                else if (cbSort.getSelectedIndex() == 2) sortBy = "THANH_TIEN_DESC";
+                else if (cbSort.getSelectedIndex() == 3) sortBy = "THANH_TIEN_ASC";
+                
+                rows = DashboardDAO.getDonHangGanDay(from, to, 20, sortBy);
                 return null;
             }
 

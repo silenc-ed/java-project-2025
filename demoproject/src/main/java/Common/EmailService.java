@@ -13,9 +13,9 @@ import javax.mail.internet.MimeMessage;
 public class EmailService {
 
 
-    // THAY THẾ BẰNG EMAIL VÀ MẬT KHẨU ỨNG DỤNG (APP PASSWORD) CỦA BẠN
-    private static final String SMTP_USER = "chieuthuhanoi06@gmail.com"; 
-    private static final String SMTP_PASSWORD = "dewq hbfq zgzg ghqq";
+    // THAY THẾ BẰNG EMAIL VÀ MẬT KHẨU ỨNG DỤNG (APP PASSWORD) BÊN TRONG FILE APPLICATION.PROPERTIES
+    private static final String SMTP_USER = ConfigHelper.getProperty("mail.smtp.user"); 
+    private static final String SMTP_PASSWORD = ConfigHelper.getProperty("mail.smtp.password");
 
     /**
      * Gửi email chứa mã OTP đến địa chỉ nhận.

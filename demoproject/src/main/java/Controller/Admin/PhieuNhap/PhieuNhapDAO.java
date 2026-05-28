@@ -25,7 +25,7 @@ public class PhieuNhapDAO {
                      "LEFT JOIN NHA_CUNG_CAP ncc ON p.MA_NCC = ncc.MA_NCC " +
                      "LEFT JOIN CHI_TIET_PHIEU_NHAP c ON p.MA_PN = c.MA_PN ";
         if (!hasEditRole) {
-            sql += "WHERE p.TRANG_THAI IN (1, 2) ";
+            sql += "WHERE p.TRANG_THAI IN (0, 1) ";
         }
         sql += "GROUP BY p.MA_PN, ncc.TEN_NCC, p.MA_NV, p.MA_CN, p.NGAY_NHAP, p.TONG_TIEN, p.TRANG_THAI, p.GHI_CHU " +
                "ORDER BY p.MA_PN DESC";
@@ -172,7 +172,7 @@ public class PhieuNhapDAO {
     }
 
     public static boolean softDeletePhieuNhaps(List<Integer> ids) {
-        String sql = "UPDATE PHIEU_NHAP SET TRANG_THAI = 0 WHERE MA_PN = ?";
+        String sql = "UPDATE PHIEU_NHAP SET TRANG_THAI = -1 WHERE MA_PN = ?";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             for (int id : ids) {

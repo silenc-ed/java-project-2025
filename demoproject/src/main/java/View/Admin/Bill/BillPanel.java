@@ -616,7 +616,7 @@ public class BillPanel extends javax.swing.JPanel {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "Bạn có chắc chắn muốn xóa mềm " + toDelete.size() + " phiếu nhập đã chọn? (Cập nhật trạng thái về 0)", 
+            "Bạn có chắc chắn muốn xóa mềm " + toDelete.size() + " phiếu nhập đã chọn? (Cập nhật trạng thái về -1)", 
             "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) return;
 
@@ -655,7 +655,7 @@ public class BillPanel extends javax.swing.JPanel {
         JTextField txtSupplier = new JTextField();
         JTextField txtMaNV = new JTextField();
         JTextField txtMaCN = new JTextField();
-        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đã hủy", "Đã nhập", "Chờ xác nhận"});
+        JComboBox<String> cbTrangThai = new JComboBox<>(new String[]{"Đã hủy", "Chờ xác nhận", "Đã nhập"});
         if (!isEditMode) {
             cbTrangThai.setSelectedItem("Chờ xác nhận");
             cbTrangThai.setEnabled(false);
@@ -725,7 +725,7 @@ public class BillPanel extends javax.swing.JPanel {
             try {
                 int maNv = Integer.parseInt(txtMaNV.getText().trim());
                 int maCn = Integer.parseInt(txtMaCN.getText().trim());
-                int status = cbTrangThai.getSelectedIndex();
+                int status = cbTrangThai.getSelectedIndex() - 1; // "Đã hủy" -> -1, "Chờ xác nhận" -> 0, "Đã nhập" -> 1
                 String note = txtGhiChu.getText().trim();
 
                 boolean success = Controller.Admin.PhieuNhap.PhieuNhapDAO.savePhieuNhap(
@@ -775,7 +775,7 @@ public class BillPanel extends javax.swing.JPanel {
                     row.get("SO_LUONG"),
                     df.format(row.get("DON_GIA_NHAP")),
                     df.format(row.get("TONG_TIEN")),
-                    ((Number)row.get("TRANG_THAI")).intValue() == 2 ? "Chờ xác nhận" : (((Number)row.get("TRANG_THAI")).intValue() == 1 ? "Đã nhập" : "Đã hủy"),
+                    ((Number)row.get("TRANG_THAI")).intValue() == 0 ? "Chờ xác nhận" : (((Number)row.get("TRANG_THAI")).intValue() == 1 ? "Đã nhập" : "Đã hủy"),
                     row.get("GHI_CHU")
                 });
             }
