@@ -103,7 +103,7 @@ public class ProcurementPanel extends javax.swing.JPanel {
     private void showOrderDialog(boolean isEdit, int maHd) {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), 
             isEdit ? "Chỉnh sửa hóa đơn" : "Thêm hóa đơn mới", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(620, 520);
+        dialog.setSize(620, 700);
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
 
@@ -233,6 +233,21 @@ public class ProcurementPanel extends javax.swing.JPanel {
         gbc.gridx = 1; gbc.weightx = 1.0;
         formPanel.add(dlgCbTrangThai, gbc);
 
+        // Row 9: Chi tiết sản phẩm
+        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 2; gbc.weightx = 1.0; gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        DefaultTableModel detailTableModel = new DefaultTableModel(new String[]{"Tên SP", "Số lượng", "Đơn giá", "Thành tiền", "Chi nhánh"}, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        JTable detailTable = new JTable(detailTableModel);
+        detailTable.setRowHeight(28);
+        detailTable.getTableHeader().setReorderingAllowed(false);
+        JScrollPane detailScroll = new JScrollPane(detailTable);
+        detailScroll.setPreferredSize(new Dimension(550, 150));
+        detailScroll.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)), "Danh sách sản phẩm trong đơn", javax.swing.border.TitledBorder.LEFT, javax.swing.border.TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 12), new Color(100, 100, 100)));
+        formPanel.add(detailScroll, gbc);
+        gbc.gridwidth = 1; gbc.weighty = 0; // reset
+
         mainPanel.add(formPanel, BorderLayout.CENTER);
 
         // ---- Live calculation: Thành tiền = Tổng tiền - Giảm giá ----
@@ -290,6 +305,20 @@ public class ProcurementPanel extends javax.swing.JPanel {
                     // Map old status values
                     if ("Chờ xử lý".equals(trangThai)) trangThai = "Chờ thanh toán";
                     dlgCbTrangThai.setSelectedItem(trangThai);
+                    
+                    if ("Đã hủy".equals(trangThai) || "Hoàn thành".equals(trangThai)) {
+                        btnSave.setEnabled(false);
+                        btnSave.setToolTipText("Không thể chỉnh sửa hóa đơn đã Hủy hoặc Hoàn thành");
+                        
+                        dlgCbKhachHang.setEnabled(false);
+                        dlgCbNhanVien.setEnabled(false);
+                        dlgCbChiNhanh.setEnabled(false);
+                        dlgCbKhuyenMai.setEnabled(false);
+                        dlgCbPhuongThuc.setEnabled(false);
+                        dlgCbTrangThai.setEnabled(false);
+                        dlgTxtTongTien.setEditable(false);
+                        dlgTxtGiamGia.setEditable(false);
+                    }
 
                     Integer maKh = (Integer) data.get("MA_KH");
                     if (maKh != null) setSelectedComboItem(dlgCbKhachHang, maKh);
@@ -298,7 +327,39 @@ public class ProcurementPanel extends javax.swing.JPanel {
                     Integer maCn = (Integer) data.get("MA_CN");
                     if (maCn != null) setSelectedComboItem(dlgCbChiNhanh, maCn);
                     Integer maKm = (Integer) data.get("MA_KM");
-                    if (maKm != null) setSelectedComboItem(dlgCbKhuyenMai, maKm);
+                    if (maKm != null && maKm > 0) {
+                        setSelectedComboItem(dlgCbKhuyenMai, maKm);
+                    } else {
+                        setSelectedComboItem(dlgCbKhuyenMai, -1);
+                    }
+                    
+                    // Khoá Khuyến mãi (Không cho đổi)
+                    dlgCbKhuyenMai.setEnabled(false);
+                    dlgCbKhuyenMai.setToolTipText("Không được phép thay đổi khuyến mãi của hóa đơn");
+
+                    // Load products into the table
+                    try {
+                        java.util.List<java.util.Map<String, Object>> details = Controller.Admin.HoaDonDAO.getChiTietHoaDon(maHd);
+                                                for (java.util.Map<String, Object> d : details) {
+                            String tenSp = (String) d.get("TEN_SP");
+                            String serial = (String) d.get("SERIAL_NUMBER");
+                            if (serial != null && !serial.isEmpty()) tenSp += " (" + serial + ")";
+                            String rowBranchName = d.get("TEN_CN") != null ? (String) d.get("TEN_CN") : (dlgCbChiNhanh.getSelectedItem() != null ? dlgCbChiNhanh.getSelectedItem().toString() : "Không xác định");
+                            
+                            detailTableModel.addRow(new Object[]{
+                                tenSp,
+                                d.get("SO_LUONG"),
+                                String.format("%,dđ", ((Number)d.get("DON_GIA")).longValue()),
+                                String.format("%,dđ", ((Number)d.get("THANH_TIEN")).longValue()),
+                                rowBranchName
+                            });
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    
+                    // Tuyệt đối không cho sửa khuyến mãi của bất kỳ đơn nào sau khi đã tạo
+                    dlgCbKhuyenMai.setEnabled(false);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -323,7 +384,8 @@ public class ProcurementPanel extends javax.swing.JPanel {
                 }
                 Integer maKm = null;
                 if (dlgCbKhuyenMai.getSelectedItem() != null) {
-                    maKm = ((DBItem) dlgCbKhuyenMai.getSelectedItem()).getId();
+                    int kmId = ((DBItem) dlgCbKhuyenMai.getSelectedItem()).getId();
+                    if (kmId > 0) maKm = kmId;
                 }
                 double tongTien = Double.parseDouble(dlgTxtTongTien.getText().trim());
                 double giamGia = Double.parseDouble(dlgTxtGiamGia.getText().trim());
@@ -775,6 +837,9 @@ public class ProcurementPanel extends javax.swing.JPanel {
     private void loadComboDataSync(JComboBox<DBItem> combo, String table, String idCol, String nameCol) {
         combo.removeAllItems();
         try {
+            if ("KHUYEN_MAI".equals(table)) {
+                combo.addItem(new DBItem(-1, "(Không có khuyến mãi)"));
+            }
             java.util.List<java.util.Map<String, Object>> items = Controller.Admin.HoaDonDAO.getComboData(table, idCol, nameCol);
             for (java.util.Map<String, Object> item : items) {
                 int id = (Integer) item.get("ID");

@@ -68,8 +68,8 @@ public class DonDatHangDAO {
             // 2. INSERT CHITIET_HOADON + UPDATE KHO_SERIAL
             long tongTienSP = 0;
             if (serials != null && !serials.isEmpty()) {
-                String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) " +
-                               "VALUES (?, ?, ?, ?, ?, ?)";
+                String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, MA_BIENTHE, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN, MA_CN) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
@@ -80,6 +80,8 @@ public class DonDatHangDAO {
                         int maSP = (int) item.get("maSP");
                         long donGia = (long) item.get("donGia");
                         int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
+                        Integer maBienThe = (Integer) item.get("maBienThe");
+                        int productMaCN = (int) item.get("maCN");
                         
                         boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
 
@@ -95,14 +97,20 @@ public class DonDatHangDAO {
                         // Insert chi tiết
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        if (!isNonSerial) {
-                            psCT.setString(3, serialNumber);
+                        if (maBienThe != null) {
+                            psCT.setInt(3, maBienThe);
                         } else {
-                            psCT.setNull(3, Types.VARCHAR);
+                            psCT.setNull(3, Types.INTEGER);
                         }
-                        psCT.setInt(4, soLuong);
-                        psCT.setLong(5, donGia);
-                        psCT.setLong(6, donGia * soLuong);
+                        if (!isNonSerial) {
+                            psCT.setString(4, serialNumber);
+                        } else {
+                            psCT.setNull(4, Types.VARCHAR);
+                        }
+                        psCT.setInt(5, soLuong);
+                        psCT.setLong(6, donGia);
+                        psCT.setLong(7, donGia * soLuong);
+                        psCT.setInt(8, productMaCN);
                         psCT.executeUpdate();
 
                         tongTienSP += (donGia * soLuong);
@@ -268,6 +276,9 @@ public class DonDatHangDAO {
                         long donGia = (long) item.get("donGia");
                         int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
 
+                        Integer maBienThe = (Integer) item.get("maBienThe");
+                        int productMaCN = (int) item.get("maCN");
+
                         boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
 
                         if (!isNonSerial) {
@@ -280,14 +291,20 @@ public class DonDatHangDAO {
 
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        if (!isNonSerial) {
-                            psCT.setString(3, serialNumber);
+                        if (maBienThe != null) {
+                            psCT.setInt(3, maBienThe);
                         } else {
-                            psCT.setNull(3, Types.VARCHAR);
+                            psCT.setNull(3, Types.INTEGER);
                         }
-                        psCT.setInt(4, soLuong);
-                        psCT.setLong(5, donGia);
-                        psCT.setLong(6, donGia * soLuong);
+                        if (!isNonSerial) {
+                            psCT.setString(4, serialNumber);
+                        } else {
+                            psCT.setNull(4, Types.VARCHAR);
+                        }
+                        psCT.setInt(5, soLuong);
+                        psCT.setLong(6, donGia);
+                        psCT.setLong(7, donGia * soLuong);
+                        psCT.setInt(8, productMaCN);
                         psCT.executeUpdate();
 
                         tongTienSP += (donGia * soLuong);
@@ -957,7 +974,7 @@ public class DonDatHangDAO {
                      " END) AS SO_LUONG_TON " +
                      "FROM BIEN_THE_SAN_PHAM BT " +
                      "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
-                     "WHERE UPPER(SP.TEN_SP) LIKE UPPER(?) AND ROWNUM <= 30";
+                     "WHERE SP.TRANG_THAI != N'Ngừng kinh doanh' AND UPPER(SP.TEN_SP) LIKE UPPER(?) AND ROWNUM <= 30";
                      
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -1003,11 +1020,13 @@ public class DonDatHangDAO {
         
         try (Connection con = ConnectionUtils.getMyConnection()) {
             // 1. Co Serial
-            String sqlSerial = "SELECT KS.MA_SN, KS.SERIAL_NUMBER, KS.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, 1 AS SO_LUONG_TON, 1 AS CO_QUAN_LY_SERIAL " +
+            String sqlSerial = "SELECT KS.MA_SN, KS.SERIAL_NUMBER, KS.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, 1 AS SO_LUONG_TON, 1 AS CO_QUAN_LY_SERIAL, CN.MA_CN, CN.TEN_CN " +
                          "FROM KHO_SERIAL KS " +
                          "JOIN BIEN_THE_SAN_PHAM BT ON KS.MA_BIENTHE = BT.MA_BIENTHE " +
                          "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
+                         "JOIN CHI_NHANH CN ON KS.MA_CN = CN.MA_CN " +
                          "WHERE KS.TRANG_THAI = N'Khả dụng' " +
+                         "AND SP.TRANG_THAI != N'Ngừng kinh doanh' " +
                          "AND (UPPER(KS.SERIAL_NUMBER) LIKE UPPER(?) OR UPPER(SP.TEN_SP) LIKE UPPER(?)) " +
                          "AND ROWNUM <= 30";
             try (PreparedStatement ps = con.prepareStatement(sqlSerial)) {
@@ -1025,18 +1044,22 @@ public class DonDatHangDAO {
                         row.put("GIA_BAN", rs.getLong("GIA_BAN"));
                         row.put("SO_LUONG_TON", rs.getInt("SO_LUONG_TON"));
                         row.put("CO_QUAN_LY_SERIAL", rs.getInt("CO_QUAN_LY_SERIAL"));
+                        row.put("MA_CN", rs.getInt("MA_CN"));
+                        row.put("TEN_CN", rs.getString("TEN_CN"));
                         results.add(row);
                     }
                 }
             }
             
             // 2. Khong Serial
-            String sqlNonSerial = "SELECT NULL AS MA_SN, NULL AS SERIAL_NUMBER, TK.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, TK.SO_LUONG_TON, 0 AS CO_QUAN_LY_SERIAL " +
+            String sqlNonSerial = "SELECT NULL AS MA_SN, NULL AS SERIAL_NUMBER, TK.MA_BIENTHE, BT.MA_SP, SP.TEN_SP, BT.TEN_BIENTHE, BT.GIA_BAN, TK.SO_LUONG_TON, 0 AS CO_QUAN_LY_SERIAL, CN.MA_CN, CN.TEN_CN " +
                          "FROM TON_KHO TK " +
                          "JOIN BIEN_THE_SAN_PHAM BT ON TK.MA_BIENTHE = BT.MA_BIENTHE " +
                          "JOIN SAN_PHAM SP ON BT.MA_SP = SP.MA_SP " +
+                         "JOIN CHI_NHANH CN ON TK.MA_CN = CN.MA_CN " +
                          "WHERE SP.CO_QUAN_LY_SERIAL = 0 " +
                          "AND TK.SO_LUONG_TON > 0 " +
+                         "AND SP.TRANG_THAI != N'Ngừng kinh doanh' " +
                          "AND UPPER(SP.TEN_SP) LIKE UPPER(?) " +
                          "AND ROWNUM <= 30";
             try (PreparedStatement ps = con.prepareStatement(sqlNonSerial)) {
@@ -1053,6 +1076,8 @@ public class DonDatHangDAO {
                         row.put("GIA_BAN", rs.getLong("GIA_BAN"));
                         row.put("SO_LUONG_TON", rs.getInt("SO_LUONG_TON"));
                         row.put("CO_QUAN_LY_SERIAL", rs.getInt("CO_QUAN_LY_SERIAL"));
+                        row.put("MA_CN", rs.getInt("MA_CN"));
+                        row.put("TEN_CN", rs.getString("TEN_CN"));
                         results.add(row);
                     }
                 }
@@ -1099,7 +1124,7 @@ public class DonDatHangDAO {
             // 2. INSERT CHITIET_HOADON + UPDATE KHO_SERIAL
             long tongTienSP = 0;
             if (products != null && !products.isEmpty()) {
-                String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?, ?)";
+                String sqlCT = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, MA_BIENTHE, SERIAL_NUMBER, SO_LUONG, DON_GIA, THANH_TIEN, MA_CN) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 String sqlSerial = "UPDATE KHO_SERIAL SET TRANG_THAI = N'Đang đặt' WHERE SERIAL_NUMBER = ? AND TRANG_THAI = N'Khả dụng'";
 
                 try (PreparedStatement psCT = con.prepareStatement(sqlCT);
@@ -1111,6 +1136,7 @@ public class DonDatHangDAO {
                         long donGia = (long) item.get("donGia");
                         int soLuong = (item.containsKey("soLuong") && item.get("soLuong") != null) ? (int) item.get("soLuong") : 1;
                         Integer maBienThe = (Integer) item.get("maBienThe");
+                        int productMaCN = (int) item.get("maCN");
 
                         boolean isNonSerial = serialNumber == null || serialNumber.startsWith("SP#");
 
@@ -1126,14 +1152,20 @@ public class DonDatHangDAO {
                         // Insert chi tiết
                         psCT.setInt(1, maHD);
                         psCT.setInt(2, maSP);
-                        if (!isNonSerial) {
-                            psCT.setString(3, serialNumber);
+                        if (maBienThe != null) {
+                            psCT.setInt(3, maBienThe);
                         } else {
-                            psCT.setNull(3, Types.VARCHAR);
+                            psCT.setNull(3, Types.INTEGER);
                         }
-                        psCT.setInt(4, soLuong);
-                        psCT.setLong(5, donGia);
-                        psCT.setLong(6, donGia * soLuong);
+                        if (!isNonSerial) {
+                            psCT.setString(4, serialNumber);
+                        } else {
+                            psCT.setNull(4, Types.VARCHAR);
+                        }
+                        psCT.setInt(5, soLuong);
+                        psCT.setLong(6, donGia);
+                        psCT.setLong(7, donGia * soLuong);
+                        psCT.setInt(8, productMaCN);
                         psCT.executeUpdate();
 
                         tongTienSP += donGia * soLuong;
@@ -1272,3 +1304,5 @@ public class DonDatHangDAO {
         }
     }
 }
+
+

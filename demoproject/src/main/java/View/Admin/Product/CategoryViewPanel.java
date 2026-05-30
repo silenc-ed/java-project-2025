@@ -107,13 +107,13 @@ public class CategoryViewPanel extends JPanel {
         centerPanel.add(searchPanel, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"", "Mã loại sản phẩm", "Tên loại sản phẩm", "Mô tả", "Tổng số mặt hàng", "Thao tác"};
+        String[] columns = {"", "Mã loại sản phẩm", "Tên loại sản phẩm", "Mô tả", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public Class<?> getColumnClass(int c) {
                 return c == 0 ? Boolean.class : super.getColumnClass(c);
             }
             @Override public boolean isCellEditable(int r, int c) {
-                return c == 0 || c == 5;
+                return c == 0 || c == 4;
             }
         };
 
@@ -133,7 +133,6 @@ public class CategoryViewPanel extends JPanel {
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         dataTable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
-        dataTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
 
         ProductSharedUtils.ActionCellEditor actionEditor = new ProductSharedUtils.ActionCellEditor(
             dataTable, 
@@ -141,8 +140,8 @@ public class CategoryViewPanel extends JPanel {
             this::handleViewCategory,
             true // Show "Chi tiết" button
         );
-        dataTable.getColumnModel().getColumn(5).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(true));
-        dataTable.getColumnModel().getColumn(5).setCellEditor(actionEditor);
+        dataTable.getColumnModel().getColumn(4).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(true));
+        dataTable.getColumnModel().getColumn(4).setCellEditor(actionEditor);
 
         dataTable.getTableHeader().setPreferredSize(new Dimension(0, 45));
         dataTable.getTableHeader().setBackground(Color.WHITE);
@@ -155,7 +154,7 @@ public class CategoryViewPanel extends JPanel {
                 if (e.getClickCount() == 2) {
                     int row = dataTable.rowAtPoint(e.getPoint());
                     int col = dataTable.columnAtPoint(e.getPoint());
-                    if (row != -1 && col > 0 && col < 5) {
+                    if (row != -1 && col > 0 && col < 4) {
                         handleViewCategory();
                     }
                 }
@@ -197,7 +196,6 @@ public class CategoryViewPanel extends JPanel {
                     String.valueOf(lsp.getMaLsp()),
                     lsp.getTenLsp(),
                     lsp.getMoTa() != null ? lsp.getMoTa() : "",
-                    lsp.getTongSoMatHang(),
                     lsp.getMaLsp()
                 });
             }
@@ -218,7 +216,7 @@ public class CategoryViewPanel extends JPanel {
                 Controller.LoaiSanPhamDAO.addLoaiSanPham(lsp);
                 refreshData();
             } catch (Exception e) {
-                tableModel.addRow(new Object[]{ Boolean.FALSE, String.valueOf(System.currentTimeMillis() % 1000), dialog.getTenLsp(), dialog.getMoTa(), 0, -1 });
+                tableModel.addRow(new Object[]{ Boolean.FALSE, String.valueOf(System.currentTimeMillis() % 1000), dialog.getTenLsp(), dialog.getMoTa(), -1 });
             }
         }
     }

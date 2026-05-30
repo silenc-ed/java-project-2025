@@ -121,6 +121,20 @@ public class PhieuNhapDAO {
                 throw new Exception("Không thể tạo hoặc tìm thấy Nhà cung cấp!");
             }
 
+            // Check old status to determine if we need to update inventory
+            int oldStatus = -999;
+            if (isEdit) {
+                String sqlOldStatus = "SELECT TRANG_THAI FROM PHIEU_NHAP WHERE MA_PN = ?";
+                try (PreparedStatement psOld = con.prepareStatement(sqlOldStatus)) {
+                    psOld.setInt(1, maPn);
+                    try (ResultSet rsOld = psOld.executeQuery()) {
+                        if (rsOld.next()) {
+                            oldStatus = rsOld.getInt("TRANG_THAI");
+                        }
+                    }
+                }
+            }
+
             // 2. Insert or update PHIEU_NHAP
             if (!isEdit) {
                 String sql = "INSERT INTO PHIEU_NHAP (MA_NCC, MA_NV, MA_CN, TONG_TIEN, TRANG_THAI, GHI_CHU) VALUES (?, ?, ?, ?, ?, ?)";
@@ -143,16 +157,52 @@ public class PhieuNhapDAO {
                     }
                 }
             } else {
-                String sql = "UPDATE PHIEU_NHAP SET MA_NCC=?, MA_NV=?, MA_CN=?, TONG_TIEN=?, TRANG_THAI=?, GHI_CHU=? WHERE MA_PN=?";
+                String sql = "UPDATE PHIEU_NHAP SET MA_NCC=?, MA_NV=?, MA_CN=?, TRANG_THAI=?, GHI_CHU=? WHERE MA_PN=?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, maNcc);
                     ps.setInt(2, maNv);
                     ps.setInt(3, maCn);
-                    ps.setDouble(4, total);
-                    ps.setInt(5, status);
-                    ps.setString(6, note);
-                    ps.setInt(7, maPn);
+                    ps.setInt(4, status);
+                    ps.setString(5, note);
+                    ps.setInt(6, maPn);
                     ps.executeUpdate();
+                }
+
+                // If status changed to 1 (Đã nhập), add to inventory
+                if (status == 1 && oldStatus != 1) {
+                    String sqlGetDetails = "SELECT MA_BIENTHE, SO_LUONG FROM CHI_TIET_PHIEU_NHAP WHERE MA_PN = ?";
+                    try (PreparedStatement psGet = con.prepareStatement(sqlGetDetails)) {
+                        psGet.setInt(1, maPn);
+                        try (ResultSet rsGet = psGet.executeQuery()) {
+                            String mergeTonKho = "MERGE INTO TON_KHO target " +
+                                "USING (SELECT ? AS MA_BIENTHE, ? AS MA_CN FROM dual) source " +
+                                "ON (target.MA_BIENTHE = source.MA_BIENTHE AND target.MA_CN = source.MA_CN) " +
+                                "WHEN MATCHED THEN " +
+                                "UPDATE SET target.SO_LUONG_TON = target.SO_LUONG_TON + ?, target.NGAY_CAP_NHAT_CUOI = SYSTIMESTAMP " +
+                                "WHEN NOT MATCHED THEN " +
+                                "INSERT (MA_BIENTHE, MA_CN, SO_LUONG_TON, NGAY_CAP_NHAT_CUOI) VALUES (source.MA_BIENTHE, source.MA_CN, ?, SYSTIMESTAMP)";
+                            try (PreparedStatement psMerge = con.prepareStatement(mergeTonKho)) {
+                                while (rsGet.next()) {
+                                    int bienthe = rsGet.getInt("MA_BIENTHE");
+                                    int soLuong = rsGet.getInt("SO_LUONG");
+                                    psMerge.setInt(1, bienthe);
+                                    psMerge.setInt(2, maCn);
+                                    psMerge.setInt(3, soLuong);
+                                    psMerge.setInt(4, soLuong);
+                                    psMerge.addBatch();
+                                }
+                                psMerge.executeBatch();
+                            }
+                        }
+                    }
+                    
+                    // Also update serials if any are linked to this MA_PN (if applicable)
+                    String updateSerials = "UPDATE KHO_SERIAL SET TRANG_THAI = 'Khả dụng', MA_CN = ? WHERE MA_PN = ?";
+                    try (PreparedStatement psSerials = con.prepareStatement(updateSerials)) {
+                        psSerials.setInt(1, maCn);
+                        psSerials.setInt(2, maPn);
+                        psSerials.executeUpdate();
+                    }
                 }
             }
 

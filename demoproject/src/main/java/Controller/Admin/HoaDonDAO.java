@@ -67,11 +67,43 @@ public class HoaDonDAO {
         return null;
     }
 
+    public static List<Map<String, Object>> getChiTietHoaDon(int maHd) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT SP.MA_SP, NVL(BT.TEN_BIENTHE, SP.TEN_SP) AS TEN_SP, " +
+                     "CTHD.SO_LUONG, CTHD.DON_GIA, CTHD.THANH_TIEN, CTHD.SERIAL_NUMBER, CN.TEN_CN " +
+                     "FROM CHI_TIET_HOA_DON CTHD " +
+                     "JOIN SAN_PHAM SP ON CTHD.MA_SP = SP.MA_SP " +
+                     "LEFT JOIN BIEN_THE_SAN_PHAM BT ON CTHD.MA_BIENTHE = BT.MA_BIENTHE " +
+                     "LEFT JOIN CHI_NHANH CN ON CTHD.MA_CN = CN.MA_CN " +
+                     "WHERE CTHD.MA_HD = ?";
+        try (Connection con = ConnectionUtils.getMyConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maHd);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("MA_SP", rs.getInt("MA_SP"));
+                    row.put("TEN_SP", rs.getString("TEN_SP"));
+                    row.put("SO_LUONG", rs.getInt("SO_LUONG"));
+                    row.put("DON_GIA", rs.getDouble("DON_GIA"));
+                    row.put("THANH_TIEN", rs.getDouble("THANH_TIEN"));
+                    row.put("SERIAL_NUMBER", rs.getString("SERIAL_NUMBER"));
+                    row.put("TEN_CN", rs.getString("TEN_CN"));
+                    list.add(row);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public static boolean saveHoaDon(int maHd, Integer maKh, int maNv, int maCn, Integer maKm, 
                                      double tongTien, double giamGia, double thanhTien, 
                                      String phuongThuc, String trangThai, boolean isEdit) throws Exception {
         
         try (Connection con = ConnectionUtils.getMyConnection()) {
+            String oldStatus = null;
             if (isEdit) {
                 // Chặn chỉnh sửa nếu hóa đơn đang ở trạng thái 'Đã hủy'
                 String checkSql = "SELECT TRANG_THAI FROM HOA_DON WHERE MA_HD = ?";
@@ -79,20 +111,29 @@ public class HoaDonDAO {
                     psCheck.setInt(1, maHd);
                     try (ResultSet rs = psCheck.executeQuery()) {
                         if (rs.next()) {
-                            String currentStatus = rs.getString("TRANG_THAI");
-                            if ("Đã hủy".equals(currentStatus)) {
+                            oldStatus = rs.getString("TRANG_THAI");
+                            if ("Đã hủy".equals(oldStatus)) {
                                 throw new Exception("Không thể chỉnh sửa hóa đơn đã bị hủy!");
+                            }
+                            if ("Hoàn thành".equals(oldStatus)) {
+                                throw new Exception("Không thể chỉnh sửa hóa đơn đã hoàn thành!");
                             }
                         }
                     }
                 }
             }
             
+            boolean shouldCallSP = isEdit && "Chờ thanh toán".equals(oldStatus) && ("Đã thanh toán".equalsIgnoreCase(trangThai) || "Hoàn thành".equalsIgnoreCase(trangThai));
+            String originalRequestedStatus = trangThai;
+            
             String sql;
             if (!isEdit) {
                 sql = "INSERT INTO HOA_DON (MA_KH, MA_NV, MA_CN, MA_KM, TONG_TIEN, GIAM_GIA, THANH_TIEN, PHUONG_THUC_TT, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             } else {
                 sql = "UPDATE HOA_DON SET MA_KH=?, MA_NV=?, MA_CN=?, MA_KM=?, TONG_TIEN=?, GIAM_GIA=?, THANH_TIEN=?, PHUONG_THUC_TT=?, TRANG_THAI=? WHERE MA_HD=?";
+                if (shouldCallSP) {
+                    trangThai = "Chờ thanh toán"; // Keep it so SP can find it
+                }
             }
 
             try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -119,6 +160,49 @@ public class HoaDonDAO {
                 }
 
                 int rows = ps.executeUpdate();
+                
+                if (rows > 0 && shouldCallSP) {
+                    // Call SP_THANH_TOAN_HOA_DON
+                    String spSql = "{call SP_THANH_TOAN_HOA_DON(?, ?)}";
+                    try (java.sql.CallableStatement cs = con.prepareCall(spSql)) {
+                        cs.setInt(1, maHd);
+                        cs.setString(2, phuongThuc);
+                        cs.execute();
+                    }
+                    
+                    // The SP might set to 'Đã thanh toán'. If the UI requested 'Hoàn thành', we should force it.
+                    if ("Hoàn thành".equalsIgnoreCase(originalRequestedStatus)) {
+                        try (PreparedStatement psFinal = con.prepareStatement("UPDATE HOA_DON SET TRANG_THAI = ? WHERE MA_HD = ?")) {
+                            psFinal.setString(1, "Hoàn thành");
+                            psFinal.setInt(2, maHd);
+                            psFinal.executeUpdate();
+                        }
+                    }
+                }
+
+                if (rows > 0 && isEdit && !"Đã hủy".equals(oldStatus) && "Đã hủy".equalsIgnoreCase(originalRequestedStatus)) {
+                    // Trả lại khuyến mãi cho khách hàng (ví khách hàng)
+                    if (maKh != null && maKh > 0 && maKm != null && maKm > 0) {
+                        try (PreparedStatement psRefundWallet = con.prepareStatement(
+                                "UPDATE VI_KHUYENMAI SET SO_LUONG = SO_LUONG + 1 WHERE MA_KH = ? AND MA_KM = ?")) {
+                            psRefundWallet.setInt(1, maKh);
+                            psRefundWallet.setInt(2, maKm);
+                            psRefundWallet.executeUpdate();
+                        }
+                    }
+                    
+                    // Nếu hóa đơn đã được thanh toán trước đó, hệ thống cũng đã trừ SO_LUONG_CL, cần hoàn lại
+                    if ("Đã thanh toán".equalsIgnoreCase(oldStatus) || "Hoàn thành".equalsIgnoreCase(oldStatus)) {
+                        if (maKm != null && maKm > 0) {
+                            try (PreparedStatement psRefundKm = con.prepareStatement(
+                                    "UPDATE KHUYEN_MAI SET SO_LUONG_CL = SO_LUONG_CL + 1 WHERE MA_KM = ?")) {
+                                psRefundKm.setInt(1, maKm);
+                                psRefundKm.executeUpdate();
+                            }
+                        }
+                    }
+                }
+                
                 return rows > 0;
             }
         }

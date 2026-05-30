@@ -37,14 +37,29 @@ public class SerialNumberDAO {
     }
 
     public static boolean addSerialNumber(SerialNumber sn) throws Exception {
-        String sql = "INSERT INTO KHO_SERIAL (SERIAL_NUMBER, MA_BIENTHE, MA_CN, TRANG_THAI) VALUES (?, ?, ?, ?)";
+        String checkSql = "SELECT COUNT(*) FROM KHO_SERIAL WHERE SERIAL_NUMBER = ?";
+        String insertSql = "INSERT INTO KHO_SERIAL (SERIAL_NUMBER, MA_BIENTHE, MA_CN, TRANG_THAI) VALUES (?, ?, ?, ?)";
         try (Connection con = ConnectionUtils.getMyConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, sn.getMaSerial());
-            ps.setInt(2, sn.getMaBienThe());
-            ps.setInt(3, sn.getMaCn());
-            ps.setString(4, sn.getTrangThai() != null ? sn.getTrangThai() : "Khả dụng");
-            return ps.executeUpdate() > 0;
+             PreparedStatement checkPs = con.prepareStatement(checkSql)) {
+            checkPs.setString(1, sn.getMaSerial());
+            try (ResultSet rs = checkPs.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new Exception("Serial " + sn.getMaSerial() + " đã tồn tại trong kho!");
+                }
+            }
+            try (PreparedStatement insertPs = con.prepareStatement(insertSql)) {
+                insertPs.setString(1, sn.getMaSerial());
+                insertPs.setInt(2, sn.getMaBienThe());
+                insertPs.setInt(3, sn.getMaCn());
+                String trangThai = sn.getTrangThai();
+                if ("KHONG_KHA_DUNG".equals(trangThai)) {
+                    trangThai = "Không khả dụng";
+                } else if (trangThai == null || trangThai.trim().isEmpty()) {
+                    trangThai = "Khả dụng";
+                }
+                insertPs.setString(4, trangThai);
+                return insertPs.executeUpdate() > 0;
+            }
         }
     }
 

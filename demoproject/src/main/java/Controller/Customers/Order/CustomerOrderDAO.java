@@ -95,17 +95,23 @@ public class CustomerOrderDAO {
             }
 
             // 3. Insert CHI_TIET_HOA_DON
-            String insertCtSql = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?)";
+            String insertCtSql = "INSERT INTO CHI_TIET_HOA_DON (MA_HD, MA_SP, MA_BIENTHE, SO_LUONG, DON_GIA, THANH_TIEN) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = con.prepareStatement(insertCtSql)) {
                 for (CartItem item : items) {
                     long maSp = item.getProduct().getMaSp();
+                    long maBienThe = (item.getVariant() != null) ? item.getVariant().getMaBienThe() : 0;
                     double price = item.getVariant() != null ? item.getVariant().getGiaBan() : item.getProduct().getGiaBan();
                     
                     ps.setLong(1, newHdId);
                     ps.setLong(2, maSp);
-                    ps.setInt(3, item.getQuantity());
-                    ps.setDouble(4, price);
-                    ps.setDouble(5, price * item.getQuantity());
+                    if (maBienThe > 0) {
+                        ps.setLong(3, maBienThe);
+                    } else {
+                        ps.setNull(3, java.sql.Types.NUMERIC);
+                    }
+                    ps.setInt(4, item.getQuantity());
+                    ps.setDouble(5, price);
+                    ps.setDouble(6, price * item.getQuantity());
                     ps.addBatch();
                 }
                 ps.executeBatch();

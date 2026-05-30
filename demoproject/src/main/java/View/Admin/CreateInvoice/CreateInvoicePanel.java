@@ -22,6 +22,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
     // Cột trái
     private JTextField txtPhone, txtCustomerName;
     private Integer currentMaKH = null;
+    private JComboBox<View.Admin.Product.ProductSharedUtils.DBItem> cbChiNhanh;
 
     private JTextField txtSearchSP;
     private JComboBox<ServiceItem> cbServices;
@@ -47,6 +48,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         dao = new DonDatHangDAO();
         setupUI();
         loadServiceCombo();
+        loadBranchesCombo();
     }
 
     private void setupUI() {
@@ -151,31 +153,32 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         cartCard.add(inputPanel, BorderLayout.NORTH);
 
         // -- Bảng Hợp Nhất --
-        String[] cols = {"Loại", "Mã / Serial", "Tên mục", "SL", "Đơn giá", "Thành tiền", "Xóa"};
+        String[] cols = {"Loại", "Mã / Serial", "Tên mục", "Chi nhánh", "SL", "Đơn giá", "Thành tiền", "Xóa"};
         cartTableModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return c == 6; }
+            @Override public boolean isCellEditable(int r, int c) { return c == 7; }
         };
         cartTable = buildTable(cartTableModel);
         
-        cartTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        cartTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         cartTable.getColumnModel().getColumn(1).setPreferredWidth(100);
-        cartTable.getColumnModel().getColumn(2).setPreferredWidth(200);
-        cartTable.getColumnModel().getColumn(3).setPreferredWidth(40);
-        cartTable.getColumnModel().getColumn(4).setPreferredWidth(90);
+        cartTable.getColumnModel().getColumn(2).setPreferredWidth(180);
+        cartTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        cartTable.getColumnModel().getColumn(4).setPreferredWidth(40);
         cartTable.getColumnModel().getColumn(5).setPreferredWidth(90);
-        cartTable.getColumnModel().getColumn(6).setMaxWidth(40);
+        cartTable.getColumnModel().getColumn(6).setPreferredWidth(90);
+        cartTable.getColumnModel().getColumn(7).setMaxWidth(40);
         
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        cartTable.getColumnModel().getColumn(4).setCellRenderer(rightRenderer);
         cartTable.getColumnModel().getColumn(5).setCellRenderer(rightRenderer);
+        cartTable.getColumnModel().getColumn(6).setCellRenderer(rightRenderer);
         
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        cartTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+        cartTable.getColumnModel().getColumn(4).setCellRenderer(centerRenderer);
         
-        cartTable.getColumnModel().getColumn(6).setCellRenderer(new DeleteBtnRenderer());
-        cartTable.getColumnModel().getColumn(6).setCellEditor(new DeleteBtnEditor(cartTable, cartTableModel, this::handleRowDeleted));
+        cartTable.getColumnModel().getColumn(7).setCellRenderer(new DeleteBtnRenderer());
+        cartTable.getColumnModel().getColumn(7).setCellEditor(new DeleteBtnEditor(cartTable, cartTableModel, this::handleRowDeleted));
 
         JScrollPane sp = new JScrollPane(cartTable);
         sp.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240)));
@@ -218,6 +221,14 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         txtCustomerName.setPreferredSize(new Dimension(0, 35));
         txtCustomerName.setBackground(new Color(241, 245, 249));
         card.add(txtCustomerName, g);
+
+        g.gridy = 1; g.gridx = 0; g.weightx = 0;
+        card.add(makeLabel("Chi nhánh:"), g);
+
+        g.gridx = 1; g.weightx = 0.5;
+        cbChiNhanh = new JComboBox<>();
+        cbChiNhanh.setPreferredSize(new Dimension(0, 35));
+        card.add(cbChiNhanh, g);
 
         return card;
     }
@@ -320,6 +331,12 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
     private void addProduct() {
         String keyword = txtSearchSP.getText().trim();
         if (keyword.isEmpty()) return;
+        
+        int selectedBranch = 1;
+        if (cbChiNhanh.getSelectedItem() != null) {
+            selectedBranch = ((View.Admin.Product.ProductSharedUtils.DBItem) cbChiNhanh.getSelectedItem()).getId();
+        }
+        
         try {
             List<Map<String, Object>> res = dao.searchProductsForSale(keyword);
             if (res.isEmpty()) {
@@ -338,7 +355,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 for (int i = 0; i < res.size(); i++) {
                     Map<String, Object> s = res.get(i);
                     String snText = s.get("SERIAL_NUMBER") != null ? (String)s.get("SERIAL_NUMBER") : "SL Tồn: " + s.get("SO_LUONG_TON");
-                    options[i] = snText + " | " + s.get("TEN_SP") + " | " + DF.format((long) s.get("GIA_BAN")) + "đ";
+                    options[i] = snText + " | " + s.get("TEN_SP") + " | " + s.get("TEN_CN") + " | " + DF.format((long) s.get("GIA_BAN")) + "đ";
                 }
                 String choice = (String) JOptionPane.showInputDialog(this, 
                     "Có nhiều Sản phẩm/Serial khớp. Vui lòng chọn:", 
@@ -382,8 +399,10 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             }
 
             String displayId = (sn != null) ? sn : "SP#" + selected.get("MA_SP");
-            cartTableModel.addRow(new Object[]{ "Sản phẩm", displayId, tenHienThi, soLuong, DF.format(giaBan) + "đ", DF.format(giaBan * soLuong) + "đ", "X" });
-            cartMetadata.add(new CartItemMetadata("SP", displayId, (int) selected.get("MA_SP"), giaBan, soLuong, maBienThe));
+            int p_maCN = (int) selected.get("MA_CN");
+            String p_tenCN = (String) selected.get("TEN_CN");
+            cartTableModel.addRow(new Object[]{ "Sản phẩm", displayId, tenHienThi, p_tenCN, soLuong, DF.format(giaBan) + "đ", DF.format(giaBan * soLuong) + "đ", "X" });
+            cartMetadata.add(new CartItemMetadata("SP", displayId, (int) selected.get("MA_SP"), giaBan, soLuong, maBienThe, p_maCN, p_tenCN));
             
             txtSearchSP.setText("");
             updateTotals();
@@ -403,8 +422,8 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 if ("DV".equals(m.type) && m.maId == selDV.id) { dup = true; break; }
             }
             if (!dup) {
-                cartTableModel.addRow(new Object[]{ "Dịch vụ", "DV#" + selDV.id, selDV.name, 1, DF.format(selDV.giaCuoc) + "đ", DF.format(selDV.giaCuoc) + "đ", "X" });
-                cartMetadata.add(new CartItemMetadata("DV", "DV#" + selDV.id, selDV.id, selDV.giaCuoc, 1, null));
+                cartTableModel.addRow(new Object[]{ "Dịch vụ", "DV#" + selDV.id, selDV.name, "Chung", 1, DF.format(selDV.giaCuoc) + "đ", DF.format(selDV.giaCuoc) + "đ", "X" });
+                cartMetadata.add(new CartItemMetadata("DV", "DV#" + selDV.id, selDV.id, selDV.giaCuoc, 1, null, 1, "DV"));
                 added = true;
                 cbServices.setSelectedIndex(0);
             }
@@ -623,7 +642,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                 long totalParts = parts.stream().mapToLong(p -> p.donGia * p.soLuong).sum();
                 long total = gc + totalParts;
                 
-                cartTableModel.addRow(new Object[]{"SC (Mới)", "NEW_SC", mt, 1, DF.format(total)+"đ", DF.format(total)+"đ", "X"});
+                cartTableModel.addRow(new Object[]{"SC (Mới)", "NEW_SC", mt, "Chung", 1, DF.format(total)+"đ", DF.format(total)+"đ", "X"});
                 cartMetadata.add(new CartItemMetadata(draft));
                 updateTotals();
                 dialog.dispose();
@@ -643,6 +662,18 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             List<Map<String, Object>> list = dao.getAvailableServices();
             for (Map<String, Object> s : list) cbServices.addItem(new ServiceItem((int) s.get("MA_DV"), (String) s.get("TEN_DV"), (long) s.get("GIA_CUOC")));
         } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private void loadBranchesCombo() {
+        try (java.sql.Connection con = ConnectDB.ConnectionUtils.getMyConnection();
+             java.sql.PreparedStatement ps = con.prepareStatement("SELECT MA_CN, TEN_CN FROM CHI_NHANH");
+             java.sql.ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                cbChiNhanh.addItem(new View.Admin.Product.ProductSharedUtils.DBItem(rs.getInt("MA_CN"), rs.getString("TEN_CN")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void checkCustomer() {
@@ -693,12 +724,18 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             currentDiscount = 0;
         }
 
-        long finalPrice = Math.max(total - currentDiscount, 0);
+        long finalTotal = (tongSP + tongDVLK) - currentDiscount;
+        if (finalTotal < 0) finalTotal = 0;
+        lblThanhTien.setText(DF.format(finalTotal) + "đ");
+        
+        if (cbChiNhanh != null) {
+            cbChiNhanh.setEnabled(cartMetadata.isEmpty());
+            cbChiNhanh.setToolTipText(cartMetadata.isEmpty() ? "Chọn chi nhánh" : "Không thể đổi chi nhánh khi đã có sản phẩm trong đơn");
+        }
 
         lblTongSP.setText(DF.format(tongSP) + "đ");
         lblTongDVLK.setText(DF.format(tongDVLK) + "đ");
         lblGiamGia.setText("-" + DF.format(currentDiscount) + "đ");
-        lblThanhTien.setText(DF.format(finalPrice) + "đ");
     }
 
     private void applyPromotion() {
@@ -719,6 +756,10 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Giỏ hàng đang trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        if (currentMaKH == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập SĐT và kiểm tra khách hàng trước khi tạo đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         try {
             List<Map<String, Object>> products = new ArrayList<>();
             List<Integer> dvIds = new ArrayList<>();
@@ -733,6 +774,7 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
                     item.put("donGia", m.donGia);
                     item.put("soLuong", m.soLuong);
                     item.put("maBienThe", m.maBienThe);
+                    item.put("maCN", m.maCN);
                     products.add(item);
                 } else if ("DV".equals(m.type)) {
                     dvIds.add(m.maId);
@@ -745,6 +787,10 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
 
             int maNV = dao.getCurrentMaNV();
             int newHD = -1;
+            int selectedBranch = 1;
+            if (cbChiNhanh.getSelectedItem() != null) {
+                selectedBranch = ((View.Admin.Product.ProductSharedUtils.DBItem) cbChiNhanh.getSelectedItem()).getId();
+            }
 
             if (!scIds.isEmpty() && !newRepairs.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Không thể kết hợp phiếu SC cũ và mới cùng lúc, vui lòng tạo riêng!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -752,9 +798,9 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
             }
             
             if (!newRepairs.isEmpty() || scIds.isEmpty()) {
-                newHD = dao.createOrderWithDrafts(currentMaKH, maNV, 1, products, dvIds, newRepairs);
+                newHD = dao.createOrderWithDrafts(currentMaKH, maNV, selectedBranch, products, dvIds, newRepairs);
             } else {
-                newHD = dao.createOrder(currentMaKH, maNV, 1, products, dvIds, scIds);
+                newHD = dao.createOrder(currentMaKH, maNV, selectedBranch, products, dvIds, scIds);
             }
 
             if (currentMaKM > 0 && newHD > 0) {
@@ -844,14 +890,16 @@ public class CreateInvoicePanel extends javax.swing.JPanel {
         int soLuong;
         Integer maBienThe;
         DonDatHangDAO.RepairTicketDraft draftSC;
+        int maCN;
+        String tenCN;
 
-        CartItemMetadata(String t, String s, int id, long gia, int sl, Integer mbt) { 
-            type = t; serialOrIdText = s; maId = id; donGia = gia; soLuong = sl; maBienThe = mbt;
+        CartItemMetadata(String t, String s, int id, long gia, int sl, Integer mbt, int mCN, String tCN) { 
+            type = t; serialOrIdText = s; maId = id; donGia = gia; soLuong = sl; maBienThe = mbt; maCN = mCN; tenCN = tCN;
         }
         CartItemMetadata(DonDatHangDAO.RepairTicketDraft draft) {
             type = "NEW_SC"; serialOrIdText = "SC Tạo mới"; maId = -1; donGia = draft.giaCuoc; 
             for(DonDatHangDAO.RepairPartDraft p : draft.parts) donGia += p.donGia * p.soLuong;
-            soLuong = 1; draftSC = draft;
+            soLuong = 1; draftSC = draft; maCN = 1; tenCN = "Chung";
         }
     }
 

@@ -87,13 +87,13 @@ public class ProductViewPanel extends JPanel {
         centerPanel.add(txtSearch, BorderLayout.NORTH);
 
         // Table
-        String[] columns = {"", "Mã SP", "Tên sản phẩm", "Mô tả", "Đã bán", "Giá bán", "Trạng thái", "Thao tác"};
+        String[] columns = {"", "Mã SP", "Tên sản phẩm", "Mô tả", "Giá bán", "Trạng thái", "Thao tác"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override public Class<?> getColumnClass(int c) {
                 return c == 0 ? Boolean.class : super.getColumnClass(c);
             }
             @Override public boolean isCellEditable(int r, int c) {
-                return c == 0 || c == 7;
+                return c == 0 || c == 6;
             }
         };
 
@@ -111,7 +111,7 @@ public class ProductViewPanel extends JPanel {
         dataTable.getColumnModel().getColumn(0).setMaxWidth(40);
         
         dataTable.getColumnModel().getColumn(2).setCellRenderer(new ProductSharedUtils.ProductCellRenderer());
-        dataTable.getColumnModel().getColumn(6).setCellRenderer(new ProductSharedUtils.StatusBadgeRenderer());
+        dataTable.getColumnModel().getColumn(5).setCellRenderer(new ProductSharedUtils.StatusBadgeRenderer());
         
         ProductSharedUtils.ActionCellEditor actionEditor = new ProductSharedUtils.ActionCellEditor(
             dataTable, 
@@ -119,17 +119,17 @@ public class ProductViewPanel extends JPanel {
             this::handleViewProduct,
             true // Show "Chi tiết"
         );
-        dataTable.getColumnModel().getColumn(7).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(true));
-        dataTable.getColumnModel().getColumn(7).setCellEditor(actionEditor);
+        dataTable.getColumnModel().getColumn(6).setCellRenderer(new ProductSharedUtils.ActionCellRenderer(true));
+        dataTable.getColumnModel().getColumn(6).setCellEditor(actionEditor);
 
-        // Double click to view details (variants) — skip checkbox col 0 and action col 7
+        // Double click to view details (variants) — skip checkbox col 0 and action col 6
         dataTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     int row = dataTable.rowAtPoint(e.getPoint());
                     int col = dataTable.columnAtPoint(e.getPoint());
-                    if (row != -1 && col > 0 && col < 7) {
+                    if (row != -1 && col > 0 && col < 6) {
                         handleViewProduct();
                     }
                 }
@@ -154,7 +154,6 @@ public class ProductViewPanel extends JPanel {
                         String.valueOf(sp.getMaSp()),
                         sp.getTenSp(),
                         sp.getMoTa(),
-                        sp.getSoLuongDaBan(),
                         new DecimalFormat("#,###đ").format(sp.getGiaBan()),
                         sp.getTrangThai(),
                         sp.getMaSp()
@@ -188,7 +187,7 @@ public class ProductViewPanel extends JPanel {
                 loadProductsForCategory(currentCategoryId);
             } catch (Exception e) {
                 e.printStackTrace();
-                tableModel.addRow(new Object[]{ Boolean.FALSE, "SP_NEW", dialog.getTenSp(), dialog.getMoTa(), dialog.getSoLuongDaBan(), dialog.getGiaBan() + "đ", dialog.getTrangThai(), -1 });
+                tableModel.addRow(new Object[]{ Boolean.FALSE, "SP_NEW", dialog.getTenSp(), dialog.getMoTa(), dialog.getGiaBan() + "đ", dialog.getTrangThai(), -1 });
             }
         }
     }
@@ -213,15 +212,9 @@ public class ProductViewPanel extends JPanel {
             Object descObj = tableModel.getValueAt(modelRow, 3);
             String desc = descObj != null ? descObj.toString() : "";
             
-            Object qtyObj = tableModel.getValueAt(modelRow, 4);
-            int qty = 0;
-            if (qtyObj != null) {
-                try {
-                    qty = Integer.parseInt(qtyObj.toString().trim());
-                } catch (Exception e) {}
-            }
+            int qty = 0; // Not available in table model anymore
             
-            Object priceObj = tableModel.getValueAt(modelRow, 5);
+            Object priceObj = tableModel.getValueAt(modelRow, 4);
             double price = 0;
             if (priceObj != null) {
                 try {
@@ -234,7 +227,7 @@ public class ProductViewPanel extends JPanel {
                 } catch (Exception e) {}
             }
             
-            Object statusObj = tableModel.getValueAt(modelRow, 6);
+            Object statusObj = tableModel.getValueAt(modelRow, 5);
             String status = statusObj != null ? statusObj.toString() : "Đang kinh doanh";
     
             ProductDialog dialog = new ProductDialog(SwingUtilities.getWindowAncestor(this), "Sửa sản phẩm");

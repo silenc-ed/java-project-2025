@@ -69,7 +69,7 @@ public class BillPanel extends javax.swing.JPanel {
         mainContainer.setBackground(Color.WHITE);
         mainContainer.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        String[] columns = {"", "Mã PN", "Nhà cung cấp", "Mã NV", "Mã CN", "Ngày nhập", "Số lượng", "Đơn giá", "Tổng tiền", "Trạng thái", "Ghi chú"};
+        String[] columns = {"", "Mã PN", "Nhà cung cấp", "Mã NV", "Mã CN", "Ngày nhập", "Tổng tiền", "Trạng thái", "Ghi chú"};
         listModel = new DefaultTableModel(columns, 0) {
             @Override
             public Class<?> getColumnClass(int columnIndex) {
@@ -686,14 +686,14 @@ public class BillPanel extends javax.swing.JPanel {
                 txtSupplier.setText(listModel.getValueAt(modelRow, 2).toString());
                 txtMaNV.setText(listModel.getValueAt(modelRow, 3).toString());
                 txtMaCN.setText(listModel.getValueAt(modelRow, 4).toString());
-                String statusStr = listModel.getValueAt(modelRow, 9).toString();
+                String statusStr = listModel.getValueAt(modelRow, 7).toString();
                 cbTrangThai.setSelectedItem(statusStr);
                 
                 if (!"Chờ xác nhận".equals(statusStr)) {
                     cbTrangThai.setEnabled(false);
                 }
                 
-                Object noteObj = listModel.getValueAt(modelRow, 10);
+                Object noteObj = listModel.getValueAt(modelRow, 8);
                 txtGhiChu.setText(noteObj != null ? noteObj.toString() : "");
             }
         }
@@ -726,6 +726,10 @@ public class BillPanel extends javax.swing.JPanel {
                 int maNv = Integer.parseInt(txtMaNV.getText().trim());
                 int maCn = Integer.parseInt(txtMaCN.getText().trim());
                 int status = cbTrangThai.getSelectedIndex() - 1; // "Đã hủy" -> -1, "Chờ xác nhận" -> 0, "Đã nhập" -> 1
+                if (status < -1 || status > 1) {
+                    JOptionPane.showMessageDialog(dialog, "Trạng thái không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 String note = txtGhiChu.getText().trim();
 
                 boolean success = Controller.Admin.PhieuNhap.PhieuNhapDAO.savePhieuNhap(
@@ -772,8 +776,6 @@ public class BillPanel extends javax.swing.JPanel {
                     row.get("MA_NV"),
                     row.get("MA_CN"),
                     row.get("NGAY_NHAP"),
-                    row.get("SO_LUONG"),
-                    df.format(row.get("DON_GIA_NHAP")),
                     df.format(row.get("TONG_TIEN")),
                     ((Number)row.get("TRANG_THAI")).intValue() == 0 ? "Chờ xác nhận" : (((Number)row.get("TRANG_THAI")).intValue() == 1 ? "Đã nhập" : "Đã hủy"),
                     row.get("GHI_CHU")
