@@ -401,17 +401,17 @@ public class WarehousePanel extends javax.swing.JPanel {
                 String status = v != null ? v.toString() : "";
                 if (!s) {
                     switch (status) {
-                        case "KHA_DUNG":
+                        case "Trong kho":
                             lbl.setText("● Khả dụng");
                             lbl.setForeground(new Color(5, 122, 85));
                             lbl.setBackground(new Color(220, 252, 231));
                             break;
-                        case "DANG_DUOC_DAT":
+                        case "Đang được đặt":
                             lbl.setText("● Đang đặt");
                             lbl.setForeground(new Color(180, 130, 0));
                             lbl.setBackground(new Color(255, 249, 219));
                             break;
-                        case "DA_BAN":
+                        case "Đã bán":
                             lbl.setText("● Đã bán");
                             lbl.setForeground(new Color(185, 28, 28));
                             lbl.setBackground(new Color(254, 226, 226));
@@ -466,9 +466,9 @@ public class WarehousePanel extends javax.swing.JPanel {
         try {
             Map<String, Integer> counts = dao.countSerialsByStatus(currentMaBienthe, currentMaCN);
             int total = counts.values().stream().mapToInt(Integer::intValue).sum();
-            int khaDung = counts.getOrDefault("KHA_DUNG", 0);
-            int dangDat = counts.getOrDefault("DANG_DUOC_DAT", 0);
-            int daBan = counts.getOrDefault("DA_BAN", 0);
+            int khaDung = counts.getOrDefault("Trong kho", 0);
+            int dangDat = counts.getOrDefault("Đang được đặt", 0);
+            int daBan = counts.getOrDefault("Đã bán", 0);
             int khac = total - khaDung - dangDat - daBan;
 
             StringBuilder sb = new StringBuilder();

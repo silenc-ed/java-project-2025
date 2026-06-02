@@ -10,6 +10,7 @@ public class DashboardPanel extends JPanel {
     private JButton btnDoanhThu;
     private JButton btnSpThinhHanh;
     private JButton btnThongKeDonHang;
+    private JButton btnTroLyAI;      // Tab Trợ lý AI
     private CardLayout cardLayout;
     private JPanel contentPanel;
 
@@ -23,6 +24,7 @@ public class DashboardPanel extends JPanel {
         contentPanel.add(new RevenuePanel(), "DOANH_THU");
         contentPanel.add(new PopularProductPanel(), "SP_THINH_HANH");
         contentPanel.add(new StatisticsPanel(), "THONG_KE");
+        contentPanel.add(new ChatPanel(), "TRO_LY_AI");
         add(contentPanel, BorderLayout.CENTER);
         activateTab(btnDoanhThu, "DOANH_THU");
     }
@@ -43,15 +45,18 @@ public class DashboardPanel extends JPanel {
         btnDoanhThu = makeTabBtn("Doanh thu");
         btnSpThinhHanh = makeTabBtn("SP thịnh hành");
         btnThongKeDonHang = makeTabBtn("Thống kê đơn hàng");
+        btnTroLyAI = makeTabBtn("🤖 Trợ lý AI");
 
         btnDoanhThu.addActionListener(e -> activateTab(btnDoanhThu, "DOANH_THU"));
         btnSpThinhHanh.addActionListener(e -> activateTab(btnSpThinhHanh, "SP_THINH_HANH"));
         btnThongKeDonHang.addActionListener(e -> activateTab(btnThongKeDonHang, "THONG_KE"));
+        btnTroLyAI.addActionListener(e -> activateTab(btnTroLyAI, "TRO_LY_AI"));
 
         header.add(lblTitle);
         header.add(btnDoanhThu);
         header.add(btnSpThinhHanh);
         header.add(btnThongKeDonHang);
+        header.add(btnTroLyAI);
         return header;
     }
 
@@ -69,15 +74,19 @@ public class DashboardPanel extends JPanel {
     }
 
     private void activateTab(JButton active, String card) {
-        for (JButton b : new JButton[]{btnDoanhThu, btnSpThinhHanh, btnThongKeDonHang}) {
+        for (JButton b : new JButton[]{btnDoanhThu, btnSpThinhHanh, btnThongKeDonHang, btnTroLyAI}) {
             b.setForeground(new Color(100, 116, 139));
             b.setFont(new Font("Segoe UI", Font.PLAIN, 13));
             b.setBorder(new EmptyBorder(16, 16, 14, 16));
         }
-        active.setForeground(new Color(37, 99, 235));
+        // Tab AI dùng màu tím để nổi bật
+        Color accentColor = (active == btnTroLyAI)
+                ? new Color(142, 68, 193)   // Tím (AI)
+                : new Color(37, 99, 235);    // Xanh (mặc định)
+        active.setForeground(accentColor);
         active.setFont(new Font("Segoe UI", Font.BOLD, 13));
         active.setBorder(new CompoundBorder(
-                new MatteBorder(0, 0, 2, 0, new Color(37, 99, 235)),
+                new MatteBorder(0, 0, 2, 0, accentColor),
                 new EmptyBorder(16, 16, 12, 16)));
         cardLayout.show(contentPanel, card);
     }

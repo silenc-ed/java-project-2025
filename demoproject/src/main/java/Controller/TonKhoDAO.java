@@ -19,7 +19,7 @@ public class TonKhoDAO {
         String sql = "SELECT cn.MA_CN, cn.TEN_CN, tk.SO_LUONG_TON " +
                      "FROM CHI_NHANH cn " +
                      "LEFT JOIN TON_KHO tk ON cn.MA_CN = tk.MA_CN AND tk.MA_BIENTHE = ? " +
-                     "WHERE cn.TRANG_THAI = 'Hoạt động' " +
+                     "WHERE cn.TRANG_THAI = N'Đang hoạt động' " +
                      "ORDER BY cn.MA_CN ASC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {

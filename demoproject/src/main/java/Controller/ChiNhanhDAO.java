@@ -12,7 +12,7 @@ public class ChiNhanhDAO {
 
     public static List<ChiNhanh> getAllChiNhanh() throws Exception {
         List<ChiNhanh> list = new ArrayList<>();
-        String sql = "SELECT MA_CN, TEN_CN, DIA_CHI, SDT_HOTLINE, TRANG_THAI FROM CHI_NHANH WHERE TRANG_THAI = 'Hoạt động' ORDER BY MA_CN ASC";
+        String sql = "SELECT MA_CN, TEN_CN, DIA_CHI, SDT_HOTLINE, TRANG_THAI FROM CHI_NHANH WHERE TRANG_THAI = N'Đang hoạt động' ORDER BY MA_CN ASC";
         try (Connection con = ConnectionUtils.getMyConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {

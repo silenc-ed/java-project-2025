@@ -8,7 +8,7 @@ import java.sql.*;
 
 /**
  * Class Connection Oracle
- * @author nguyenminhnhut
+ * @author nguyenminhnhutt
  */
 public class ConnectionOracle {
     
@@ -27,7 +27,7 @@ public class ConnectionOracle {
         //SID Oralce
         String sid = "orcl";
         //Username
-        String userName = "AdminTestingVN";
+        String userName = "DoAn_database";
 //        String userName = "AdminLinhTinh";
         //Password
         String password = "Admin123";
